@@ -1,0 +1,29 @@
+{
+    "name": "letterncms/site",
+    "description": "Design system (content/design), page templates, routing, rendering, previews and static builds.",
+    "type": "cms-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.1 <1",
+        "letterncms/blocks": ">=0.1 <1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Site\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "Site",
+            "icon": "globe",
+            "provider": "Cms\\Site\\SitePlugin",
+            "provides": [
+                "site-builder",
+                "rendering"
+            ]
+        }
+    },
+    "homepage": "https://github.com/letterncms/site"
+}

@@ -1,0 +1,25 @@
+{
+    "name": "letterncms/brevo",
+    "description": "Send email through Brevo's transactional API.",
+    "type": "cms-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.1 <1",
+        "letterncms/mail": ">=0.1 <1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Brevo\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "Brevo",
+            "icon": "brevo",
+            "provider": "Cms\\Brevo\\BrevoPlugin"
+        }
+    },
+    "homepage": "https://github.com/letterncms/brevo"
+}

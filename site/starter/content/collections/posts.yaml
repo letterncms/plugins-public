@@ -1,0 +1,24 @@
+title: Blog
+singular: Post
+icon: article
+structure: dated
+route: '/blog/{slug}'
+template: post
+body: content
+fields:
+  -
+    handle: content
+    type: blocks
+    label: Content
+  -
+    handle: tags
+    type: tags
+    label: Tags
+    section: sidebar
+  -
+    handle: template
+    type: select
+    label: Template
+    dynamic: templates
+    section: sidebar
+nav_order: 20

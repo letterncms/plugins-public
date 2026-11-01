@@ -1,0 +1,19 @@
+{
+  ":field is required.": ":field ist erforderlich.",
+  "Choose one of the options.": "Bitte wählen Sie eine der Optionen.",
+  "Enter a full web address (https://…).": "Bitte geben Sie eine vollständige Webadresse ein (https://…).",
+  "Enter a number.": "Bitte geben Sie eine Zahl ein.",
+  "Enter a valid date.": "Bitte geben Sie ein gültiges Datum ein.",
+  "Enter a valid email address.": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+  "Enter a valid phone number.": "Bitte geben Sie eine gültige Telefonnummer ein.",
+  "Form builder on the block editor, spam-protected submissions for static sites, notifications, confirmations, webhooks and an inbox.": "Formular-Builder im Block-Editor, spamgeschützte Einsendungen für statische Websites, Benachrichtigungen, Bestätigungen, Webhooks und eine Inbox.",
+  "Keep it under :count characters.": "Bitte bleiben Sie unter :count Zeichen.",
+  "Leave this empty": "Dieses Feld bitte leer lassen",
+  "Please check the highlighted fields and try again.": "Bitte prüfen Sie die markierten Felder und versuchen Sie es erneut.",
+  "Please confirm to continue.": "Bitte bestätigen Sie, um fortzufahren.",
+  "Submissions from this website are not accepted.": "Einsendungen von dieser Website werden nicht angenommen.",
+  "The file is too large (:size MB at most).": "Die Datei ist zu groß (höchstens :size MB).",
+  "This file type is not accepted.": "Dieser Dateityp wird nicht akzeptiert.",
+  "This form does not exist.": "Dieses Formular gibt es nicht.",
+  "This number is out of range.": "Diese Zahl liegt außerhalb des zulässigen Bereichs."
+}

@@ -1,0 +1,14 @@
+# Changelog
+
+## Unreleased
+
+## 0.1.0 (2026-11-01)
+
+### Added
+
+- Navigation from a tree: `entry.root`, `item.current` and `item.active` on entries, child pages of the top of a branch, and **Group by** on Repeat. `cms links:check` fails on links, images and anchors in the built site that lead nowhere.
+
+### Fixed
+
+- A static build removes generated files nothing produces any more, such as the sitemap of a language the site no longer has.
+- A visitor who hits a rate limit, such as more than 20 checkout posts in a minute, now sees the site's own page with a plain message and a way back, instead of a bare 429. A checkout form left open past its session goes back to the form.

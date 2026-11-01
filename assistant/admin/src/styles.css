@@ -1,0 +1,82 @@
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(plugins);
+@import "@letterncms/admin/theme.css";
+
+@source "./";
+
+.cms-assistant-width {
+  width: 100%;
+  max-width: 760px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+.cms-assistant-greeting {
+  font-size: 23px;
+  line-height: 1.25;
+}
+
+.cms-assistant-footer {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+.cms-assistant-thread {
+  overflow-wrap: anywhere;
+}
+
+/* Reserve the action row so revealing controls never moves a message. */
+.cms-assistant-message-actions { min-height: 28px; }
+.cms-assistant-message-editor textarea { resize: none; }
+@media (pointer: coarse) {
+  .cms-assistant-message-actions button { width: 44px; height: 44px; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .cms-assistant-message-actions { opacity: 0; }
+  .cms-assistant-message:hover .cms-assistant-message-actions,
+  .cms-assistant-message:focus-within .cms-assistant-message-actions { opacity: 1; }
+}
+
+/* Keep the composer a single surface, above the shared textarea utilities. */
+.cms-assistant-composer textarea {
+  display: block;
+  resize: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 16px 16px 10px;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Chat is a workspace destination, not a dialog. Never transform the app shell. */
+.cms-assistant-page {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--cms-bg);
+}
+
+.cms-assistant-page[hidden] { display: none; }
+
+.cms-assistant-page .cms-assistant-width { padding-inline: 28px; }
+.cms-assistant-page .cms-assistant-greeting { font-size: clamp(23px, 3vw, 30px); }
+.cms-assistant-page .cms-assistant-footer { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+.cms-assistant-page .cms-assistant-welcome { max-width: 680px; }
+
+@media (max-width: 639px) {
+  .cms-assistant-page .cms-assistant-width { padding-inline: 16px; }
+  .cms-assistant-page .cms-assistant-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+}
+
+.cms-assistant-page[data-empty] .cms-assistant-scroll {
+  flex: 0 1 auto;
+  margin-top: auto;
+}
+.cms-assistant-page[data-empty] .cms-assistant-welcome { min-height: 0; }
+.cms-assistant-page[data-empty] .cms-assistant-footer {
+  max-width: 680px;
+  margin-bottom: auto;
+}

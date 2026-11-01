@@ -1,0 +1,27 @@
+{
+    "name": "letterncms/assistant",
+    "description": "An AI assistant inside the admin that builds and edits the site with abilities, as the signed-in user.",
+    "type": "cms-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.1 <1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Assistant\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "Assistant",
+            "icon": "sparkle",
+            "provider": "Cms\\Assistant\\AssistantPlugin",
+            "provides": [
+                "assistant"
+            ]
+        }
+    },
+    "homepage": "https://github.com/letterncms/assistant"
+}

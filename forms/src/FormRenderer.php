@@ -1,0 +1,129 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Cms\Forms;
+
+use Cms\Admin\Translations;
+use Cms\Blocks\BlockRenderer;
+use Cms\Cms;
+
+/**
+ * Renders a form as plain HTML that works without JavaScript (POST + redirect)
+ * and is enhanced by a tiny inline script (inline errors, no page reload,
+ * conditional fields, spam timing).
+ */
+final class FormRenderer
+{
+    private static bool $scriptAdded = false;
+
+    public function __construct(private readonly Cms $cms, private readonly FormRepository $forms, private readonly BlockRenderer $blocks) {}
+
+    public function endpoint(string $handle): string
+    {
+        $base = rtrim((string) $this->cms->settings('forms', 'endpoint', ''), '/');
+
+        return ($base !== '' ? $base : '').'/api/forms/'.$handle;
+    }
+
+    public function render(string $handle, array $options = []): string
+    {
+        // Visitors read the form and its messages in the page's language.
+        $translations = $this->cms->app()->make(Translations::class);
+        $locale = $translations->current();
+        $form = $this->forms->find($handle, $locale);
+
+        if (! $form || ! $form['settings']['enabled']) {
+            return '';
+        }
+
+        $id = 'cms-form-'.$handle;
+        $s = $form['settings'];
+        $error = $this->e(__('Please check the highlighted fields and try again.', [], $locale));
+        $empty = $this->e(__('Leave this empty', [], $locale));
+        $fields = $this->blocks->render($form['fields']);
+        $honeypot = $s['honeypot'] ? '<div class="cms-form__hp" aria-hidden="true"><label>'.$empty.'<input type="text" name="_cms_website" tabindex="-1" autocomplete="off"></label></div>' : '';
+        $rules = json_encode(array_values(array_filter(array_map(static fn ($f) => empty($f['props']['show_if']['field']) ? null : ['name' => $f['name'], 'rule' => $f['props']['show_if']], FormFields::extract($form['fields'])))), JSON_HEX_TAG | JSON_HEX_APOS);
+
+        $this->cms->hooks()->dispatch('render.foot', 'cms-forms', '<script type="module">'.$this->script().'</script>');
+        $this->styles();
+
+        return <<<HTML
+<form id="{$id}" class="cms-form" method="post" action="{$this->e($this->endpoint($handle))}" enctype="multipart/form-data" data-cms-form="{$this->e($handle)}" data-rules='{$rules}' novalidate>
+  {$fields}
+  {$honeypot}
+  <input type="hidden" name="_cms_t" value="">
+  <input type="hidden" name="_cms_locale" value="{$this->e($locale)}">
+  <div class="cms-form__error" id="{$id}-error" role="alert" tabindex="-1"><p>{$error}</p></div>
+  <button type="submit" class="cms-button cms-form__submit" data-variant="primary" data-size="md">{$this->e((string) $s['submit'])}</button>
+</form>
+<div class="cms-form__success" id="{$id}-ok" role="status" tabindex="-1"><p>{$this->e((string) $s['success'])}</p></div>
+HTML;
+    }
+
+    private function e(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    /** The fields' styles, once per page. */
+    public function styles(): void
+    {
+        $this->cms->hooks()->dispatch('render.head', 'cms-forms-css', '<style>'.$this->css().'</style>');
+    }
+
+    private function css(): string
+    {
+        return '.cms-form{display:grid;gap:1.1rem}.cms-form__hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}'
+            .'[data-field]{display:grid;gap:.4rem}[data-field]>label,[data-field] legend{font-weight:500;font-size:var(--text-sm,.95rem)}[data-field] .cms-req{color:var(--color-muted,#888)}'
+            .'[data-field] input:not([type=checkbox]):not([type=radio]),[data-field] select,[data-field] textarea{width:100%;font:inherit;color:inherit;padding:.65em .8em;border:1px solid var(--color-border,#d4d4d1);border-radius:var(--radius-sm,.4rem);background:var(--color-background,#fff)}'
+            .'[data-field] input:focus,[data-field] select:focus,[data-field] textarea:focus{outline:2px solid var(--color-primary,#2563eb);outline-offset:1px}'
+            .'[data-field] fieldset{border:0;padding:0;margin:0;display:grid;gap:.4rem}[data-field] .cms-choice{display:flex;gap:.55rem;align-items:flex-start;font-weight:400}'
+            .'[data-field] .cms-help{font-size:var(--text-xs,.8rem);color:var(--color-muted,#777)}[data-field] .cms-msg{font-size:var(--text-xs,.8rem);color:#dc2626}[data-field].is-invalid input,[data-field].is-invalid textarea,[data-field].is-invalid select{border-color:#dc2626}'
+            .'[data-field][hidden]{display:none}.cms-form__error,.cms-form__success{display:none}.cms-form__error:target,.cms-form__error.is-shown{display:block;color:#dc2626}'
+            .'.cms-form__success:target,.cms-form__success.is-shown{display:block;padding:1rem 1.25rem;border-radius:var(--radius-md,.6rem);background:color-mix(in srgb,#16a34a 10%,transparent)}.cms-form__submit{justify-self:start}.cms-form.is-busy .cms-form__submit{opacity:.6;pointer-events:none}';
+    }
+
+    private function script(): string
+    {
+        return <<<'JS'
+for (const form of document.querySelectorAll('form[data-cms-form]')) {
+  const t = form.querySelector('[name=_cms_t]'); if (t) t.value = String(Date.now());
+  const rules = JSON.parse(form.dataset.rules || '[]');
+  const value = (name) => { const els = form.querySelectorAll(`[name="${name}"],[name="${name}[]"]`); const out = []; els.forEach((el) => { if ((el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value) out.push(el.value) }); return out };
+  const apply = () => rules.forEach(({ name, rule }) => { const v = value(rule.field); const ok = rule.op === 'filled' ? v.length > 0 : rule.op === 'empty' ? v.length === 0 : rule.op === 'not' ? !v.includes(rule.value ?? '') : v.includes(rule.value ?? ''); const field = form.querySelector(`[data-field="${name}"]`); if (field) { field.hidden = !ok; field.querySelectorAll('input,select,textarea').forEach((el) => (el.disabled = !ok)) } });
+  form.addEventListener('input', apply); apply();
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    form.classList.add('is-busy');
+    form.querySelectorAll('.cms-msg').forEach((m) => m.remove());
+    form.querySelectorAll('.is-invalid').forEach((f) => f.classList.remove('is-invalid'));
+    const error = document.getElementById(form.id + '-error');
+    error?.classList.remove('is-shown');
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' }, credentials: 'omit' });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok) {
+        if (json.redirect) { location.href = json.redirect; return }
+        form.hidden = true;
+        const ok = document.getElementById(form.id + '-ok');
+        if (ok) { ok.classList.add('is-shown'); ok.focus() }
+        return;
+      }
+      for (const [name, message] of Object.entries(json.errors || {})) {
+        const field = form.querySelector(`[data-field="${name}"]`);
+        if (!field) continue;
+        field.classList.add('is-invalid');
+        const p = document.createElement('p'); p.className = 'cms-msg'; p.textContent = message; field.appendChild(p);
+      }
+      if (error) { error.querySelector('p').textContent = json.message || error.querySelector('p').textContent; error.classList.add('is-shown'); error.focus() }
+    } catch {
+      error?.classList.add('is-shown');
+    } finally {
+      form.classList.remove('is-busy');
+    }
+  });
+}
+JS;
+    }
+}

@@ -1,0 +1,52 @@
+/* Editor placeholders preserve the rendered site dimensions. Never on the published site. */
+
+/* The page scrolls inside the frame: a thin, quiet scrollbar that doesn't read as part of the design. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(127 127 127 / 0.35) transparent;
+}
+[data-cms-placeholder]:empty::before {
+  content: attr(data-cms-placeholder);
+  color: color-mix(in srgb, currentColor 38%, transparent);
+  pointer-events: none;
+}
+
+[data-cms-ghost] {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+[data-cms-media] {
+  display: block;
+  margin: 0;
+}
+span[data-cms-media] {
+  display: inline-flex;
+  opacity: 0.4;
+}
+.cms-media-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 48px;
+  border-radius: inherit;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+  color: color-mix(in srgb, currentColor 32%, transparent);
+}
+.cms-media-placeholder svg {
+  width: 28px;
+  height: 28px;
+}
+
+.cms-placeholder {
+  color: rgb(127 127 127);
+  font: 500 0.8125rem/1.4 ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Only a genuinely empty source document needs an insertion target. */
+[data-cms-editor-root] > [data-cms-editor-empty-root] {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  text-align: center;
+}

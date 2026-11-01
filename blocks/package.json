@@ -1,0 +1,41 @@
+{
+  "name": "@letterncms/plugin-blocks",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf dist/chunks && vite build && vite build -c vite.runtime.config.mjs",
+    "dev": "vite build --watch --mode development",
+    "typecheck": "tsc -p .",
+    "icons": "node scripts/icons.mjs",
+    "test": "node --test 'tests/js/*.test.ts'"
+  },
+  "dependencies": {
+    "@alpinejs/csp": "3.17.4",
+    "@alpinejs/intersect": "3.17.4",
+    "@alpinejs/collapse": "3.17.4",
+    "@alpinejs/focus": "3.17.4",
+    "@imacrayon/alpine-ajax": "0.12.7",
+    "highlight.js": "11.11.1"
+  },
+  "devDependencies": {
+    "@letterncms/admin": "^0.1.0",
+    "@letterncms/sdk": "^0.1.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/react-query": "5.105.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "@iconify-json/ph": "1.2.2",
+    "@types/alpinejs": "3.13.11",
+    "@dnd-kit/core": "6.3.1",
+    "@dnd-kit/sortable": "10.0.0",
+    "@dnd-kit/utilities": "3.2.2"
+  }
+}

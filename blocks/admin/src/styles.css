@@ -1,0 +1,41 @@
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(plugins);
+@import "@letterncms/admin/theme.css";
+
+@source "./";
+
+@layer plugins {
+/* Inline editable text inside the document lens */
+.cms-block-text { border-radius: 0; outline: none; white-space: pre-wrap; word-break: break-word; caret-color: var(--cms-ink); }
+.cms-block-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--cms-faint);
+  pointer-events: none;
+}
+/* Quiet placeholders (empty paragraphs, captions) show only where you are writing. */
+.cms-block-text[data-quiet]:empty:not(:focus)::before { content: none; }
+.cms-block-figure:hover .cms-block-text[data-quiet]:empty::before { content: attr(data-placeholder); }
+/* A quote's attribution appears once you are in the quote (or it has one). */
+.cms-block-cite:empty { display: none; }
+blockquote:focus-within .cms-block-cite:empty { display: block; }
+blockquote:focus-within .cms-block-text.cms-block-cite[data-quiet]:empty::before { content: attr(data-placeholder); }
+.cms-block-text a { color: inherit; text-decoration: underline; text-decoration-color: var(--cms-border-strong); text-underline-offset: 3px; }
+.cms-block-text a:hover { text-decoration-color: currentColor; }
+.cms-block-text code { font-family: var(--font-mono); font-size: 0.86em; background: var(--cms-sunken); padding: 0.12em 0.32em; border-radius: 4px; }
+.cms-block-text mark { background: color-mix(in srgb, var(--cms-warning) 30%, transparent); }
+.cms-block-text ::selection, .cms-block-text::selection { background: color-mix(in srgb, var(--cms-focus) 22%, transparent); }
+/* Editing chrome over the live page fades in where it is; it never slides after the pointer. */
+.cms-block-chrome { animation: cms-block-fade 120ms var(--ease-out) both; }
+@keyframes cms-block-fade { from { opacity: 0; } }
+/* The insertion line grows from its center along its own axis; its + follows with a small spring. */
+.cms-block-line-x { animation: cms-block-line-x 180ms cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.cms-block-line-y { animation: cms-block-line-y 180ms cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+@keyframes cms-block-line-x { from { scale: 0 1; opacity: 0; } }
+@keyframes cms-block-line-y { from { scale: 1 0; opacity: 0; } }
+.cms-block-plus { animation: cms-block-plus 200ms cubic-bezier(0.32, 1.25, 0.5, 1) 40ms backwards; transition: scale 120ms var(--ease-out), filter 120ms var(--ease-out); }
+.cms-block-plus:hover { scale: 1.1; filter: brightness(1.08); }
+.cms-block-plus:active { scale: 0.94; transition-duration: 60ms; }
+@keyframes cms-block-plus { from { scale: 0.4; opacity: 0; } }
+.cms-block-plus-icon { transition: rotate 160ms var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .cms-block-chrome, .cms-block-line-x, .cms-block-line-y, .cms-block-plus { animation: none; } .cms-block-plus, .cms-block-plus-icon { transition: none; } }
+}

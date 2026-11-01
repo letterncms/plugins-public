@@ -1,0 +1,20 @@
+title: Pages
+singular: Page
+icon: page
+structure: tree
+route: '/{parent_uri}/{slug}'
+home: home
+template: page
+body: content
+fields:
+  -
+    handle: content
+    type: blocks
+    label: Content
+  -
+    handle: template
+    type: select
+    label: Template
+    dynamic: templates
+    section: sidebar
+nav_order: 10

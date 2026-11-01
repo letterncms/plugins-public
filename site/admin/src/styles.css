@@ -1,0 +1,10 @@
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(plugins);
+@import "@letterncms/admin/theme.css";
+
+@source "./";
+
+/* Suggestions (datalists) open on typing; no native dropdown arrow in the declaration rows. */
+.cms-declarations input::-webkit-calendar-picker-indicator {
+  display: none !important;
+}

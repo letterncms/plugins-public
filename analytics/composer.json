@@ -1,0 +1,30 @@
+{
+    "name": "letterncms/analytics",
+    "description": "Site analytics on your own server: page views per day by default, with visitors, sources and devices as an option.",
+    "type": "cms-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.1 <1"
+    },
+    "suggest": {
+        "letterncms/site": "Adds the tracking snippet to every published page"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Analytics\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "Analytics",
+            "icon": "chart",
+            "provider": "Cms\\Analytics\\AnalyticsPlugin",
+            "provides": [
+                "analytics"
+            ]
+        }
+    },
+    "homepage": "https://github.com/letterncms/analytics"
+}

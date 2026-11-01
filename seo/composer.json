@@ -1,0 +1,27 @@
+{
+    "name": "letterncms/seo",
+    "description": "Search and generative engine optimization: meta tags, social cards, JSON-LD, sitemap, robots and AI crawlers, llms.txt, Markdown twins, redirects and on-page checks.",
+    "type": "cms-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.1 <1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Seo\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "SEO & GEO",
+            "icon": "seo",
+            "provider": "Cms\\Seo\\SeoPlugin",
+            "provides": [
+                "seo"
+            ]
+        }
+    },
+    "homepage": "https://github.com/letterncms/seo"
+}

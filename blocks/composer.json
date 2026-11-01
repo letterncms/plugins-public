@@ -1,0 +1,27 @@
+{
+    "name": "letterncms/blocks",
+    "description": "Live block editing with the site renderer, reusable components and templates, styles, data bindings and Block Markdown.",
+    "type": "cms-plugin",
+    "version": "0.1.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.1 <1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Blocks\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "Blocks",
+            "icon": "blocks",
+            "provider": "Cms\\Blocks\\BlocksPlugin",
+            "provides": [
+                "blocks"
+            ]
+        }
+    },
+    "homepage": "https://github.com/letterncms/blocks"
+}

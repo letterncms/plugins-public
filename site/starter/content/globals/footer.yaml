@@ -1,0 +1,8 @@
+title: Footer
+icon: layout
+fields:
+  - handle: tagline
+    type: text
+    label: Tagline
+data:
+  tagline: Made with Lettern.
