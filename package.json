@@ -1,0 +1,13 @@
+{
+  "name": "plugins-public",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck"
+  },
+  "packageManager": "pnpm@11.12.0",
+  "engines": {
+    "node": ">=22"
+  }
+}
