@@ -1,13 +1,10 @@
 {
-  "extends": "../../../tsconfig.base.json",
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "types": [
       "vite/client"
     ],
     "paths": {
-      "@letterncms/ui": [
-        "../../cms/modules/admin/src/ui/index.ts"
-      ],
       "@letterncms/blocks": [
         "../blocks/admin/src/index.tsx"
       ]

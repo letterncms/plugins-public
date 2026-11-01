@@ -1,2 +1,16 @@
-node_modules/
+/vendor/
+/plugins/
+/node_modules/
+/composer.lock
+/pnpm-lock.yaml
+/.phpunit.cache/
+*/node_modules/
+
+# Composer copies a site's front files here too
+/index.php
+/cms
+/setup.php
+/.htaccess
+/public/
+/storage/
 .DS_Store
