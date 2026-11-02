@@ -62,7 +62,7 @@ export function AssistantPanel() {
   }, [path, id])
   if (!available()) return null
   return (
-    <Dock open={mode !== 'closed'} full={mode === 'full'} label={title || t('New Chat')}>
+    <Dock open={mode !== 'closed'} full={mode === 'full'} label={title || t('New Chat')} onClose={panel.close}>
       <Chat open={mode !== 'closed'} full={mode === 'full'} />
     </Dock>
   )
@@ -385,6 +385,9 @@ function useSuggestions(items: ContextItem[], kind: string | undefined, open: bo
   const selected = items.filter((item) => item.id !== 'page' && item.kind !== 'selected_text').map((item) => item.label)
   const key = page || selected.length ? JSON.stringify([page?.to, page?.label, selected]) : null
   const [found, setFound] = useState<{ key: string; ideas: Idea[] | null } | null>(null)
+  // Selecting another block keeps the last ideas up until the next are in: nothing flickers.
+  const last = useRef<Idea[] | null>(null)
+  if (found?.ideas) last.current = found.ideas
   const items$ = useRef(items)
   items$.current = items
 
@@ -407,7 +410,7 @@ function useSuggestions(items: ContextItem[], kind: string | undefined, open: bo
   }, [open, key, found?.key])
 
   if (!key) return { ideas: null, loading: false }
-  return found?.key === key ? { ideas: found.ideas, loading: false } : { ideas: null, loading: true }
+  return found?.key === key ? { ideas: found.ideas, loading: false } : { ideas: last.current, loading: !last.current }
 }
 
 interface SurfaceHostProps {

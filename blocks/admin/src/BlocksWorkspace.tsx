@@ -1,6 +1,7 @@
 import { events, plural, t, useScreenContext, type EntryEditorProps } from '@letterncms/sdk'
-import { Button, IconButton, InspectorPanel, Popover, QueryError, Spinner, Tooltip, fieldControlId, useWideInspector } from '@letterncms/ui'
+import { Button, IconButton, InspectorPanel, Popover, QueryError, ScreenSidebar, Spinner, closeDock, fieldControlId, useScreenSidebar, useWideInspector } from '@letterncms/ui'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { EditorProvider, useCatalog, useEditorContext, type DocRef } from './core/context'
 import { Inserter, type InsertChoice } from './core/Inserter'
 import { accepts, choiceToNodes, insertionPoint } from './core/insert'
@@ -44,12 +45,10 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   const undo = useEditor(store, () => store.canUndo())
   const redo = useEditor(store, () => store.canRedo())
   const [inspecting, setInspecting] = useState(false)
-  const [outline, setOutline] = useState(false)
+  const outline = useScreenSidebar()
   const [insert, setInsert] = useState(false)
   const [query, setQuery] = useState('')
   const wide = useWideInspector()
-  // Outline and inspector side by side need more room than the inspector alone.
-  const roomy = useWideInspector(1060)
   const selection = useEditor(store, selectionOf)
   useScreenContext({
     items: selection.flatMap((id) => {
@@ -57,9 +56,10 @@ function Workspace({ props }: { props: EntryEditorProps }) {
       return node ? [{ id, kind: 'block', label: types.get(node.type)?.title ?? t('Block'), icon: types.get(node.type)?.icon, read: () => tree.find(store.get().nodes, id) }] : []
     }),
   })
-  const inspect = (id: string) => { store.select(id, true); setInspecting(true); props.setSidebarOpen(true) }
+  // Asking for a block's settings gives them the right edge; selecting one leaves a chat there alone.
+  const inspect = (id: string) => { store.select(id, true); setInspecting(true); props.setSidebarOpen(true); closeDock() }
   useEffect(() => {
-    if (selected && blockMode) { setInspecting(true); props.setSidebarOpen(true); if (!roomy) setOutline(false) }
+    if (selected && blockMode) { setInspecting(true); props.setSidebarOpen(true); if (!wide) outline.setOpen(false) }
     // Writing in a block makes it the active block too; it never opens a closed sidebar or a sheet over the text.
     else if (selected && wide && props.sidebarOpen) setInspecting(true)
   }, [selected?.id, blockMode, wide])
@@ -83,20 +83,15 @@ function Workspace({ props }: { props: EntryEditorProps }) {
     setInsert(false); setQuery('')
   }
   return <div className="flex h-full min-h-0 flex-col" data-block-workspace>
-    <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border px-3">
-      <Tooltip content={t('Outline')}><IconButton icon="list-tree" label={t('Outline')} active={outline} onClick={() => setOutline(!outline)} size="xs" /></Tooltip>
-      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" label={t('Insert block')} size="xs" />} className="!p-0">
+    {props.toolbar && createPortal(<>
+      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" label={t('Insert block')} />} className="!p-0">
         <Inserter types={[...types.values()]} query={query} onQuery={setQuery} onChoose={choose} onClose={() => setInsert(false)} allowed={(type) => !!destination(type.name)} />
       </Popover>}
-      <IconButton icon="undo" label={t('Undo')} size="xs" disabled={!undo} onClick={store.undo} />
-      <IconButton icon="redo" label={t('Redo')} size="xs" disabled={!redo} onClick={store.redo} />
-      <div className="min-w-0 flex-1" />
-    </div>
+      <IconButton icon="undo" label={t('Undo')} disabled={!undo} onClick={store.undo} />
+      <IconButton icon="redo" label={t('Redo')} disabled={!redo} onClick={store.redo} />
+    </>, props.toolbar)}
+    <ScreenSidebar title={t('Outline')}><Layers /></ScreenSidebar>
     <div className="flex min-h-0 flex-1">
-      {outline && <InspectorPanel open docked={roomy} onOpenChange={setOutline} title={t('Outline')} className={roomy ? 'order-first !w-[248px] !border-l-0 border-r' : undefined}>
-        <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3"><span className="text-xs font-medium">{t('Outline')}</span><IconButton size="xs" icon="close" label={t('Close outline')} onClick={() => setOutline(false)} /></div>
-        <div className="min-h-0 flex-1 overflow-y-auto"><Layers /></div>
-      </InspectorPanel>}
       <main id={fieldControlId(props.bodyField)} tabIndex={-1} aria-label={props.bodyField.label} aria-describedby={props.errors[props.bodyField.handle] ? `${fieldControlId(props.bodyField)}-error` : undefined} className="flex min-w-0 flex-1 flex-col outline-none" data-editor-document>
         <LiveEditor collection={props.collection.handle} entryId={props.entry?.id} content={props.content} onTitleChange={!['templates', 'components'].includes(props.collection.handle) ? props.setTitle : undefined} onInspect={inspect} />
         {props.errors[props.bodyField.handle] && <p id={`${fieldControlId(props.bodyField)}-error`} role="alert" className="m-0 shrink-0 px-3 py-2 text-xs text-danger">{props.errors[props.bodyField.handle]}</p>}

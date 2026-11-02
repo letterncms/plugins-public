@@ -95,6 +95,7 @@ export const panel = {
     } else panel.set({ focus: state.focus + 1 })
   },
   close() {
+    if (state.mode === 'closed') return
     const full = state.mode === 'full'
     panel.set({ mode: 'closed' })
     if (full) navigate(returnTo ?? '/', { overlay: returnTo !== null })

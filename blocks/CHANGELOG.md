@@ -4,11 +4,13 @@
 
 ### Fixed
 
+- The admin's shortcuts, such as `⌘J`, `⌘K` and `⌘\`, work with the cursor on the canvas.
 - A page whose blocks have short ids, or an id used twice, no longer opens with an empty canvas in the editor.
 
 ### Changed
 
-- The outline docks when the workspace has room for it beside the inspector, and otherwise opens over the canvas.
+- The builder gets the whole window: the admin's sidebar folds away when it opens and comes back when you leave. The outline takes its place on the left, with the same button and `⌘\`, and always opens there.
+- One bar: insert, undo and redo moved from their own row into the top bar.
 - The selected block is known to whatever works alongside the editor, such as the assistant's chat.
 
 ## 0.1.0 (2026-11-01)
