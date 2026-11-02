@@ -1,5 +1,4 @@
 {
-  "{brand} has read site content in this chat, which others may have written. Allow only what you asked for.": "{brand} a lu dans cette discussion du contenu du site que d’autres ont pu écrire. N’autorisez que ce que vous avez demandé.",
   "{brand} sees the text you selected": "{brand} voit le texte que vous avez sélectionné",
   "{brand} sees this block": "{brand} voit ce bloc",
   "{brand} sees this page": "{brand} voit cette page",
@@ -24,6 +23,7 @@
   "Ask anything. @ for context, / for skills": "Demandez ce que vous voulez. @ pour le contexte, / pour les compétences",
   "Ask Before": "Demander avant",
   "Ask the assistant from the home screen.": "Interrogez l'assistant depuis l'écran d'accueil.",
+  "Asked because this chat has read site content. Allow only what you asked for.": "Demandé car cette discussion a lu du contenu du site. N’autorisez que ce que vous avez demandé.",
   "Assistant": "Assistant",
   "Assistant Status": "État de l’assistant",
   "Authentication required.": "Authentification requise.",
@@ -50,6 +50,7 @@
   "Delete “{title}”?": "Supprimer « {title} » ?",
   "Delete Assistant Chat": "Supprimer la discussion",
   "Delete Chat": "Supprimer la discussion",
+  "Details": "Détails",
   "Detach": "Détacher",
   "Discard Draft": "Abandonner le brouillon",
   "Discover components": "Découvrir les composants",

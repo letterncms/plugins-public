@@ -21,6 +21,13 @@ final class Toolbox
     public const string UI_CATALOG = 'ui_catalog';
     public const string UI_PRESENT = 'ui_present';
 
+    /**
+     * What a change does, in the model's words, for the person who may have to
+     * approve it. Every tool that changes something takes it; it never reaches
+     * the ability.
+     */
+    public const string SUMMARY = 'change_summary';
+
     /** Longest tool result handed back to the model, in characters. */
     private const int LIMIT = 60_000;
 
@@ -184,6 +191,8 @@ final class Toolbox
             return ['content' => "There is no tool named {$tool}.", 'isError' => true, 'mutated' => false];
         }
 
+        unset($input[self::SUMMARY]);
+
         try {
             $result = $this->cms->abilities()->execute($ability->name, $input, $context);
         } catch (AbilityException $e) {
@@ -214,6 +223,15 @@ final class Toolbox
     {
         $schema = $ability->input === [] ? ['type' => 'object'] : $ability->input;
         $schema['type'] = 'object';
+
+        if (! $ability->isReadOnly()) {
+            $schema['properties'] = [...(array) ($schema['properties'] ?? []), self::SUMMARY => [
+                'type' => 'string',
+                'maxLength' => 200,
+                'description' => 'For the person who may approve this: what it changes, in one short sentence in their language, naming the page, file or setting by its title or name, e.g. "Add alt text to terrace.jpg".',
+            ]];
+            $schema['required'] = [...($schema['required'] ?? []), self::SUMMARY];
+        }
 
         if (empty($schema['properties'])) {
             $schema['properties'] = (object) [];

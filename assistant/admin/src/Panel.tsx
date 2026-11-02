@@ -1,6 +1,6 @@
 import { can, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, type SurfaceAction } from '@letterncms/sdk'
 import { Button, Dock, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import { Composer } from './Composer'
 import { History, NewChatButton } from './History'
 import { Markdown } from './Markdown'
@@ -473,7 +473,7 @@ const statusIcon = { ok: 'check', error: 'x-circle', declined: 'minus', awaiting
 
 function ToolRow({ part }: { part: Extract<Part, { type: 'tool' }> }) {
   const [open, setOpen] = useState(false)
-  const hint = detail(part.input)
+  const hint = summary(part.input) || detail(part.input)
 
   return (
     <div className="rounded-sm border border-border">
@@ -510,30 +510,53 @@ function Approval({ calls, onDecide }: { calls: Call[]; onDecide: (ids: string[]
   const danger = calls.some((c) => c.destructive)
   return (
     <div className="cms-assistant-width w-full shrink-0 pb-2">
-      <div className="max-h-[40dvh] overflow-y-auto rounded-xl border border-border-strong bg-surface p-3 shadow-sm">
-      <p className="m-0 flex items-center gap-1.5 text-sm font-medium text-ink">
-        <Icon name="shield" size={14} /> {calls.length === 1 ? t('Allow this action?') : t('Allow these {count} actions?', { count: calls.length })}
-      </p>
-      {calls.some((c) => c.untrusted) && (
-        <p className="m-0 mt-1 text-xs text-muted">{t('{brand} has read site content in this chat, which others may have written. Allow only what you asked for.')}</p>
-      )}
-      <ul className="m-0 mt-2 list-none space-y-1 p-0">
-        {calls.map((c) => (
-          <li key={c.id} className="flex items-baseline gap-1.5 text-sm">
-            <Icon name={c.destructive ? 'trash' : 'edit'} size={12} className={c.destructive ? 'text-danger' : 'text-muted'} />
-            <span className="text-text">{c.label}</span>
-            {detail(c.input) && <span className="min-w-0 truncate text-xs text-faint">{detail(c.input)}</span>}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-3 flex justify-end gap-1.5">
-        <Button size="sm" variant="ghost" onClick={() => onDecide([])}>{t('Decline')}</Button>
-        <Button size="sm" variant={danger ? 'danger' : 'primary'} onClick={() => onDecide(calls.map((c) => c.id))} autoFocus>
-          {calls.length === 1 ? t('Allow') : t('Allow All')}
-        </Button>
-      </div>
+      <div className="flex max-h-[40dvh] flex-col gap-2.5 overflow-y-auto rounded-xl border border-border-strong bg-surface p-3 shadow-sm">
+        <p className="m-0 flex items-center gap-1.5 text-sm font-medium text-ink">
+          <Icon name="shield" size={14} /> {calls.length === 1 ? t('Allow this action?') : t('Allow these {count} actions?', { count: calls.length })}
+        </p>
+        <ul className="m-0 flex list-none flex-col gap-2 p-0">
+          {calls.map((c) => <ApprovalCall key={c.id} call={c} />)}
+        </ul>
+        {calls.some((c) => c.untrusted) && (
+          <p className="m-0 text-xs text-muted">{t('Asked because this chat has read site content. Allow only what you asked for.')}</p>
+        )}
+        <div className="flex justify-end gap-1.5">
+          <Button size="sm" variant="ghost" onClick={() => onDecide([])}>{t('Decline')}</Button>
+          <Button size="sm" variant={danger ? 'danger' : 'primary'} onClick={() => onDecide(calls.map((c) => c.id))} autoFocus>
+            {calls.length === 1 ? t('Allow') : t('Allow All')}
+          </Button>
+        </div>
       </div>
     </div>
+  )
+}
+
+/** What a call does, in a sentence, with exactly what it sends one click away. */
+function ApprovalCall({ call }: { call: Call }) {
+  const [open, setOpen] = useState(false)
+  const said = summary(call.input)
+  const sent = fields(call.input)
+  return (
+    <li className="flex gap-2">
+      <Icon name={call.destructive ? 'trash' : 'edit'} size={13} className={cn('mt-[3px] shrink-0', call.destructive ? 'text-danger' : 'text-muted')} />
+      <div className="min-w-0 flex-1">
+        <p className="m-0 text-sm text-text">{said || call.label}</p>
+        <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="flex items-center gap-1 pt-0.5 text-xs text-faint hover:text-muted">
+          {said ? call.label : t('Details')}
+          <Icon name={open ? 'chevron-down' : 'chevron-right'} size={11} />
+        </button>
+        {open && (
+          <dl className="mx-0 mb-0 mt-1.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-l border-border pl-2.5 text-xs">
+            {sent.map(([key, value]) => (
+              <Fragment key={key}>
+                <dt className="font-mono text-2xs leading-5 text-faint">{key}</dt>
+                <dd className="m-0 line-clamp-3 min-w-0 break-words text-muted">{value}</dd>
+              </Fragment>
+            ))}
+          </dl>
+        )}
+      </div>
+    </li>
   )
 }
 
@@ -546,6 +569,20 @@ function Working({ items }: { items: Item[] }) {
       <Spinner size={12} /> {t('Working…')}
     </p>
   )
+}
+
+/** What a change does, as the model put it for whoever approves it (`change_summary`). */
+function summary(input: unknown): string {
+  const said = input && typeof input === 'object' ? (input as Record<string, unknown>).change_summary : undefined
+  return typeof said === 'string' ? said.trim() : ''
+}
+
+/** What a call sends, field by field, as short text. */
+function fields(input: unknown): [string, string][] {
+  if (!input || typeof input !== 'object') return []
+  return Object.entries(input as Record<string, unknown>)
+    .filter(([key, value]) => key !== 'change_summary' && value !== undefined && value !== null && value !== '')
+    .map(([key, value]) => [key, (typeof value === 'string' ? value : JSON.stringify(value)).slice(0, 300)])
 }
 
 /** The most telling field of a tool input, shown next to its label. */
