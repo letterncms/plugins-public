@@ -1,4 +1,4 @@
-import { boot, can, getManifest, navigate, useScreen, type ComposerOption, type ContextItem } from '@letterncms/sdk'
+import { boot, can, getManifest, navigate, run, setManifest, useScreen, type ComposerOption, type ContextItem } from '@letterncms/sdk'
 import { useSyncExternalStore } from 'react'
 
 /** Where the chat is: out of the way, docked beside the page, or taking the whole window (a chat's own URL). */
@@ -61,8 +61,19 @@ export function conversationAt(path: string): string | null | undefined {
   return match ? (match[1] === 'new' ? null : decodeURIComponent(match[1])) : undefined
 }
 
-/** Its nav item says who gets it: without an API key, only those who can add one. Everyone else sees no assistant they can't use. */
-export const available = () => can('assistant.use') && getManifest().nav.some((item) => item.id === 'chat')
+/** Without an API key, only those who can add one get the chat. Everyone else sees no assistant they can't use. */
+export const available = () => can('assistant.use') && (getManifest().config?.assistant?.configured === true || can('settings.manage'))
+
+const HIDDEN = 'assistant.hidden'
+
+/** Whether this person put the chat out of the top bar, for not using AI. `⌘J` and the command palette still open it. */
+export const chatHidden = () => getManifest().user.preferences?.[HIDDEN] === true
+
+export function hideChat(hidden: boolean) {
+  const manifest = getManifest()
+  setManifest({ ...manifest, user: { ...manifest.user, preferences: { ...(manifest.user.preferences ?? {}), [HIDDEN]: hidden } } })
+  void run('account/update', { preferences: { [HIDDEN]: hidden } }).catch(() => {})
+}
 
 const here = () => window.location.pathname.slice(boot.base.length) || '/'
 

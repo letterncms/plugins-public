@@ -1,11 +1,11 @@
-import { can, events, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, useScreen, type ContextItem, type SurfaceAction } from '@letterncms/sdk'
+import { can, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, useScreen, type ContextItem, type SurfaceAction } from '@letterncms/sdk'
 import { Button, Dock, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import { Composer } from './Composer'
 import { attachments } from './context'
 import { History, NewChatButton } from './History'
 import { Markdown } from './Markdown'
-import { available, conversationAt, panel, useFloating, usePanel } from './store'
+import { available, chatHidden, conversationAt, hideChat, panel, useFloating, usePanel } from './store'
 import { useChat, type Call, type Item, type Part } from './useChat'
 
 interface Model {
@@ -318,8 +318,7 @@ function ModelPicker({ models, value, onChange }: { models: Model[]; value?: str
 }
 
 function Setup() {
-  const { sidebar } = useManifest()
-  const pinned = !sidebar.hidden.includes('chat')
+  useManifest()
   return (
     <div className="cms-assistant-width flex min-h-full flex-col items-center justify-center py-8 text-center">
       <div className="mb-4 grid size-10 place-items-center rounded-lg border border-border bg-surface text-muted"><Icon name="key" size={18} /></div>
@@ -330,13 +329,13 @@ function Setup() {
       ) : (
         <p className="m-0 mt-4 text-sm text-faint">{t('Ask an administrator to add one.')}</p>
       )}
-      {/* AI is optional: everything in the CMS works without it. One click puts it out of the way, and More keeps it close. */}
-      {pinned && <p className="m-0 pt-8 text-xs text-faint">
-        {t('Not using AI? {brand} works fully without it.')}{' '}
-        <button type="button" className="text-muted underline decoration-border-strong underline-offset-2 hover:text-text" onClick={() => { events.emit('sidebar.pin', { id: 'chat', pinned: false }); panel.close() }}>
-          {t('Unpin New Chat')}
+      {/* AI is optional: everything in the CMS works without it. One click puts it out of the way; ⌘J and the command palette keep it close. */}
+      <p className="m-0 pt-8 text-xs text-faint">
+        {chatHidden() ? t('Chat is out of the top bar.') : t('Not using AI? {brand} works fully without it.')}{' '}
+        <button type="button" className="text-muted underline decoration-border-strong underline-offset-2 hover:text-text" onClick={() => { const hide = !chatHidden(); hideChat(hide); if (hide) panel.close() }}>
+          {chatHidden() ? t('Show Chat') : t('Hide Chat')}
         </button>
-      </p>}
+      </p>
     </div>
   )
 }

@@ -84,7 +84,7 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   }
   return <div className="flex h-full min-h-0 flex-col" data-block-workspace>
     {props.toolbar && createPortal(<>
-      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" variant="primary" label={t('Insert block')} className="mr-1" />} className="!p-0">
+      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" label={t('Insert block')} />} className="!p-0">
         <Inserter types={[...types.values()]} query={query} onQuery={setQuery} onChoose={choose} onClose={() => setInsert(false)} allowed={(type) => !!destination(type.name)} />
       </Popover>}
       <IconButton icon="undo" label={t('Undo')} disabled={!undo} onClick={store.undo} className="max-sm:hidden" />
