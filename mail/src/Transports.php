@@ -42,7 +42,11 @@ final class Transports
             return new SymfonyTransport($smtp);
         });
 
-        $this->register('sendmail', __('Server mail (sendmail)'), [], static fn () => new SymfonyTransport(new SendmailTransport));
+        // Sendmail runs a program, which many hosts forbid by turning proc_open off. There it isn't
+        // offered, and a site still set to it reads as not sending rather than failing every email.
+        if (function_exists('proc_open')) {
+            $this->register('sendmail', __('Server mail (sendmail)'), [], static fn () => new SymfonyTransport(new SendmailTransport));
+        }
 
         $this->register('log', __('Log only (development)'), [], static fn () => new class implements Transport
         {
