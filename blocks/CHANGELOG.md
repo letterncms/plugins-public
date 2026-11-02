@@ -11,7 +11,7 @@
 ### Changed
 
 - The builder gets the whole window: the admin's sidebar folds away when it opens and comes back when you leave. Bring it out with the same button and `⌘\`, and it shows the outline, with a way back to the list, the way it shows the settings on a settings page.
-- One bar: insert, undo and redo moved from their own row into the top bar.
+- One bar: insert, undo and redo moved from their own row into the top bar, with insert as the one filled button.
 - The selected block is known to whatever works alongside the editor, such as the assistant's chat.
 
 ## 0.1.0 (2026-11-01)
