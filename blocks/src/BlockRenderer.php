@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Cms\Blocks;
 
 use Closure;
+use Cms\Users\AccountInBrowser;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\HtmlString;
@@ -287,8 +288,14 @@ final class BlockRenderer
         $scope = $this->currentScope();
         $bind = (array) ($node['bind'] ?? []);
         $conditional = false;
+        // Shown to people signed in, or out, on a page they all get the same copy of: the browser decides.
+        $browser = match (true) {
+            isset($bind['visible']) && $scope->resolve($bind['visible']) instanceof AccountInBrowser => 'in',
+            isset($bind['hidden']) && $scope->resolve($bind['hidden']) instanceof AccountInBrowser => 'out',
+            default => null,
+        };
 
-        if ((isset($bind['visible']) && ! Scope::truthy($scope->resolve($bind['visible']))) || (isset($bind['hidden']) && Scope::truthy($scope->resolve($bind['hidden'])))) {
+        if ((isset($bind['visible']) && ! Scope::truthy($scope->resolve($bind['visible'])) && $browser !== 'in') || (isset($bind['hidden']) && Scope::truthy($scope->resolve($bind['hidden'])))) {
             if (! $this->editor) {
                 return '';
             }
@@ -296,15 +303,22 @@ final class BlockRenderer
             $conditional = true;
         }
 
+        if ($browser !== null) {
+            $this->uses('account');
+        }
+
         $this->depth++;
 
         try {
             if ($type->name === 'pattern') {
-                return $this->pattern($node);
+                $html = $this->pattern($node);
+
+                return $browser === null ? $html : '<div style="display:contents" data-cms-account="'.$browser.'">'.$html.'</div>';
             }
 
             $props = array_replace($type->blueprint()->defaults(), $type->defaults, array_filter((array) ($node['props'] ?? []), static fn ($v) => $v !== null));
             [$props, $extra] = $this->bindings($type, $props, $bind, $scope);
+            $browser !== null && $extra['attrs']['data-cms-account'] = $browser;
             $state = (array) ($node['logic']['data'] ?? []);
             $state !== [] && $this->logicData[] = $state;
 

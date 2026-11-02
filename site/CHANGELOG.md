@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- The starter's header shows **Sign in**, or **My account** once someone is signed in, on sites with public accounts turned on, on phones too.
+
 ## 0.2.0 (2026-11-02)
 
 ### Changed
