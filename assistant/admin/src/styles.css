@@ -4,24 +4,44 @@
 
 @source "./";
 
+.cms-assistant { container-type: inline-size; width: 100%; }
+
 .cms-assistant-width {
   width: 100%;
   max-width: 760px;
   margin-inline: auto;
-  padding-inline: 20px;
+  padding-inline: 12px;
 }
 
 .cms-assistant-greeting {
-  font-size: 23px;
+  font-size: 17px;
   line-height: 1.25;
 }
 
 .cms-assistant-footer {
-  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
 .cms-assistant-thread {
   overflow-wrap: anywhere;
+}
+
+.cms-assistant-bubble { background: var(--cms-active); }
+
+.cms-assistant-chip {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  height: 22px;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+  padding-right: 2px;
+  border: 1px solid var(--cms-border);
+  border-radius: var(--radius-xs);
+  background: var(--cms-surface);
+  font-size: var(--text-xs);
+  transition: color 120ms var(--ease-out);
 }
 
 /* Reserve the action row so revealing controls never moves a message. */
@@ -36,47 +56,31 @@
   .cms-assistant-message:focus-within .cms-assistant-message-actions { opacity: 1; }
 }
 
-/* Keep the composer a single surface, above the shared textarea utilities. */
+/* Keep the composer a single surface, above the shared textarea utilities. It grows with what is written. */
 .cms-assistant-composer textarea {
   display: block;
+  field-sizing: content;
+  min-height: 44px;
   resize: none;
   border: 0;
   border-radius: 0;
   background: transparent;
-  padding: 16px 16px 10px;
+  padding: 10px 12px 6px;
   outline: none;
   box-shadow: none;
 }
-
-/* Chat is a workspace destination, not a dialog. Never transform the app shell. */
-.cms-assistant-page {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-  background: var(--cms-bg);
+/* Any smaller and a phone zooms in on the field. */
+@media (pointer: coarse) {
+  .cms-assistant-composer textarea { font-size: 16px; }
 }
 
-.cms-assistant-page[hidden] { display: none; }
-
-.cms-assistant-page .cms-assistant-width { padding-inline: 28px; }
-.cms-assistant-page .cms-assistant-greeting { font-size: clamp(23px, 3vw, 30px); }
-.cms-assistant-page .cms-assistant-footer { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
-.cms-assistant-page .cms-assistant-welcome { max-width: 680px; }
-
-@media (max-width: 639px) {
-  .cms-assistant-page .cms-assistant-width { padding-inline: 16px; }
-  .cms-assistant-page .cms-assistant-footer { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-}
-
-.cms-assistant-page[data-empty] .cms-assistant-scroll {
-  flex: 0 1 auto;
-  margin-top: auto;
-}
-.cms-assistant-page[data-empty] .cms-assistant-welcome { min-height: 0; }
-.cms-assistant-page[data-empty] .cms-assistant-footer {
-  max-width: 680px;
-  margin-bottom: auto;
+/* With room, the same thread reads as a page. */
+@container (min-width: 640px) {
+  .cms-assistant-width { padding-inline: 28px; }
+  .cms-assistant-greeting { font-size: clamp(23px, 3cqw, 30px); }
+  .cms-assistant-footer { padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+  .cms-assistant-welcome { max-width: 680px; }
+  .cms-assistant-page[data-empty] .cms-assistant-scroll { flex: 0 1 auto; margin-top: auto; }
+  .cms-assistant-page[data-empty] .cms-assistant-welcome { min-height: 0; }
+  .cms-assistant-page[data-empty] .cms-assistant-footer { max-width: 680px; margin-bottom: auto; }
 }

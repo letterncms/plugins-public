@@ -1,9 +1,11 @@
-import { can, events, getManifest, Link, navigate, run, t, useAbility, useAction, useLocation, useManifest, type SurfaceAction } from '@letterncms/sdk'
-import { Button, Fields, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, Topbar, cn, confirm, toast } from '@letterncms/ui'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { can, events, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, useScreen, type SurfaceAction } from '@letterncms/sdk'
+import { Button, Dock, Fields, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
+import { attachments } from './context'
+import { History, NewChatButton, Recent } from './History'
 import { Markdown } from './Markdown'
-import { conversationAt, panel, usePanel } from './store'
-import { useChat, type Call, type Item, type Part } from './useChat'
+import { available, conversationAt, panel, usePanel } from './store'
+import { useChat, type Call, type Item, type Origin, type Part } from './useChat'
 
 interface Model {
   id: string
@@ -33,26 +35,55 @@ function rememberModel(id: string) {
   void run('account/update', { preferences: { [PREFERENCE]: id } }).catch(() => {})
 }
 
-/** Keep the conversation alive while navigating CMS screens. Chat itself is a page. */
+const wideQuery = window.matchMedia('(min-width: 1024px)')
+const useWide = () => useSyncExternalStore((change) => {
+  wideQuery.addEventListener('change', change)
+  return () => wideQuery.removeEventListener('change', change)
+}, () => wideQuery.matches)
+
+/**
+ * The chat, on every screen: docked beside the page, which stays open and live
+ * next to it. A chat's URL is the same surface at full size, the list of chats
+ * beside it. It stays mounted while closed, so a reply keeps coming.
+ */
 export function AssistantPanel() {
   const { path } = useLocation()
+  const { mode, title } = usePanel()
   const id = conversationAt(path)
   useLayoutEffect(() => {
-    if (id === undefined) panel.set({ contextPath: path })
-    else if (panel.get().conversation !== id) panel.set({ conversation: id, prompt: null })
+    const state = panel.get()
+    if (id === undefined) {
+      if (path !== state.contextPath) panel.set({ contextPath: path, dismissedPage: null, selectedText: '' })
+      if (state.mode === 'full') panel.set({ mode: 'docked' })
+    } else {
+      panel.set({ mode: 'full', history: false, ...(state.conversation !== id ? { conversation: id, prompt: null } : {}) })
+    }
   }, [path, id])
-  if (!can('assistant.use')) return null
-  return <Chat open={id !== undefined} />
+  if (!available()) return null
+  return (
+    <Dock open={mode !== 'closed'} full={mode === 'full'} label={title || t('New Chat')}>
+      <Chat open={mode !== 'closed'} full={mode === 'full'} />
+    </Dock>
+  )
 }
 
-function Chat({ open }: { open: boolean }) {
-  const { conversation, prompt, drafts, models, focus: requestedFocus } = usePanel()
+function Chat({ open, full }: { open: boolean; full: boolean }) {
+  const { conversation, prompt, drafts, models, focus: requestedFocus, history } = usePanel()
+  const wide = useWide()
+  const canMaximize = useSyncExternalStore((change) => {
+    const media = window.matchMedia('(min-width: 768px)')
+    media.addEventListener('change', change)
+    return () => media.removeEventListener('change', change)
+  }, () => window.matchMedia('(min-width: 768px)').matches)
+  // At full size the list has a column of its own; in the dock it is the thread's second page.
+  const column = full && wide
   const status = useAbility<Status>('assistant/status', {}, { staleTime: 60_000 })
   const chat = useChat(conversation, {
     picked: models[conversation ?? 'new'] ?? (conversation || !status.data ? undefined : preferredModel(status.data)),
     fallback: status.data?.model,
     offered: status.data?.models.map((m) => m.id),
   })
+  useEffect(() => panel.set({ awaiting: chat.awaiting.length > 0 }), [chat.awaiting.length])
   const remove = useAction<{ deleted: boolean }, { id: string }>('assistant/conversation-delete', {
     invalidates: ['assistant/conversations'],
     onSuccess: (_, { id }) => {
@@ -113,97 +144,179 @@ function Chat({ open }: { open: boolean }) {
     })) remove.mutate({ id: conversation })
   }
 
+  const empty = ready && !chat.loading && !chat.items.length
+  const title = chat.title || t('New Chat')
+  const listing = history && !column
+
+  // Esc puts it away, unless something inside it takes the key first (a menu, a message being edited).
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || e.defaultPrevented || document.querySelector('[role="dialog"], [role="menu"], [role="listbox"], [data-popup-open]')) return
+    if (listing) panel.set({ history: false })
+    else if (full) panel.minimize()
+    else panel.close()
+  }
+
   return (
-    <main id="cms-assistant" data-empty={ready && !chat.loading && !chat.items.length || undefined} hidden={!open} aria-label={chat.title || t('New Chat')} className="cms-assistant-page">
-      <Topbar
-        crumbs={[{ label: <span role="heading" aria-level={1}>{chat.title || t('New Chat')}</span> }]}
-        actions={conversation && (
-          <Menu
-            trigger={<IconButton icon="more" label={t('Chat Actions')} disabled={remove.isPending} />}
-            items={[{
-              label: t('Delete Chat'),
-              icon: 'trash',
-              danger: true,
-              disabled: chat.busy || chat.loading || remove.isPending,
-              onSelect: deleteChat,
-            }]}
-          />
-        )}
-      />
-      <div
-        ref={scroller}
-        onScroll={(e) => {
-          const el = e.currentTarget
-          pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48
-        }}
-        className="cms-assistant-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
-      >
-        {status.isPending || chat.loading ? (
-          <div className="grid h-full place-items-center text-faint"><Spinner /></div>
-        ) : status.isError ? (
-          <div role="alert" className="cms-assistant-width flex min-h-full flex-col items-center justify-center gap-3 text-sm text-muted">
-            <p>{t('Could not connect to the assistant.')}</p>
-            <Button onClick={() => void status.refetch()}>{t('Try Again')}</Button>
+    <div className="cms-assistant flex h-full min-h-0" data-full={full || undefined} onKeyDown={onKeyDown}>
+      {column && (
+        <div className="flex w-[260px] shrink-0 flex-col border-r border-border">
+          <div className="flex h-12 shrink-0 items-center justify-between pl-4 pr-2">
+            <h2 className="m-0 text-sm font-semibold text-ink">{t('Chats')}</h2>
+            <NewChatButton />
           </div>
-        ) : !ready ? (
-          <Setup />
-        ) : chat.items.length === 0 ? (
-          <Welcome onPick={(text, send) => (send ? chat.send(text) : (setDraft(text), setFocus((f) => f + 1)))} />
-        ) : (
-          <div className="cms-assistant-thread cms-assistant-width space-y-6 py-6">
-            {chat.items.map((item, i) => (
-              <Message
-                key={`${conversation}:${i}`}
-                item={item}
-                {...surfaceProps}
-                editing={editing === i}
-                onEditingChange={(value) => {
-                  if (panel.get().conversation === conversation) setEditing((active) => value ? i : active === i ? null : active)
-                }}
-                editingDisabled={chat.busy || chat.loading || remove.isPending}
-                onEdit={chat.edit}
-              />
-            ))}
-            {chat.busy && <Working items={chat.items} />}
-          </div>
-        )}
-      </div>
-
-      {chat.error && (
-        <div className="cms-assistant-width w-full shrink-0 pb-2">
-          <div role="alert" className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger/6 px-3 py-2 text-sm text-text">
-            <Icon name="warning" size={15} className="mt-0.5 shrink-0 text-danger" />
-            <span className="flex-1">{chat.error}</span>
-            <IconButton icon="close" label={t('Dismiss')} size="xs" onClick={chat.dismissError} />
-          </div>
+          <History />
         </div>
       )}
-
-      {chat.awaiting.length > 0 && editing === null && <Approval calls={chat.awaiting} onDecide={chat.decide} />}
-
-      {ready && (
-        <div className="cms-assistant-footer cms-assistant-width w-full shrink-0">
-          <form onSubmit={(e) => { e.preventDefault(); submit() }} className="cms-assistant-composer overflow-hidden rounded-lg border border-border bg-surface transition-colors focus-within:border-border-strong">
-            <Fields
-              bare
-              fields={[{ handle: 'draft', type: 'textarea', component: 'assistant-composer', label: t('Message {brand}'), placeholder: chat.awaiting.length ? t('Or tell {brand} what to do instead…') : t('Ask {brand} to build, write or change something…'), focus }]}
-              values={{ draft }}
-              onChange={(_, v) => setDraft(v)}
+      <section aria-label={title} data-empty={(full && empty) || undefined} className="cms-assistant-page relative flex min-w-0 flex-1 flex-col">
+        <header className="flex h-12 shrink-0 items-center gap-0.5 border-b border-border pl-2 pr-2">
+          {!column && (
+            <Tooltip content={listing ? t('Back to Chat') : t('All Chats')} side="bottom">
+              <IconButton icon={listing ? 'arrow-left' : 'chat'} label={listing ? t('Back to Chat') : t('All Chats')} title={undefined} active={listing} onClick={() => panel.set({ history: !listing })} />
+            </Tooltip>
+          )}
+          <h2 className={cn('m-0 min-w-0 flex-1 truncate text-sm font-medium text-ink', column ? 'pl-2.5' : 'pl-1.5')}>{listing ? t('Chats') : title}</h2>
+          {conversation && !listing && (
+            <Menu
+              trigger={<IconButton icon="more" label={t('Chat Actions')} disabled={remove.isPending} />}
+              items={[{
+                label: t('Delete Chat'),
+                icon: 'trash',
+                danger: true,
+                disabled: chat.busy || chat.loading || remove.isPending,
+                onSelect: deleteChat,
+              }]}
             />
-            <div className="flex items-center gap-2 px-2 pb-2">
-              <div className="flex min-w-0 flex-1">
-                {status.data && !chat.loading && <ModelPicker models={status.data.models} value={chat.model} onChange={(id) => { panel.model(id); rememberModel(id) }} />}
+          )}
+          {!column && <NewChatButton />}
+          {canMaximize && (
+            <Tooltip content={full ? t('Back to the Page') : t('Full Size')} side="bottom">
+              <IconButton icon={full ? 'minimize' : 'maximize'} label={full ? t('Back to the Page') : t('Full Size')} title={undefined} onClick={() => (full ? panel.minimize() : panel.maximize())} />
+            </Tooltip>
+          )}
+          {!full && (
+            <Tooltip content={t('Close')} shortcut="mod+j" side="bottom">
+              <IconButton icon="close" label={t('Close')} title={undefined} onClick={() => panel.close()} />
+            </Tooltip>
+          )}
+        </header>
+        {listing ? <History /> : <>
+          <div
+            ref={scroller}
+            onScroll={(e) => {
+              const el = e.currentTarget
+              pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48
+            }}
+            className="cms-assistant-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          >
+            {status.isPending || chat.loading ? (
+              <div className="grid h-full place-items-center text-faint"><Spinner /></div>
+            ) : status.isError ? (
+              <div role="alert" className="cms-assistant-width flex min-h-full flex-col items-center justify-center gap-3 text-sm text-muted">
+                <p>{t('Could not connect to the assistant.')}</p>
+                <Button onClick={() => void status.refetch()}>{t('Try Again')}</Button>
               </div>
-              {chat.busy ? (
-                <IconButton icon="stop" label={t('Stop')} variant="secondary" onClick={chat.stop} />
-              ) : (
-                <IconButton icon="arrow-up" label={t('Send')} variant="primary" onClick={submit} disabled={!draft.trim() || chat.loading || remove.isPending || editing !== null} />
-              )}
+            ) : !ready ? (
+              <Setup />
+            ) : chat.items.length === 0 ? (
+              <Welcome recent={!column} onPick={(text, send) => (send ? chat.send(text) : (setDraft(text), setFocus((f) => f + 1)))} />
+            ) : (
+              <div className="cms-assistant-thread cms-assistant-width space-y-6 py-5">
+                {chat.items.map((item, i) => (
+                  <Message
+                    key={`${conversation}:${i}`}
+                    item={item}
+                    {...surfaceProps}
+                    editing={editing === i}
+                    onEditingChange={(value) => {
+                      if (panel.get().conversation === conversation) setEditing((active) => value ? i : active === i ? null : active)
+                    }}
+                    editingDisabled={chat.busy || chat.loading || remove.isPending}
+                    onEdit={chat.edit}
+                  />
+                ))}
+                {chat.busy && <Working items={chat.items} />}
+              </div>
+            )}
+          </div>
+
+          {chat.error && (
+            <div className="cms-assistant-width w-full shrink-0 pb-2">
+              <div role="alert" className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger/6 px-3 py-2 text-sm text-text">
+                <Icon name="warning" size={15} className="mt-0.5 shrink-0 text-danger" />
+                <span className="flex-1">{chat.error}</span>
+                <IconButton icon="close" label={t('Dismiss')} size="xs" onClick={chat.dismissError} />
+              </div>
             </div>
-          </form>
-        </div>
+          )}
+
+          {chat.awaiting.length > 0 && editing === null && <Approval calls={chat.awaiting} onDecide={chat.decide} />}
+
+          {ready && (
+            <div className="cms-assistant-footer cms-assistant-width w-full shrink-0">
+              <form onSubmit={(e) => { e.preventDefault(); submit() }} className="cms-assistant-composer overflow-hidden rounded-lg border border-border bg-bg transition-colors focus-within:border-border-strong">
+                <Attachments />
+                <Fields
+                  bare
+                  fields={[{ handle: 'draft', type: 'textarea', component: 'assistant-composer', label: t('Message {brand}'), placeholder: chat.awaiting.length ? t('Or tell {brand} what to do instead…') : t('Ask {brand} to build, write or change something…'), focus }]}
+                  values={{ draft }}
+                  onChange={(_, v) => setDraft(v)}
+                />
+                <div className="flex items-center gap-2 px-2 pb-2">
+                  <div className="flex min-w-0 flex-1">
+                    {status.data && !chat.loading && <ModelPicker models={status.data.models} value={chat.model} onChange={(id) => { panel.model(id); rememberModel(id) }} />}
+                  </div>
+                  {chat.busy ? (
+                    <IconButton icon="stop" label={t('Stop')} variant="secondary" onClick={chat.stop} />
+                  ) : (
+                    <IconButton icon="arrow-up" label={t('Send')} variant="primary" onClick={submit} disabled={!draft.trim() || chat.loading || remove.isPending || editing !== null} />
+                  )}
+                </div>
+              </form>
+            </div>
+          )}
+        </>}
+      </section>
+    </div>
+  )
+}
+
+/**
+ * What the next message carries, as chips in the composer: the page on view, the
+ * block selected on it, the text selected on it. Each comes off with its ×.
+ */
+function Attachments() {
+  const state = usePanel()
+  const screen = useScreen()
+  const { page, secret, selection, text } = attachments(screen, state)
+  if (!page && !secret && !selection && !text) {
+    return screen.title && !screen.private
+      ? <div className="flex flex-wrap gap-1 px-2 pt-2"><button type="button" onClick={() => panel.set({ dismissedPage: null })} className="cms-assistant-chip text-faint hover:text-text"><Icon name="plus" size={11} /><span className="truncate">{screen.title}</span></button></div>
+      : null
+  }
+  return (
+    <div className="flex flex-wrap gap-1 px-2 pt-2">
+      {secret && (
+        <Tooltip content={t('This screen stays private: {brand} does not see it.')}>
+          <span tabIndex={0} className="cms-assistant-chip pr-1.5 text-faint"><Icon name="lock" size={11} /><span className="truncate">{secret.title ?? t('Private')}</span></span>
+        </Tooltip>
       )}
-    </main>
+      {page && <Chip icon={page.icon ?? 'file'} label={page.title} hint={t('{brand} sees this page')} onRemove={() => panel.set({ dismissedPage: state.contextPath })} />}
+      {selection && <Chip icon={selection.icon ?? 'square'} label={selection.label} hint={t('{brand} sees this block')} onRemove={() => panel.set({ dismissedSelection: selection.id })} />}
+      {text && <Chip icon="quote" label={text.replace(/\s+/g, ' ')} hint={t('{brand} sees the text you selected')} onRemove={() => panel.set({ selectedText: '' })} />}
+    </div>
+  )
+}
+
+function Chip({ icon, label, hint, onRemove }: { icon: string; label: string; hint: string; onRemove: () => void }) {
+  return (
+    <span className="cms-assistant-chip text-muted">
+      <Tooltip content={hint}>
+        <span tabIndex={0} className="flex min-w-0 items-center gap-1 outline-offset-1"><Icon name={icon} size={11} className="shrink-0" /><span className="truncate">{label}</span></span>
+      </Tooltip>
+      <button type="button" aria-label={t('Remove {name}', { name: label })} onClick={onRemove} className="grid size-4 shrink-0 place-items-center rounded-xs text-faint hover:bg-hover hover:text-text">
+        <Icon name="close" size={10} />
+      </button>
+    </span>
   )
 }
 
@@ -248,21 +361,29 @@ function Setup() {
         <p className="m-0 mt-4 text-sm text-faint">{t('Ask an administrator to add one.')}</p>
       )}
       {/* AI is optional: everything in the CMS works without it. One click puts it out of the way, and More keeps it close. */}
-      {pinned && <p className="m-0 mt-8 text-xs text-faint">
+      {pinned && <p className="m-0 pt-8 text-xs text-faint">
         {t('Not using AI? {brand} works fully without it.')}{' '}
-        <button type="button" className="text-muted underline decoration-border-strong underline-offset-2 hover:text-text" onClick={() => { events.emit('sidebar.pin', { id: 'chat', pinned: false }); navigate('/') }}>
-          {t('Unpin New Chat')}
+        <button type="button" className="text-muted underline decoration-border-strong underline-offset-2 hover:text-text" onClick={() => { events.emit('sidebar.pin', { id: 'chat', pinned: false }); panel.close() }}>
+          {t('Unpin Chat')}
         </button>
       </p>}
     </div>
   )
 }
 
-function Welcome({ onPick }: { onPick: (text: string, send: boolean) => void }) {
-  const { contextPath: path } = usePanel()
-  const onEntry = /^\/content\/[^/]+\/[^/]+$/.test(path)
+function Welcome({ recent, onPick }: { recent: boolean; onPick: (text: string, send: boolean) => void }) {
+  const state = usePanel()
+  const screen = useScreen()
+  const { page, selection } = attachments(screen, state)
   const ideas: { label: string; text: string; send: boolean }[] = [
-    ...(onEntry ? [{ label: t('Tighten This Page'), text: t('Proofread this page: fix mistakes, tighten the copy and improve the SEO description. Show me what you changed.'), send: true }] : []),
+    ...(selection ? [
+      { label: t('Rewrite This Block'), text: t('Rewrite the selected block so it reads better. Keep what it says and show me what you changed.'), send: true },
+    ] : []),
+    ...(page && screen.kind === 'entry' ? [
+      { label: t('Tighten This Page'), text: t('Proofread this page: fix mistakes, tighten the copy and improve the SEO description. Show me what you changed.'), send: true },
+    ] : page && screen.kind !== 'entry' ? [
+      { label: t('Explain This Screen'), text: t('What am I looking at here, and what stands out?'), send: true },
+    ] : []),
     { label: t('Build a Landing Page'), text: t('Build a landing page for '), send: false },
     { label: t('Draft a Blog Post'), text: t('Draft a blog post about '), send: false },
     { label: t('Audit SEO'), text: t('Check every published page for SEO and accessibility problems and list the most important fixes. Do not change anything yet.'), send: true },
@@ -270,22 +391,21 @@ function Welcome({ onPick }: { onPick: (text: string, send: boolean) => void }) 
   ]
 
   return (
-    <div className="cms-assistant-welcome cms-assistant-width flex min-h-full flex-col justify-center py-8">
-      <div className="mb-5 flex size-10 items-center justify-center rounded-xl border border-border bg-surface text-ink"><Icon name="sparkle" size={21} /></div>
-      <h2 className="cms-assistant-greeting m-0 font-semibold tracking-[-0.025em] text-ink">{t('What should we work on?')}</h2>
-      <p className="m-0 mt-1 text-sm text-muted">{t('{brand} writes, designs and publishes with the same actions you can, and asks before deleting anything.')}</p>
-      <div className="mt-6 flex flex-wrap gap-2">
-        {ideas.map((idea) => (
+    <div className="cms-assistant-welcome cms-assistant-width flex min-h-full flex-col justify-end py-5">
+      <h2 className="cms-assistant-greeting m-0 font-semibold tracking-[-0.02em] text-ink">{t('What should we work on?')}</h2>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {ideas.slice(0, 5).map((idea) => (
           <button
             key={idea.label}
             type="button"
             onClick={() => onPick(idea.text, idea.send)}
-            className="min-h-8 rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-border-strong hover:bg-hover hover:text-text"
+            className="min-h-7 rounded-full border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-border-strong hover:bg-hover hover:text-text"
           >
             {idea.label}
           </button>
         ))}
       </div>
+      {recent && <Recent />}
     </div>
   )
 }
@@ -315,6 +435,7 @@ function Message({ item, editing, onEditingChange, editingDisabled, onEdit, ...h
     }
     return (
       <div className="cms-assistant-message flex flex-col items-end gap-1">
+        {item.page && !editing && <OriginLink page={item.page} />}
         {editing ? (
           <form className="cms-assistant-message-editor w-full rounded-xl border border-border-strong bg-surface p-3" onSubmit={(e) => { e.preventDefault(); void save() }}>
             <Textarea autoFocus aria-label={t('Edit message')} value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={20000} disabled={editingDisabled} rows={2} className="max-h-52 resize-none" onKeyDown={(e) => {
@@ -327,7 +448,7 @@ function Message({ item, editing, onEditingChange, editingDisabled, onEdit, ...h
               <Button type="submit" size="sm" variant="primary" disabled={editingDisabled || !draft.trim() || draft.trim() === item.text}>{t('Save & Send')}</Button>
             </div>
           </form>
-        ) : <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-xl bg-sunken px-4 py-2.5 text-sm text-text">{item.text}</div>}
+        ) : <div className="cms-assistant-bubble max-w-[85%] whitespace-pre-wrap break-words rounded-xl px-3.5 py-2 text-sm text-text">{item.text}</div>}
         {!editing && <div className="cms-assistant-message-actions flex items-center gap-0.5">
           <CopyMessage text={item.text} />
           {item.messageIndex !== undefined && <Tooltip content={t('Edit message')}><IconButton ref={editButton} icon="edit" label={t('Edit message')} title={undefined} disabled={editingDisabled} onClick={() => { setDraft(item.text); onEditingChange(true) }} /></Tooltip>}
@@ -349,6 +470,16 @@ function Message({ item, editing, onEditingChange, editingDisabled, onEdit, ...h
       {item.parts.map((part, i) => <PartView key={part.type === 'tool' ? part.id : i} part={part} {...host} />)}
       {item.parts.some((part) => part.type === 'text' && part.text.trim()) && <div className="cms-assistant-message-actions flex items-center"><CopyMessage text={item.parts.filter((part) => part.type === 'text').map((part) => part.text).join('\n\n')} /></div>}
     </div>
+  )
+}
+
+/** The page a message was sent from, one click away. */
+function OriginLink({ page }: { page: Origin }) {
+  return (
+    <Link to={page.path} className="flex min-w-0 max-w-[85%] items-center gap-1 rounded-xs text-xs text-faint no-underline hover:text-muted">
+      <Icon name="file" size={11} className="shrink-0" />
+      <span className="truncate">{page.title}</span>
+    </Link>
   )
 }
 

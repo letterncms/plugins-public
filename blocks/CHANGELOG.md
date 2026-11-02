@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- The outline docks when the workspace has room for it beside the inspector, and otherwise opens over the canvas.
+- The selected block is known to whatever works alongside the editor, such as the assistant's chat.
+
 ## 0.1.0 (2026-11-01)
 
 ### Added

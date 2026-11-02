@@ -57,6 +57,15 @@ final class ChatController
             'model' => ['nullable', 'string', Rule::in(array_keys(Claude::models()))],
             'context' => ['nullable', 'array'],
             'context.path' => ['nullable', 'string', 'max:300'],
+            'context.title' => ['nullable', 'string', 'max:300'],
+            'context.kind' => ['nullable', 'string', 'max:40'],
+            'context.data' => ['nullable', 'string', 'max:40000'],
+            'context.text' => ['nullable', 'string', 'max:12000'],
+            'context.selection' => ['nullable', 'array:label,data'],
+            'context.selection.label' => ['required_with:context.selection', 'string', 'max:200'],
+            'context.selection.data' => ['nullable', 'string', 'max:12000'],
+            'context.selected_text' => ['nullable', 'string', 'max:4000'],
+            'context.unchanged' => ['nullable', 'boolean'],
         ]);
 
         $acting = ! empty($data['action']);

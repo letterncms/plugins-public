@@ -3,18 +3,17 @@ import { can, registry, t } from '@letterncms/sdk'
 import { EmptyState } from '@letterncms/ui'
 import { lazy } from 'react'
 import { ComposerField } from './fields'
+import { Launcher } from './Launcher'
 import { AssistantPanel } from './Panel'
-import { panel } from './store'
-import { ChatHistory } from './History'
+import { available, panel } from './store'
 
 registry.fields.set('assistant-composer', ComposerField as any)
-registry.panels.set('assistant', { id: 'assistant', slot: 'shell.aside', component: AssistantPanel })
+registry.panels.set('assistant', { id: 'assistant', slot: 'shell.dock', component: AssistantPanel })
 registry.widgets.set('assistant-ask', lazy(() => import('./WidgetAsk')))
-// The persistent shell component owns streaming; routes provide native navigation.
+registry.panels.set('assistant-launcher', { id: 'assistant-launcher', slot: 'sidebar.footer', component: Launcher })
+// A chat's own URL is the dock at full size, over the page it came from. The dock owns streaming, so the route draws nothing.
 const ChatScreen = () => can('assistant.use') ? null : <EmptyState icon="lock" title={t('You do not have access to the assistant.')} className="min-h-[50vh]" />
-registry.routes.set('/chat/:id', { path: '/chat/:id', component: ChatScreen })
-// New Chat is a sidebar item (registered in PHP); the chats follow the sidebar's pinned items.
-registry.panels.set('assistant-history', { id: 'assistant-history', slot: 'sidebar.history', component: ChatHistory })
+registry.routes.set('/chat/:id', { path: '/chat/:id', component: ChatScreen, overlay: true })
 
 registry.commands.set('assistant', {
   id: 'assistant',
@@ -28,8 +27,8 @@ registry.commands.set('assistant', {
 })
 
 window.addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'j' && can('assistant.use')) {
+  if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'j' && available()) {
     e.preventDefault()
-    panel.newChat()
+    panel.toggle()
   }
 })
