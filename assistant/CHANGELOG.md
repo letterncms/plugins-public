@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-11-02)
+
 ### Changed
 
 - New chats use Claude Sonnet 5.5 unless you pick another model. It handles everyday site work well, faster and at half the price of Opus. Claude Opus 5.5 is still in the model menu under the chat box. A default you saved under **Settings → Assistant** stays as it is.
