@@ -84,11 +84,11 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   }
   return <div className="flex h-full min-h-0 flex-col" data-block-workspace>
     {props.toolbar && createPortal(<>
-      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" label={t('Insert block')} />} className="!p-0">
+      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" variant="primary" label={t('Insert block')} className="mr-1" />} className="!p-0">
         <Inserter types={[...types.values()]} query={query} onQuery={setQuery} onChoose={choose} onClose={() => setInsert(false)} allowed={(type) => !!destination(type.name)} />
       </Popover>}
-      <IconButton icon="undo" label={t('Undo')} disabled={!undo} onClick={store.undo} />
-      <IconButton icon="redo" label={t('Redo')} disabled={!redo} onClick={store.redo} />
+      <IconButton icon="undo" label={t('Undo')} disabled={!undo} onClick={store.undo} className="max-sm:hidden" />
+      <IconButton icon="redo" label={t('Redo')} disabled={!redo} onClick={store.redo} className="max-sm:hidden" />
     </>, props.toolbar)}
     <ScreenSidebar title={t('Outline')} backTo={props.listPath} backLabel={props.collection.title}><Layers /></ScreenSidebar>
     <div className="flex min-h-0 flex-1">
