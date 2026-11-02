@@ -1,6 +1,6 @@
 import { t, useManifest } from '@letterncms/sdk'
-import { Icon, Spinner, Tooltip } from '@letterncms/ui'
-import { available, panel, usePanel } from './store'
+import { Icon, Spinner, Tooltip, cn } from '@letterncms/ui'
+import { available, panel, useFloating, usePanel } from './store'
 
 /** How the chat is doing while it's away, if there's anything to say. */
 function Doing() {
@@ -15,18 +15,18 @@ export function NavStatus() {
   return usePanel().mode === 'closed' ? <Doing /> : null
 }
 
-/**
- * At the far end of every screen's bar, where the chat's close button is once it's
- * open: back to the chat as you left it, on screens where the sidebar is away too.
- */
+/** At the far end of every screen's bar: opens the chat as you left it, and closes it where it floats. A docked one has its own close button in that spot. */
 export function ChatToggle() {
   const { mode, working, awaiting } = usePanel()
+  const { chosen, required } = useFloating()
   const { sidebar } = useManifest()
-  if (mode !== 'closed' || !available() || sidebar.hidden.includes('chat')) return null
+  const docked = mode !== 'closed' && !chosen && !required
+  if (docked || !available() || sidebar.hidden.includes('chat')) return null
+  const open = mode !== 'closed'
   return (
     <Tooltip content={t('Chat')} shortcut="mod+j" side="bottom">
-      <button type="button" aria-label={t('Chat')} onClick={() => panel.open()} className="grid size-7 shrink-0 place-items-center rounded-sm text-muted outline-offset-[-2px] transition-colors hover:bg-hover hover:text-text">
-        {working || awaiting ? <Doing /> : <Icon name="sparkle" size={15} />}
+      <button type="button" aria-label={t('Chat')} aria-expanded={open} onClick={() => (open ? panel.close() : panel.open())} className={cn('grid size-7 shrink-0 place-items-center rounded-sm outline-offset-[-2px] transition-colors', open ? 'bg-active text-ink' : 'text-muted hover:bg-hover hover:text-text')}>
+        {!open && (working || awaiting) ? <Doing /> : <Icon name="sparkle" size={15} />}
       </button>
     </Tooltip>
   )
