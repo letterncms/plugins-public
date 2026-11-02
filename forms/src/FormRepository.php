@@ -118,8 +118,6 @@ final class FormRepository
 
     public function save(string $handle, array $form): array
     {
-        cms()->guardConfigWrites();
-
         if (! Files::isHandle($handle)) {
             throw new InvalidArgumentException(__('Invalid form handle.'));
         }
@@ -155,8 +153,6 @@ final class FormRepository
 
     public function delete(string $handle): void
     {
-        cms()->guardConfigWrites();
-
         if (Files::isHandle($handle)) {
             @unlink(content_path("forms/{$handle}.json"));
         }

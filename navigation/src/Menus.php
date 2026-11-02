@@ -64,8 +64,6 @@ final class Menus
 
     public function save(string $handle, array $menu): array
     {
-        cms()->guardConfigWrites();
-
         if (! Files::isHandle($handle)) {
             throw new InvalidArgumentException(__('Use lowercase letters, numbers, dashes or underscores for the menu handle.'));
         }
@@ -90,8 +88,6 @@ final class Menus
 
     public function delete(string $handle): bool
     {
-        cms()->guardConfigWrites();
-
         $file = content_path("navigation/{$handle}.yaml");
 
         if (! Files::isHandle($handle) || ! is_file($file)) {

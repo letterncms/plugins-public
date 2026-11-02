@@ -6,6 +6,10 @@
 
 - The starter's header shows **Sign in**, or **My account** once someone is signed in, on sites with public accounts turned on, on phones too.
 
+### Changed
+
+- The design system and custom code no longer check the core's `CMS_LOCKDOWN`, which is gone. This version works with every 0.x of the core; the previous one stops saving on a core without lockdown.
+
 ## 0.2.0 (2026-11-02)
 
 ### Changed

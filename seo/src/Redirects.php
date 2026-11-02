@@ -42,7 +42,6 @@ final class Redirects
 
     public function save(array $redirects): array
     {
-        cms()->guardConfigWrites();
         $previous = array_column($this->all(), null, 'from');
         $clean = [];
 

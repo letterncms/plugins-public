@@ -56,7 +56,6 @@ final class Design
             throw new InvalidArgumentException(__('Code is css or js.'));
         }
 
-        cms()->guardConfigWrites();
         $file = $this->path("custom.{$kind}");
 
         trim($code) === '' ? @unlink($file) : Files::put($file, rtrim($code)."\n");
