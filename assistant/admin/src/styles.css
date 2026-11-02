@@ -60,7 +60,7 @@
 .cms-assistant-composer textarea {
   display: block;
   field-sizing: content;
-  min-height: 44px;
+  min-height: calc(2lh + 16px);
   resize: none;
   border: 0;
   border-radius: 0;
