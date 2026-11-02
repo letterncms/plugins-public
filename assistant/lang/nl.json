@@ -1,5 +1,4 @@
 {
-  "{brand} has read site content in this chat, which others may have written. Allow only what you asked for.": "{brand} heeft in deze chat site-inhoud gelezen die anderen geschreven kunnen hebben. Sta alleen toe wat je zelf hebt gevraagd.",
   "{brand} sees the text you selected": "{brand} ziet de tekst die je hebt geselecteerd",
   "{brand} sees this block": "{brand} ziet dit blok",
   "{brand} sees this page": "{brand} ziet deze pagina",
@@ -24,6 +23,7 @@
   "Ask anything. @ for context, / for skills": "Vraag wat je wilt. @ voor context, / voor vaardigheden",
   "Ask Before": "Vragen vóór",
   "Ask the assistant from the home screen.": "Stel vragen aan de assistent vanaf het startscherm.",
+  "Asked because this chat has read site content. Allow only what you asked for.": "Gevraagd omdat deze chat site-inhoud heeft gelezen. Sta alleen toe wat je zelf hebt gevraagd.",
   "Assistant": "Assistent",
   "Assistant Status": "Status van de assistent",
   "Authentication required.": "Aanmelden is vereist.",
@@ -50,6 +50,7 @@
   "Delete “{title}”?": "‘{title}’ verwijderen?",
   "Delete Assistant Chat": "Assistentchat verwijderen",
   "Delete Chat": "Chat verwijderen",
+  "Details": "Details",
   "Detach": "Losmaken",
   "Discard Draft": "Concept verwijderen",
   "Discover components": "Componenten ontdekken",

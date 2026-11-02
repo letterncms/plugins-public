@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- An approval says in a sentence what it changes, such as “Add alt text to terrace.jpg”, instead of the action's name and an ID. Exactly what it sends is one click away, and the note under it says plainly why it's asking.
+
 ## 0.3.0 (2026-11-02)
 
 ### Changed

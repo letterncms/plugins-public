@@ -450,6 +450,32 @@ final class AssistantTest extends TestCase
         $this->assertTrue(Conversation::query()->sole()->untrusted);
     }
 
+    public function test_changes_say_what_they_do_for_whoever_approves_them(): void
+    {
+        $this->actingAs($this->admin());
+        $received = [];
+        $this->cms()->abilities()->register('example/rename', [
+            'label' => 'Rename Thing',
+            'permission' => 'admin.access',
+            'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'name' => ['type' => 'string']], 'required' => ['id'], 'additionalProperties' => false],
+            'handler' => static function (array $in) use (&$received) {
+                $received = $in;
+
+                return 'Renamed.';
+            },
+        ]);
+        $this->api->queue(FakeAnthropic::tool('toolu_rename', 'example__rename', ['id' => 'x1', 'name' => 'Terrace', 'change_summary' => 'Rename x1 to Terrace']));
+        $this->api->queue(FakeAnthropic::text('Done.'));
+
+        $this->chat(['message' => 'Rename it']);
+
+        $tools = array_column($this->api->requests[0]['body']['tools'], 'input_schema', 'name');
+        $this->assertSame(['id', 'change_summary'], $tools['example__rename']['required']);
+        $this->assertArrayHasKey('change_summary', $tools['entries__create']['properties']);
+        $this->assertArrayNotHasKey('change_summary', (array) $tools['entries__list']['properties'], 'reads never ask, so they say nothing');
+        $this->assertSame(['id' => 'x1', 'name' => 'Terrace'], $received, 'the ability never sees it');
+    }
+
     public function test_outside_reads_wait_for_approval_once_the_chat_is_untrusted(): void
     {
         $this->actingAs($this->admin());
