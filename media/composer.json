@@ -2,7 +2,7 @@
     "name": "letterncms/media",
     "description": "Media library: safe uploads, folders, alt text, focal points and responsive AVIF/WebP images.",
     "type": "cms-plugin",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",

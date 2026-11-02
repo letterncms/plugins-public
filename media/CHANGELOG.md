@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-02)
+
 ### Added
 
 - `@` in the assistant's chat finds files from the library.
