@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-02)
+
 ### Fixed
 
 - Clicking into text on the canvas and leaving it no longer saves the page. Text the browser writes differently, such as a non-breaking space, counted as an edit and was changed without anyone typing.
