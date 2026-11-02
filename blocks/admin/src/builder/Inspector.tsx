@@ -4,7 +4,6 @@ import { Fragment, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useEditorContext } from '../core/context'
 import { savePattern } from '../core/SavePattern'
 import { useEditor } from '../core/store'
-import * as tree from '../core/tree'
 import type { BlockNode } from '../core/types'
 import { patternFits } from '../core/insert'
 import { ContentPanel } from './content/ContentPanel'
@@ -48,7 +47,6 @@ function initialTab(): Tab {
 export function Inspector({ node, onClose }: { node: BlockNode; onClose?: () => void }) {
   const { store, types, allowed, readOnly } = useEditorContext()
   const type = types.get(node.type)
-  const ancestors = useEditor(store, (s) => tree.ancestors(s.nodes, node.id))
   const breakpoint = useEditor(store, (state) => state.breakpoint)
   const screens = [{ value: 'base', label: t('Desktop'), icon: 'b-monitor' }, { value: 'tablet', label: t('Tablet'), icon: 'b-device-tablet' }, { value: 'mobile', label: t('Phone'), icon: 'b-device-mobile' }] as const
   const screen = screens.find((item) => item.value === breakpoint) ?? screens[0]
@@ -78,15 +76,6 @@ export function Inspector({ node, onClose }: { node: BlockNode; onClose?: () => 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col">
       <div className="border-b border-border px-3 pb-2 pt-2.5">
-        {ancestors.length > 0 && (
-          <div className="mb-1 flex items-center gap-0.5 overflow-hidden text-[10px] text-faint">
-            {ancestors.slice(-3).map((a) => (
-              <button key={a.id} type="button" onClick={() => store.select(a.id)} className="max-w-[80px] truncate hover:text-text">
-                {a.label || types.get(a.type)?.title || a.type} ›
-              </button>
-            ))}
-          </div>
-        )}
         <div className="flex items-center gap-2">
           <span className="grid size-6 shrink-0 place-items-center rounded-xs bg-focus/12 text-focus">
             <Icon name={type?.icon ?? 'square'} size={13} />
