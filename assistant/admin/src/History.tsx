@@ -1,11 +1,11 @@
 import { can, run, t, timeAgo, useAction } from '@letterncms/sdk'
-import { Icon, IconButton, SidebarRow, Spinner, Tooltip, confirm, toast } from '@letterncms/ui'
+import { IconButton, SidebarRow, Spinner, Tooltip, confirm, toast } from '@letterncms/ui'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
 import { panel, usePanel } from './store'
 
 type Conversation = { id: string; title: string; updatedAt: string | null }
-const pageSize = 20
-const RECENT = 3
+const pageSize = 30
 
 function useChats() {
   const allowed = can('assistant.use')
@@ -61,7 +61,7 @@ function useRemove() {
   }
 }
 
-/** The one list of chats, by age: the dock's second page, a column of its own at full size. */
+/** The one list of chats, all of them, by age: where a new chat starts, and a column of its own at full size. */
 export function History() {
   const { history, chats } = useChats()
   const remove = useRemove()
@@ -82,6 +82,16 @@ export function History() {
     }),
   })).filter((group) => group.chats.length > 0)
 
+  // More of them as the list nears its end.
+  const more = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const end = more.current
+    if (!end) return
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting && history.hasNextPage && !history.isFetchingNextPage) void history.fetchNextPage() }, { rootMargin: '200px' })
+    observer.observe(end)
+    return () => observer.disconnect()
+  }, [history.hasNextPage, history.isFetchingNextPage, history.fetchNextPage])
+
   return (
     <nav aria-label={t('Chats')} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-4 pt-1">
       {(creating || unsent) && (
@@ -100,33 +110,16 @@ export function History() {
         </section>
       ))}
       {history.isPending && <div className="grid h-24 place-items-center text-faint"><Spinner /></div>}
-      {!history.isPending && !history.isError && chats.length === 0 && !creating && !unsent && <p className="m-0 px-2 py-6 text-center text-sm text-muted">{t('Your chats will be here.')}</p>}
       {history.isError && <button type="button" onClick={() => void history.refetch()} className="px-2 py-1.5 text-left text-xs text-muted hover:text-text">{t('Could not load chats. Try again')}</button>}
-      {history.hasNextPage && <button type="button" onClick={() => void history.fetchNextPage()} disabled={history.isFetchingNextPage} className="mt-1 flex h-7 w-full items-center rounded-md px-2 text-xs text-muted hover:bg-hover hover:text-text disabled:opacity-50">{history.isFetchingNextPage ? t('Loading…') : t('Show more')}</button>}
+      {history.hasNextPage && <div ref={more} className="grid h-10 place-items-center text-faint">{history.isFetchingNextPage && <Spinner size={14} />}</div>}
     </nav>
-  )
-}
-
-/** The first few, where a new chat starts in the dock. The rest of the same list is one click on. */
-export function Recent() {
-  const { chats } = useChats()
-  const remove = useRemove()
-  if (!chats.length) return null
-  return (
-    <section aria-label={t('Recent Chats')} className="mt-6 -mx-2">
-      <div className="flex h-7 items-center justify-between pl-2">
-        <h3 className="m-0 text-xs font-medium text-faint">{t('Recent Chats')}</h3>
-        {chats.length > RECENT && <button type="button" onClick={() => panel.set({ history: true })} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted hover:text-text">{t('All Chats')}<Icon name="chevron-right" size={11} /></button>}
-      </div>
-      <div className="space-y-px">{chats.slice(0, RECENT).map((chat) => <ChatRow key={chat.id} chat={chat} remove={(c) => void remove(c)} />)}</div>
-    </section>
   )
 }
 
 export function NewChatButton() {
   return (
     <Tooltip content={t('New Chat')}>
-      <IconButton icon="compose" label={t('New Chat')} title={undefined} onClick={() => panel.select(null)} />
+      <IconButton icon="plus" label={t('New Chat')} title={undefined} onClick={() => panel.select(null)} />
     </Tooltip>
   )
 }
