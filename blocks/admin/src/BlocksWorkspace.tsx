@@ -50,7 +50,13 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   const wide = useWideInspector()
   // Outline and inspector side by side need more room than the inspector alone.
   const roomy = useWideInspector(1060)
-  useScreenContext({ selection: selected ? { id: selected.id, label: types.get(selected.type)?.title ?? t('Block'), icon: types.get(selected.type)?.icon, data: () => tree.find(store.get().nodes, selected.id) } : null })
+  const selection = useEditor(store, selectionOf)
+  useScreenContext({
+    items: selection.flatMap((id) => {
+      const node = tree.find(store.get().nodes, id)
+      return node ? [{ id, kind: 'block', label: types.get(node.type)?.title ?? t('Block'), icon: types.get(node.type)?.icon, read: () => tree.find(store.get().nodes, id) }] : []
+    }),
+  })
   const inspect = (id: string) => { store.select(id, true); setInspecting(true); props.setSidebarOpen(true) }
   useEffect(() => {
     if (selected && blockMode) { setInspecting(true); props.setSidebarOpen(true); if (!roomy) setOutline(false) }

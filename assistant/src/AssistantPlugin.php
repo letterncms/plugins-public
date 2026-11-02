@@ -80,6 +80,39 @@ final class AssistantPlugin extends Plugin
             ],
         ]);
 
+        $a->register('assistant/skills', [
+            'label' => 'List Assistant Skills',
+            'description' => 'What / offers in a chat: the skills this person may use.',
+            'permission' => 'assistant.use',
+            'annotations' => ['readOnly' => true],
+            'expose' => $expose,
+            'package' => $this->manifest->name,
+            'handler' => fn (array $in, AbilityContext $c) => array_values(array_map(static fn (array $skill) => [
+                'name' => $skill['name'], 'label' => __($skill['label']), 'description' => __($skill['description']), 'icon' => $skill['icon'],
+            ], $this->cms()->skills()->all($c->user))),
+        ]);
+
+        $a->register('assistant/resources', [
+            'label' => 'List Assistant Resources',
+            'description' => 'What @ offers in a chat besides content: the context resources this person may read.',
+            'permission' => 'assistant.use',
+            'annotations' => ['readOnly' => true],
+            'expose' => $expose,
+            'package' => $this->manifest->name,
+            'handler' => fn (array $in, AbilityContext $c) => array_map(static fn (array $resource) => ['uri' => $resource['uri'], 'name' => __($resource['name'])], $this->cms()->context()->list($c->user)),
+        ]);
+
+        $a->register('assistant/resource', [
+            'label' => 'Read Assistant Resource',
+            'description' => 'One context resource, for a chat that attaches it.',
+            'permission' => 'assistant.use',
+            'annotations' => ['readOnly' => true],
+            'expose' => $expose,
+            'package' => $this->manifest->name,
+            'input' => ['type' => 'object', 'properties' => ['uri' => ['type' => 'string']], 'required' => ['uri']],
+            'handler' => fn (array $in, AbilityContext $c) => $this->cms()->context()->read($in['uri'], $c->user)['text'] ?? throw new AbilityException(__('Not found.'), 'not_found'),
+        ]);
+
         $a->register('assistant/conversations', [
             'label' => 'List Assistant Chats',
             'description' => 'Your recent chats with the assistant, newest first.',

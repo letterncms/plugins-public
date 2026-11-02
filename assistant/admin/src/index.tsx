@@ -2,12 +2,11 @@ import './styles.css'
 import { can, registry, t } from '@letterncms/sdk'
 import { EmptyState } from '@letterncms/ui'
 import { lazy } from 'react'
-import { ComposerField } from './fields'
 import { NavStatus } from './NavStatus'
 import { AssistantPanel } from './Panel'
+import './sources'
 import { available, panel } from './store'
 
-registry.fields.set('assistant-composer', ComposerField as any)
 registry.panels.set('assistant', { id: 'assistant', slot: 'shell.dock', component: AssistantPanel })
 registry.widgets.set('assistant-ask', lazy(() => import('./WidgetAsk')))
 registry.panels.set('assistant-status', { id: 'assistant-status', slot: 'nav.chat', component: NavStatus })

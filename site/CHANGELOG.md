@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Adds `/adjust-design` to the assistant's chat, and a prompt for MCP clients.
+
 ## 0.1.0 (2026-11-01)
 
 ### Added

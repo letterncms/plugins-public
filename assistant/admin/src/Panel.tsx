@@ -1,11 +1,12 @@
 import { can, events, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, useScreen, type SurfaceAction } from '@letterncms/sdk'
-import { Button, Dock, Fields, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
+import { Button, Dock, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
+import { Composer } from './Composer'
 import { attachments } from './context'
 import { History, NewChatButton } from './History'
 import { Markdown } from './Markdown'
 import { available, conversationAt, panel, usePanel } from './store'
-import { useChat, type Call, type Item, type Origin, type Part } from './useChat'
+import { useChat, type Call, type Item, type Part } from './useChat'
 
 interface Model {
   id: string
@@ -53,7 +54,7 @@ export function AssistantPanel() {
   useLayoutEffect(() => {
     const state = panel.get()
     if (id === undefined) {
-      if (path !== state.contextPath) panel.set({ contextPath: path, dismissedPage: null, selectedText: '' })
+      if (path !== state.contextPath) panel.set({ contextPath: path, dismissed: [], selectedText: '' })
       if (state.mode === 'full') panel.set({ mode: 'docked' })
     } else {
       panel.set({ mode: 'full', history: false, ...(state.conversation !== id ? { conversation: id, prompt: null } : {}) })
@@ -118,10 +119,13 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
     if (open && el && pinned.current) el.scrollTop = el.scrollHeight
   })
 
+  const skill = usePanel().skills[conversation ?? 'new']
+  const sendable = !!draft.trim() || !!skill
   const submit = () => {
-    if (!draft.trim() || chat.busy || chat.loading || remove.isPending || editing !== null) return
+    if (!sendable || chat.busy || chat.loading || remove.isPending || editing !== null) return
     pinned.current = true
-    chat.send(draft)
+    // A skill says enough by itself.
+    chat.send(draft.trim() || skill!.label)
     setDraft('')
   }
 
@@ -259,14 +263,7 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
 
           {ready && (
             <div className="cms-assistant-footer cms-assistant-width w-full shrink-0">
-              <form onSubmit={(e) => { e.preventDefault(); submit() }} className="cms-assistant-composer overflow-hidden rounded-lg border border-border bg-bg transition-colors focus-within:border-border-strong">
-                <Attachments />
-                <Fields
-                  bare
-                  fields={[{ handle: 'draft', type: 'textarea', component: 'assistant-composer', label: t('Message {brand}'), placeholder: chat.awaiting.length ? t('Or tell {brand} what to do instead…') : t('Ask {brand} to build, write or change something…'), focus }]}
-                  values={{ draft }}
-                  onChange={(_, v) => setDraft(v)}
-                />
+              <Composer placeholder={chat.awaiting.length ? t('Or tell {brand} what to do instead…') : t('Ask anything. @ for context, / for skills')} focus={focus} onSubmit={submit}>
                 <div className="flex items-center gap-2 px-2 pb-2">
                   <div className="flex min-w-0 flex-1">
                     {status.data && !chat.loading && <ModelPicker models={status.data.models} value={chat.model} onChange={(id) => { panel.model(id); rememberModel(id) }} />}
@@ -274,50 +271,15 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
                   {chat.busy ? (
                     <IconButton icon="stop" label={t('Stop')} variant="secondary" onClick={chat.stop} />
                   ) : (
-                    <IconButton icon="arrow-up" label={t('Send')} variant="primary" onClick={submit} disabled={!draft.trim() || chat.loading || remove.isPending || editing !== null} />
+                    <IconButton icon="arrow-up" label={t('Send')} variant="primary" onClick={submit} disabled={!sendable || chat.loading || remove.isPending || editing !== null} />
                   )}
                 </div>
-              </form>
+              </Composer>
             </div>
           )}
         </>}
       </section>
     </div>
-  )
-}
-
-/**
- * What the next message carries, as chips in the composer: the page on view, the
- * block selected on it, the text selected on it. Each comes off with its ×.
- */
-function Attachments() {
-  const state = usePanel()
-  const screen = useScreen()
-  const { page, selection, text } = attachments(screen, state)
-  if (!page && !selection && !text) {
-    return screen.title && !screen.private
-      ? <div className="flex flex-wrap gap-1 px-2 pt-2"><button type="button" onClick={() => panel.set({ dismissedPage: null })} className="cms-assistant-chip text-faint hover:text-text"><Icon name="plus" size={11} /><span className="truncate">{screen.title}</span></button></div>
-      : null
-  }
-  return (
-    <div className="flex flex-wrap gap-1 px-2 pt-2">
-      {page && <Chip icon={page.icon ?? 'file'} label={page.title} hint={t('{brand} sees this page')} onRemove={() => panel.set({ dismissedPage: state.contextPath })} />}
-      {selection && <Chip icon={selection.icon ?? 'square'} label={selection.label} hint={t('{brand} sees this block')} onRemove={() => panel.set({ dismissedSelection: selection.id })} />}
-      {text && <Chip icon="quote" label={text.replace(/\s+/g, ' ')} hint={t('{brand} sees the text you selected')} onRemove={() => panel.set({ selectedText: '' })} />}
-    </div>
-  )
-}
-
-function Chip({ icon, label, hint, onRemove }: { icon: string; label: string; hint: string; onRemove: () => void }) {
-  return (
-    <span className="cms-assistant-chip text-muted">
-      <Tooltip content={hint}>
-        <span tabIndex={0} className="flex min-w-0 items-center gap-1 outline-offset-1"><Icon name={icon} size={11} className="shrink-0" /><span className="truncate">{label}</span></span>
-      </Tooltip>
-      <button type="button" aria-label={t('Remove {name}', { name: label })} onClick={onRemove} className="grid size-4 shrink-0 place-items-center rounded-xs text-faint hover:bg-hover hover:text-text">
-        <Icon name="close" size={10} />
-      </button>
-    </span>
   )
 }
 
@@ -375,14 +337,16 @@ function Setup() {
 function Welcome({ onPick }: { onPick: (text: string, send: boolean) => void }) {
   const state = usePanel()
   const screen = useScreen()
-  const { page, selection } = attachments(screen, state)
+  const items = attachments(screen, state)
+  const page = items.some((item) => item.id === 'page')
+  const block = items.some((item) => item.kind === 'block')
   const ideas: { label: string; text: string; send: boolean }[] = [
-    ...(selection ? [
+    ...(block ? [
       { label: t('Rewrite This Block'), text: t('Rewrite the selected block so it reads better. Keep what it says and show me what you changed.'), send: true },
     ] : []),
     ...(page && screen.kind === 'entry' ? [
       { label: t('Tighten This Page'), text: t('Proofread this page: fix mistakes, tighten the copy and improve the SEO description. Show me what you changed.'), send: true },
-    ] : page && screen.kind !== 'entry' ? [
+    ] : page ? [
       { label: t('Explain This Screen'), text: t('What am I looking at here, and what stands out?'), send: true },
     ] : []),
     { label: t('Build a Landing Page'), text: t('Build a landing page for '), send: false },
@@ -435,7 +399,7 @@ function Message({ item, editing, onEditingChange, editingDisabled, onEdit, ...h
     }
     return (
       <div className="cms-assistant-message flex flex-col items-end gap-1">
-        {item.page && !editing && <OriginLink page={item.page} />}
+        {item.attached && item.attached.length > 0 && !editing && <Carried items={item.attached} />}
         {editing ? (
           <form className="cms-assistant-message-editor w-full rounded-xl border border-border-strong bg-surface p-3" onSubmit={(e) => { e.preventDefault(); void save() }}>
             <Textarea autoFocus aria-label={t('Edit message')} value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={20000} disabled={editingDisabled} rows={2} className="max-h-52 resize-none" onKeyDown={(e) => {
@@ -473,13 +437,18 @@ function Message({ item, editing, onEditingChange, editingDisabled, onEdit, ...h
   )
 }
 
-/** The page a message was sent from, one click away. */
-function OriginLink({ page }: { page: Origin }) {
+/** What a message carried, each thing one click away where it has a place in the admin. */
+function Carried({ items }: { items: NonNullable<Extract<Item, { role: 'user' }>['attached']> }) {
   return (
-    <Link to={page.path} className="flex min-w-0 max-w-[85%] items-center gap-1 rounded-xs text-xs text-faint no-underline hover:text-muted">
-      <Icon name="file" size={11} className="shrink-0" />
-      <span className="truncate">{page.title}</span>
-    </Link>
+    <div className="flex max-w-[85%] flex-wrap justify-end gap-x-2 gap-y-0.5">
+      {items.map((item, i) => {
+        const inner = <><Icon name={item.icon ?? 'file'} size={11} className="shrink-0" /><span className="truncate">{item.label}</span></>
+        const className = 'flex min-w-0 max-w-full items-center gap-1 rounded-xs text-xs text-faint no-underline'
+        return item.to
+          ? <Link key={i} to={item.to} className={cn(className, 'hover:text-muted')}>{inner}</Link>
+          : <span key={i} className={className}>{inner}</span>
+      })}
+    </div>
   )
 }
 

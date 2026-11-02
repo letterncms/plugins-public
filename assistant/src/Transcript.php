@@ -9,13 +9,16 @@ use Illuminate\Support\Str;
 /** Turns the stored model history into what the chat panel shows. */
 final class Transcript
 {
-    /** How the note about the page on view starts, among a user message's blocks. */
-    public const string PAGE_NOTE = '<page_on_view>';
+    /** How the note on what a message carries starts, among a user message's blocks. */
+    public const string ATTACHED_NOTE = '<attached>';
+
+    /** How what a skill asks for starts. */
+    public const string SKILL_NOTE = '<skill>';
 
     public function __construct(private readonly Toolbox $tools) {}
 
     /**
-     * @return list<array{role: 'user', text: string, messageIndex?: int, page?: array{title: string, path: string}|null}|array{role: 'assistant', parts: list<array>}>
+     * @return list<array{role: 'user', text: string, messageIndex?: int, attached?: list<array{label: string, kind?: string, icon?: string, to?: string}>}|array{role: 'assistant', parts: list<array>}>
      */
     public function of(Conversation $conversation): array
     {
@@ -50,15 +53,15 @@ final class Transcript
 
                 $text = implode("\n\n", array_map(
                     static fn ($b) => $b['text'],
-                    array_filter($content, static fn ($b) => ($b['type'] ?? null) === 'text' && ! str_starts_with($b['text'], '<context>') && ! str_starts_with($b['text'], self::PAGE_NOTE)),
+                    array_filter($content, static fn ($b) => ($b['type'] ?? null) === 'text' && ! str_starts_with($b['text'], '<context>') && ! str_starts_with($b['text'], self::ATTACHED_NOTE) && ! str_starts_with($b['text'], self::SKILL_NOTE)),
                 ));
 
                 if ($text !== '') {
                     $item = ['role' => 'user', 'text' => $text];
                     if (is_string($message['content']) || array_any($content, static fn ($b) => ($b['type'] ?? '') === 'text' && str_starts_with($b['text'], '<context>'))) {
                         $item['messageIndex'] = $index;
-                        $page = self::origin($content);
-                        if ($page) $item['page'] = $page;
+                        $attached = self::attached($content);
+                        if ($attached) $item['attached'] = $attached;
                     }
                     $items[] = $item;
                 }
@@ -103,20 +106,27 @@ final class Transcript
     }
 
     /**
-     * The page a message was sent from, to show with it.
+     * What a message carried, to show with it. The link only where it stays in the admin.
      *
-     * @return array{title: string, path: string}|null
+     * @return list<array{label: string, kind?: string, icon?: string, to?: string}>
      */
-    public static function origin(array $content): ?array
+    public static function attached(array $content): array
     {
         foreach ($content as $block) {
-            if (($block['type'] ?? null) === 'text' && str_starts_with($block['text'], self::PAGE_NOTE)) {
-                $page = json_decode(substr($block['text'], strlen(self::PAGE_NOTE), -strlen('</page_on_view>')), true);
+            if (($block['type'] ?? null) === 'text' && str_starts_with($block['text'], self::ATTACHED_NOTE)) {
+                $items = json_decode(substr($block['text'], strlen(self::ATTACHED_NOTE), -strlen('</attached>')), true);
 
-                return isset($page['title'], $page['path']) && preg_match('~^/[A-Za-z0-9/_.-]{0,199}$~', $page['path']) === 1 ? ['title' => $page['title'], 'path' => $page['path']] : null;
+                return array_values(array_map(static function (array $item): array {
+                    $shown = array_intersect_key($item, ['label' => 1, 'kind' => 1, 'icon' => 1, 'to' => 1]);
+                    if (isset($shown['to']) && preg_match('~^/[A-Za-z0-9/_.-]{0,199}$~', $shown['to']) !== 1) {
+                        unset($shown['to']);
+                    }
+
+                    return $shown;
+                }, is_array($items) ? $items : []));
             }
         }
 
-        return null;
+        return [];
     }
 }

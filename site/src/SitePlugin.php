@@ -45,6 +45,16 @@ final class SitePlugin extends Plugin
 
     public function boot(): void
     {
+        // An agent's way into the design system: `/adjust-design` in the assistant's chat, a prompt for MCP clients.
+        $this->cms()->skills()->register('adjust-design', [
+            'label' => 'Adjust the Design',
+            'description' => 'Change the design system so the site feels a certain way.',
+            'icon' => 'palette',
+            'prompt' => 'Change the design system so the site feels the way asked here: {feel}. Read cms://site/design first and change design tokens rather than individual blocks. Say what you changed and why.',
+            'arguments' => [['name' => 'feel', 'description' => 'How the site should feel', 'required' => true]],
+            'permission' => 'settings.manage',
+        ]);
+
         $this->renderHooks();
         $this->dataSources();
         $this->routes();

@@ -94,7 +94,8 @@ export function History() {
 
   return (
     <nav aria-label={t('Chats')} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-4 pt-1">
-      {(creating || unsent) && (
+      {/* A chat waiting to be sent, where it isn't already on view. */}
+      {(creating || (unsent && conversation !== null)) && (
         <SidebarRow
           label={(creating ? working.title : unsent) || t('New Chat')}
           onClick={() => panel.select(null)}

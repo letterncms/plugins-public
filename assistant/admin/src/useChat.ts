@@ -1,6 +1,6 @@
 import { eventStream, events, loadManifest, queryClient, run, t, CmsError, type SurfaceDocument, type SurfaceAction } from '@letterncms/sdk'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { forget, pageContext } from './context'
+import { forget, messageContext, type SentItem } from './context'
 import { panel } from './store'
 
 export type ToolStatus = 'running' | 'ok' | 'error' | 'declined' | 'awaiting'
@@ -10,13 +10,7 @@ export type Part =
   | { type: 'thinking'; text: string }
   | { type: 'tool'; id: string; name: string; label: string; input?: unknown; status: ToolStatus; output?: string; surface?: SurfaceDocument; used?: boolean }
 
-/** The page a message was sent from. */
-export interface Origin {
-  title: string
-  path: string
-}
-
-export type Item = { role: 'user'; text: string; messageIndex?: number; page?: Origin | null } | { role: 'assistant'; parts: Part[] } | { role: 'notice'; text: string; tone: string }
+export type Item = { role: 'user'; text: string; messageIndex?: number; attached?: Omit<SentItem, 'content' | 'unchanged'>[] } | { role: 'assistant'; parts: Part[] } | { role: 'notice'; text: string; tone: string }
 
 export interface Call {
   id: string
@@ -137,7 +131,7 @@ export function useChat(conversation: string | null, { picked, fallback, offered
     try {
       // Only what someone says carries the page; deciding and clicking go on from there.
       if (body.edit) forget(current.current)
-      const page = typeof body.message === 'string' ? await pageContext(current.current) : null
+      const page = typeof body.message === 'string' ? await messageContext(current.current) : null
       if (controller.signal.aborted) return false
       await eventStream(
         'assistant/chat',
@@ -151,7 +145,7 @@ export function useChat(conversation: string | null, { picked, fallback, offered
               setItems((list) => {
                 const index = edit ? list.findIndex((item) => item.role === 'user' && item.messageIndex === edit.index) : list.findLastIndex((item) => item.role === 'user')
                 if (index < 0) return list
-                return [...list.slice(0, index), { role: 'user', text: data.text, messageIndex: data.messageIndex, page: data.page }, ...(edit ? [] : list.slice(index + 1))]
+                return [...list.slice(0, index), { role: 'user', text: data.text, messageIndex: data.messageIndex, attached: data.attached }, ...(edit ? [] : list.slice(index + 1))]
               })
               if (edit) { setAwaiting([]); onAccepted?.() }
               break

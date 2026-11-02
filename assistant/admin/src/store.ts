@@ -1,4 +1,4 @@
-import { boot, can, getManifest, navigate } from '@letterncms/sdk'
+import { boot, can, getManifest, navigate, type ComposerOption, type ContextItem } from '@letterncms/sdk'
 import { useSyncExternalStore } from 'react'
 
 /** Where the chat is: out of the way, docked beside the page, or taking the whole window (a chat's own URL). */
@@ -13,12 +13,14 @@ interface State {
   prompt: string | null
   focus: number
   contextPath: string
-  /** The page this person took out of the chat with its chip; it comes back on the next page. */
-  dismissedPage: string | null
-  /** Likewise for the selected block. */
-  dismissedSelection: string | null
+  /** What this person took off with its ×, of what a screen offers; it comes back on the next screen. */
+  dismissed: string[]
   /** Text selected on the page. */
   selectedText: string
+  /** Picked with @ for the next message, per chat ('new' before it exists). */
+  attached: Record<string, ContextItem[]>
+  /** Picked with / for the next message, likewise. */
+  skills: Record<string, ComposerOption | null>
   drafts: Record<string, string>
   /** Models picked per chat ('new' before it exists); the next turn sends it. */
   models: Record<string, string>
@@ -41,7 +43,7 @@ function restored(): Pick<State, 'mode' | 'conversation'> {
 }
 
 const listeners = new Set<() => void>()
-let state: State = { ...restored(), history: false, title: '', prompt: null, focus: 0, contextPath: '/', dismissedPage: null, dismissedSelection: null, selectedText: '', drafts: {}, models: {}, working: null, awaiting: false }
+let state: State = { ...restored(), history: false, title: '', prompt: null, focus: 0, contextPath: '/', dismissed: [], selectedText: '', attached: {}, skills: {}, drafts: {}, models: {}, working: null, awaiting: false }
 /** Where maximizing started, to return to. */
 let returnTo: string | null = null
 /** What had the focus before the dock took it. */
