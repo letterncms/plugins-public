@@ -33,8 +33,13 @@ export function InlineEditable({ html, onChange, tag = 'div', placeholder, class
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
-    if (el.ownerDocument.activeElement !== el && clean(el.innerHTML) !== html) el.innerHTML = html
-    last.current = html
+    if (el.ownerDocument.activeElement === el) {
+      last.current = html
+      return
+    }
+    if (clean(el.innerHTML) !== html) el.innerHTML = html
+    // What it reads back as, which isn't always what's stored (&nbsp;, <br />): only leaving it changed is an edit.
+    last.current = clean(el.innerHTML)
   }, [html])
 
   // Before the next keystroke is handled: a block that just turned into another keeps the caret.
