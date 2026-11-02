@@ -77,7 +77,7 @@ final class Motion
 
     private const string ID = '/^[a-z0-9_-]{1,24}$/i';
 
-    private const string NODE = '/^#[a-z0-9_-]{3,40}$/i';
+    private const string NODE = '/^#[a-z0-9_-]{1,40}$/i';
 
     public static function sanitize(mixed $motion): array
     {

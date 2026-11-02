@@ -41,7 +41,7 @@ final class Logic
 
     private const string VAR = '/^[a-zA-Z_][a-zA-Z0-9_]{0,40}(\.[a-zA-Z0-9_]{1,40}){0,3}$/';
 
-    private const string ID = '/^[a-z0-9_-]{3,40}$/i';
+    private const string ID = '/^[a-z0-9_-]{1,40}$/i';
 
     /** Clean a logic map; unknown keys and unsafe expressions are dropped. */
     public static function sanitize(mixed $logic): array
