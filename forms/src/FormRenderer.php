@@ -41,7 +41,8 @@ final class FormRenderer
         $s = $form['settings'];
         $error = $this->e(__('Please check the highlighted fields and try again.', [], $locale));
         $empty = $this->e(__('Leave this empty', [], $locale));
-        $fields = $this->blocks->render($form['fields']);
+        // The form's fields aren't blocks of the page it's embedded in: the canvas would take them for ones that were removed.
+        $fields = $this->blocks->withEditorDocument(null, fn () => $this->blocks->render($form['fields']));
         $honeypot = $s['honeypot'] ? '<div class="cms-form__hp" aria-hidden="true"><label>'.$empty.'<input type="text" name="_cms_website" tabindex="-1" autocomplete="off"></label></div>' : '';
         $rules = json_encode(array_values(array_filter(array_map(static fn ($f) => empty($f['props']['show_if']['field']) ? null : ['name' => $f['name'], 'rule' => $f['props']['show_if']], FormFields::extract($form['fields'])))), JSON_HEX_TAG | JSON_HEX_APOS);
 
