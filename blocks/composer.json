@@ -2,7 +2,7 @@
     "name": "letterncms/blocks",
     "description": "Live block editing with the site renderer, reusable components and templates, styles, data bindings and Block Markdown.",
     "type": "cms-plugin",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",

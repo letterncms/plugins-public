@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-11-02)
+
 ### Fixed
 
 - Saving a page keeps every block as it was. A text block with a tag such as `span`, an id that interactions point at, or no text yet no longer turns into plain Markdown and loses them, two lists in a row stay two, and a screen size with no styles left is dropped instead of saved as an empty list. A page saved without changes keeps its file as it was.
