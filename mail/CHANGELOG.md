@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.1 (2026-11-02)
+
 ### Fixed
 
 - **Server mail (sendmail)** is only offered where the host lets PHP run it. On hosts that turn `proc_open` off, it failed every email; a site still set to it now shows that email isn't set up, so you can choose SMTP instead.
