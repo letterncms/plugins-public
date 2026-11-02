@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.1 (2026-11-02)
+
 ### Security
 
 - Revoking an AI tool under **Account → API Tokens** now disconnects it for good. Before, the tool could use its refresh token to get a new access token for up to 180 days.
