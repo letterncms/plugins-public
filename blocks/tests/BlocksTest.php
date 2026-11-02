@@ -14,6 +14,13 @@ use Cms\Tests\TestCase;
 
 final class BlocksTest extends TestCase
 {
+    public function test_a_block_keeps_a_short_id_so_the_editor_finds_it_on_the_canvas(): void
+    {
+        $nodes = $this->app->make(\Cms\Blocks\Document::class)->normalize([['id' => 'dl', 'type' => 'paragraph', 'props' => ['text' => 'Hi']]]);
+
+        $this->assertSame('dl', $nodes[0]['id']);
+    }
+
     public function test_creation_options_provide_a_usable_explicit_blocks_body(): void
     {
         $admin = $this->admin();

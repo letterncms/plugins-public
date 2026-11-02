@@ -62,7 +62,7 @@ final class Document
             }
 
             $type = $this->registry->get($node['type']);
-            $id = is_string($node['id'] ?? null) && preg_match('/^[a-z0-9_-]{3,40}$/i', $node['id']) && ! isset($seen[$node['id']]) ? $node['id'] : self::id();
+            $id = is_string($node['id'] ?? null) && preg_match('/^[a-z0-9_-]{1,40}$/i', $node['id']) && ! isset($seen[$node['id']]) ? $node['id'] : self::id();
             $seen[$id] = true;
 
             // Unknown types (e.g. a disabled plugin's block) are kept verbatim so nothing is lost.

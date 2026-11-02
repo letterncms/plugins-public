@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- A page whose blocks have short ids, or an id used twice, no longer opens with an empty canvas in the editor.
+
 ### Changed
 
 - The outline docks when the workspace has room for it beside the inspector, and otherwise opens over the canvas.
