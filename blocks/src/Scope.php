@@ -122,6 +122,8 @@ final class Scope
     public static function truthy(mixed $value): bool
     {
         return match (true) {
+            // Who's signed in isn't known here: as for someone signed out.
+            $value instanceof \Cms\Users\AccountInBrowser => false,
             is_array($value) => $value !== [],
             $value instanceof \Countable => count($value) > 0,
             is_string($value) => trim($value) !== '' && $value !== '0',

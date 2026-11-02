@@ -5,7 +5,7 @@ status: published
 position: 1
 synced: true
 category: Components
-description: 'Site name, main menu and a menu button on phones.'
+description: 'Site name, main menu, sign in or your account once the site has public accounts, and a menu button on phones.'
 ---
 
 ::: box {"id":"hdr","props":{"tag":"header"},"label":"Header","style":{"base":{"position":"sticky","top":"0","zIndex":40,"backgroundColor":"token:color.background/85","backdropFilter":"saturate(1.6) blur(14px)","borderBottom":"1px solid transparent","transition":"border-color 200ms ease, background-color 200ms ease"}},"logic":{"data":{"open":false},"on":[{"event":"keydown","mods":["window"],"key":"escape","actions":[{"do":"set","var":"open","value":"false"}]}],"states":{"open":"open"},"behaviors":{"scroll":{"threshold":8,"hide":false}}}}
@@ -19,6 +19,14 @@ description: 'Site name, main menu and a menu button on phones.'
 :::::::: link {"id":"hdr-link","style":{"base":{"color":"token:color.muted","transition":"color 150ms ease"},"hover":{"color":"token:color.foreground"},"is-active":{"color":"token:color.foreground","fontWeight":"token:weight.medium"}},"bind":{"label":"item.label","url":"item.url","state:active":"item.active"}}
 ::::::::
 :::::::
+::::::
+:::::
+
+::::: box {"id":"hdr-account","label":"Account","style":{"base":{"display":"flex","alignItems":"center"},"mobile":{"display":"none"}},"bind":{"visible":"accounts"}}
+:::::: link {"id":"hdr-sign-in","style":{"base":{"color":"token:color.muted","fontSize":"token:text.sm","transition":"color 150ms ease"},"hover":{"color":"token:color.foreground"}},"bind":{"label":"accounts.sign_in.label","url":"accounts.sign_in.url","hidden":"account"}}
+::::::
+
+:::::: link {"id":"hdr-my-account","style":{"base":{"color":"token:color.muted","fontSize":"token:text.sm","transition":"color 150ms ease"},"hover":{"color":"token:color.foreground"}},"bind":{"label":"accounts.account.label","url":"accounts.account.url","visible":"account"}}
 ::::::
 :::::
 
@@ -36,6 +44,14 @@ description: 'Site name, main menu and a menu button on phones.'
 :::::: box {"id":"hdr-panel-item","props":{"tag":"li"}}
 ::::::: link {"id":"hdr-panel-link","style":{"base":{"display":"block","paddingBlock":"token:space.3","fontSize":"token:text.lg"}},"bind":{"label":"item.label","url":"item.url"}}
 :::::::
+::::::
+:::::
+
+::::: box {"id":"hdr-panel-account","label":"Account","style":{"base":{"width":"100%","maxWidth":"token:container.content","marginInline":"auto","paddingInline":"token:space.gutter","paddingBottom":"token:space.4"}},"bind":{"visible":"accounts"}}
+:::::: link {"id":"hdr-panel-sign-in","style":{"base":{"display":"block","paddingBlock":"token:space.3","fontSize":"token:text.lg"}},"bind":{"label":"accounts.sign_in.label","url":"accounts.sign_in.url","hidden":"account"}}
+::::::
+
+:::::: link {"id":"hdr-panel-my-account","style":{"base":{"display":"block","paddingBlock":"token:space.3","fontSize":"token:text.lg"}},"bind":{"label":"accounts.account.label","url":"accounts.account.url","visible":"account"}}
 ::::::
 :::::
 ::::

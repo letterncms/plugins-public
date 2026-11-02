@@ -130,6 +130,10 @@ final class BlocksPlugin extends Plugin
 
             $features = $renderer()->features;
 
+            if (! empty($features['account']) && ! $renderer()->editor) {
+                $head[] = \Cms\Users\AccountInBrowser::script();
+            }
+
             // Editor placeholders stay available across rendered document updates.
             if ($renderer()->editor) {
                 $head[] = '<style data-cms-editor="placeholders">'.file_get_contents($this->path('resources/css/editor.css')).'</style>';
@@ -146,7 +150,7 @@ final class BlocksPlugin extends Plugin
                 $hooks->dispatch('render.warning', __('This page has an animation that runs forever and no Motion Toggle block to pause it.'));
             }
 
-            $features = array_values(array_diff($features, ['forever', 'motion-toggle']));
+            $features = array_values(array_diff($features, ['forever', 'motion-toggle', 'account']));
 
             if ($features === [] || $renderer()->editor) {
                 return $foot;
