@@ -178,7 +178,12 @@ export function Composer({ placeholder, focus, onSubmit, children }: ComposerPro
   const options = groups.flatMap((group) => group.options)
   const open = trigger !== null
 
-  useEffect(() => input.current?.focus(), [focus])
+  // A frame on: the panel may only now have come out, and what was clicked has just taken the focus.
+  useEffect(() => {
+    if (!focus) return
+    const frame = requestAnimationFrame(() => input.current?.focus())
+    return () => cancelAnimationFrame(frame)
+  }, [focus])
   useEffect(() => setActive(0), [trigger?.char, trigger?.query])
   // Writing away from a closed picker opens it again the next time.
   useEffect(() => { if (!found) setClosedAt(null) }, [found])

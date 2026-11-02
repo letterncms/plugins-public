@@ -411,8 +411,9 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
     d.addEventListener('keydown', (event) => {
       if (event.defaultPrevented) return
       const mod = event.metaKey || event.ctrlKey
-      if (mod && ['s', '.'].includes(event.key.toLowerCase())) {
-        event.preventDefault(); document.dispatchEvent(new KeyboardEvent('keydown', { key: event.key, metaKey: event.metaKey, ctrlKey: event.ctrlKey, shiftKey: event.shiftKey, bubbles: true })); return
+      // The admin's own shortcuts work from the canvas too: keys here don't reach its window.
+      if (mod && ['s', '.', 'j', 'k', '\\'].includes(event.key.toLowerCase())) {
+        event.preventDefault(); document.dispatchEvent(new KeyboardEvent('keydown', { key: event.key, code: event.code, metaKey: event.metaKey, ctrlKey: event.ctrlKey, shiftKey: event.shiftKey, bubbles: true })); return
       }
       if (latest.current.readOnly) return
       if (mod && event.key.toLowerCase() === 'z') {
