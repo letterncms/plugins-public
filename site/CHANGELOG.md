@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-02)
+
 ### Changed
 
 - **Preview** moved from the editor's top bar into its **More** menu.
