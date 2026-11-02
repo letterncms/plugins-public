@@ -147,10 +147,26 @@ final class Document
         foreach (is_array($attrs) ? array_slice($attrs, 0, 30, true) : [] as $name => $value) {
             if (is_string($name) && preg_match(self::ATTRIBUTE, strtolower($name)) && (is_scalar($value))) {
                 $out[strtolower($name)] = mb_substr(strip_tags((string) $value), 0, 300);
+            } elseif (is_string($name) && strtolower($name) === 'style' && is_string($value) && self::variables($value)) {
+                $out['style'] = trim($value);
             }
         }
 
         return $out;
+    }
+
+    /** A style attribute that only sets CSS variables, such as a section's own colours: `--color-primary:#d9432a`. */
+    private static function variables(string $style): bool
+    {
+        $declarations = array_filter(array_map('trim', explode(';', $style)), static fn ($d) => $d !== '');
+
+        foreach ($declarations as $declaration) {
+            if (! preg_match('/^--[a-z0-9-]{1,40}\s*:\s*(.{1,200})$/i', $declaration, $m) || Css::value(trim($m[1])) === null) {
+                return false;
+            }
+        }
+
+        return $declarations !== [] && strlen($style) <= 2000;
     }
 
     /**

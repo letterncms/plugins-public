@@ -615,7 +615,7 @@ final class Motion
 
             if ($kind === 'number' && is_numeric($value)) {
                 $out[$key] = (float) $value;
-            } elseif ($kind === 'length' && (is_numeric($value) || (is_string($value) && preg_match('/^-?[\d.]+(px|rem|em|vw|vh|%)$/', trim($value))))) {
+            } elseif ($kind === 'length' && (is_numeric($value) || (is_string($value) && (preg_match('/^-?[\d.]+(px|rem|em|vw|vh|%)$/', trim($value)) || (preg_match('/^(calc|min|max|clamp)\(/', trim($value)) && Css::value($value) !== null))))) {
                 $out[$key] = is_numeric($value) ? (float) $value : trim($value);
             } elseif ($kind === 'css' && is_string($value) && Css::value($value) !== null) {
                 $out[$key] = trim($value);
