@@ -2,7 +2,7 @@ import { can, events, getManifest, Link, run, t, useAbility, useAction, useLocat
 import { Button, Dock, Fields, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import { attachments } from './context'
-import { History, NewChatButton, Recent } from './History'
+import { History, NewChatButton } from './History'
 import { Markdown } from './Markdown'
 import { available, conversationAt, panel, usePanel } from './store'
 import { useChat, type Call, type Item, type Origin, type Part } from './useChat'
@@ -42,7 +42,7 @@ const useWide = () => useSyncExternalStore((change) => {
 }, () => wideQuery.matches)
 
 /**
- * The chat, on every screen: docked beside the page, which stays open and live
+ * The chat, on every screen: docked at the right edge, the page open and live
  * next to it. A chat's URL is the same surface at full size, the list of chats
  * beside it. It stays mounted while closed, so a reply keeps coming.
  */
@@ -160,7 +160,7 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
     <div className="cms-assistant flex h-full min-h-0" data-full={full || undefined} onKeyDown={onKeyDown}>
       {column && (
         <div className="flex w-[260px] shrink-0 flex-col border-r border-border">
-          <div className="flex h-12 shrink-0 items-center justify-between pl-4 pr-2">
+          <div className="flex h-12 shrink-0 items-center justify-between pl-[calc(1rem+var(--cms-sidebar-toggle,0px))] pr-2">
             <h2 className="m-0 text-sm font-semibold text-ink">{t('Chats')}</h2>
             <NewChatButton />
           </div>
@@ -168,13 +168,19 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
         </div>
       )}
       <section aria-label={title} data-empty={(full && empty) || undefined} className="cms-assistant-page relative flex min-w-0 flex-1 flex-col">
-        <header className="flex h-12 shrink-0 items-center gap-0.5 border-b border-border pl-2 pr-2">
-          {!column && (
-            <Tooltip content={listing ? t('Back to Chat') : t('All Chats')} side="bottom">
-              <IconButton icon={listing ? 'arrow-left' : 'chat'} label={listing ? t('Back to Chat') : t('All Chats')} title={undefined} active={listing} onClick={() => panel.set({ history: !listing })} />
+        <header className={cn('flex h-12 shrink-0 items-center gap-0.5 border-b border-border pr-2', full && !column ? 'pl-[calc(0.75rem+var(--cms-sidebar-toggle,0px))]' : 'pl-3')}>
+          {listing && (
+            <Tooltip content={t('Back to Chat')} side="bottom">
+              <IconButton icon="arrow-left" label={t('Back to Chat')} title={undefined} className="-ml-1 mr-0.5" onClick={() => panel.set({ history: false })} />
             </Tooltip>
           )}
-          <h2 className={cn('m-0 min-w-0 flex-1 truncate text-sm font-medium text-ink', column ? 'pl-2.5' : 'pl-1.5')}>{listing ? t('Chats') : title}</h2>
+          <h2 className="m-0 min-w-0 flex-1 truncate text-sm font-medium text-ink">{listing ? t('Chats') : title}</h2>
+          {!column && <NewChatButton />}
+          {!column && conversation && !listing && (
+            <Tooltip content={t('All Chats')} side="bottom">
+              <IconButton icon="history" label={t('All Chats')} title={undefined} onClick={() => panel.set({ history: true })} />
+            </Tooltip>
+          )}
           {conversation && !listing && (
             <Menu
               trigger={<IconButton icon="more" label={t('Chat Actions')} disabled={remove.isPending} />}
@@ -187,7 +193,6 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
               }]}
             />
           )}
-          {!column && <NewChatButton />}
           {canMaximize && (
             <Tooltip content={full ? t('Back to the Page') : t('Full Size')} side="bottom">
               <IconButton icon={full ? 'minimize' : 'maximize'} label={full ? t('Back to the Page') : t('Full Size')} title={undefined} onClick={() => (full ? panel.minimize() : panel.maximize())} />
@@ -200,13 +205,14 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
           )}
         </header>
         {listing ? <History /> : <>
+          {ready && empty && !column && <History />}
           <div
             ref={scroller}
             onScroll={(e) => {
               const el = e.currentTarget
               pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48
             }}
-            className="cms-assistant-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            className={cn('cms-assistant-scroll min-h-0 overflow-y-auto overscroll-contain', ready && empty && !column ? 'shrink-0' : 'flex-1')}
           >
             {status.isPending || chat.loading ? (
               <div className="grid h-full place-items-center text-faint"><Spinner /></div>
@@ -218,7 +224,7 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
             ) : !ready ? (
               <Setup />
             ) : chat.items.length === 0 ? (
-              <Welcome recent={!column} onPick={(text, send) => (send ? chat.send(text) : (setDraft(text), setFocus((f) => f + 1)))} />
+              <Welcome onPick={(text, send) => (send ? chat.send(text) : (setDraft(text), setFocus((f) => f + 1)))} />
             ) : (
               <div className="cms-assistant-thread cms-assistant-width space-y-6 py-5">
                 {chat.items.map((item, i) => (
@@ -287,19 +293,14 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
 function Attachments() {
   const state = usePanel()
   const screen = useScreen()
-  const { page, secret, selection, text } = attachments(screen, state)
-  if (!page && !secret && !selection && !text) {
+  const { page, selection, text } = attachments(screen, state)
+  if (!page && !selection && !text) {
     return screen.title && !screen.private
       ? <div className="flex flex-wrap gap-1 px-2 pt-2"><button type="button" onClick={() => panel.set({ dismissedPage: null })} className="cms-assistant-chip text-faint hover:text-text"><Icon name="plus" size={11} /><span className="truncate">{screen.title}</span></button></div>
       : null
   }
   return (
     <div className="flex flex-wrap gap-1 px-2 pt-2">
-      {secret && (
-        <Tooltip content={t('This screen stays private: {brand} does not see it.')}>
-          <span tabIndex={0} className="cms-assistant-chip pr-1.5 text-faint"><Icon name="lock" size={11} /><span className="truncate">{secret.title ?? t('Private')}</span></span>
-        </Tooltip>
-      )}
       {page && <Chip icon={page.icon ?? 'file'} label={page.title} hint={t('{brand} sees this page')} onRemove={() => panel.set({ dismissedPage: state.contextPath })} />}
       {selection && <Chip icon={selection.icon ?? 'square'} label={selection.label} hint={t('{brand} sees this block')} onRemove={() => panel.set({ dismissedSelection: selection.id })} />}
       {text && <Chip icon="quote" label={text.replace(/\s+/g, ' ')} hint={t('{brand} sees the text you selected')} onRemove={() => panel.set({ selectedText: '' })} />}
@@ -364,14 +365,14 @@ function Setup() {
       {pinned && <p className="m-0 pt-8 text-xs text-faint">
         {t('Not using AI? {brand} works fully without it.')}{' '}
         <button type="button" className="text-muted underline decoration-border-strong underline-offset-2 hover:text-text" onClick={() => { events.emit('sidebar.pin', { id: 'chat', pinned: false }); panel.close() }}>
-          {t('Unpin Chat')}
+          {t('Unpin New Chat')}
         </button>
       </p>}
     </div>
   )
 }
 
-function Welcome({ recent, onPick }: { recent: boolean; onPick: (text: string, send: boolean) => void }) {
+function Welcome({ onPick }: { onPick: (text: string, send: boolean) => void }) {
   const state = usePanel()
   const screen = useScreen()
   const { page, selection } = attachments(screen, state)
@@ -391,7 +392,7 @@ function Welcome({ recent, onPick }: { recent: boolean; onPick: (text: string, s
   ]
 
   return (
-    <div className="cms-assistant-welcome cms-assistant-width flex min-h-full flex-col justify-end py-5">
+    <div className="cms-assistant-welcome cms-assistant-width flex min-h-full flex-col justify-end pb-3 pt-2">
       <h2 className="cms-assistant-greeting m-0 font-semibold tracking-[-0.02em] text-ink">{t('What should we work on?')}</h2>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {ideas.slice(0, 5).map((idea) => (
@@ -405,7 +406,6 @@ function Welcome({ recent, onPick }: { recent: boolean; onPick: (text: string, s
           </button>
         ))}
       </div>
-      {recent && <Recent />}
     </div>
   )
 }

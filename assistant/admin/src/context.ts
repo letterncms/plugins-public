@@ -30,7 +30,6 @@ export function attachments(screen: ScreenContext, state: ReturnType<typeof pane
   const secret = screen.private === true
   return {
     page: !secret && !!screen.title && state.dismissedPage !== state.contextPath ? { title: screen.title, icon: screen.icon } : null,
-    secret: secret ? { title: screen.title } : null,
     selection: !secret && screen.selection && state.dismissedSelection !== screen.selection.id ? screen.selection : null,
     text: !secret ? state.selectedText : '',
   }
@@ -47,9 +46,10 @@ const carried = new Map<string, string>()
 export async function pageContext(conversation: string | null): Promise<{ context: PageContext; carry: (id: string) => void }> {
   const screen = screenContext.get()
   const state = panel.get()
-  const { page, selection, text, secret } = attachments(screen, state)
+  const { page, selection, text } = attachments(screen, state)
   const context: PageContext = {}
-  if (page || selection || text || secret) context.path = state.contextPath
+  // Where someone is, even on a screen that stays private; unless they took the page off this message.
+  if (page || selection || text || screen.private) context.path = state.contextPath
   if (!page && !selection && !text) return { context, carry: () => {} }
 
   await screen.flush?.()

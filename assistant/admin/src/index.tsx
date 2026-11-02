@@ -3,14 +3,14 @@ import { can, registry, t } from '@letterncms/sdk'
 import { EmptyState } from '@letterncms/ui'
 import { lazy } from 'react'
 import { ComposerField } from './fields'
-import { Launcher } from './Launcher'
+import { NavStatus } from './NavStatus'
 import { AssistantPanel } from './Panel'
 import { available, panel } from './store'
 
 registry.fields.set('assistant-composer', ComposerField as any)
 registry.panels.set('assistant', { id: 'assistant', slot: 'shell.dock', component: AssistantPanel })
 registry.widgets.set('assistant-ask', lazy(() => import('./WidgetAsk')))
-registry.panels.set('assistant-launcher', { id: 'assistant-launcher', slot: 'sidebar.footer', component: Launcher })
+registry.panels.set('assistant-status', { id: 'assistant-status', slot: 'nav.chat', component: NavStatus })
 // A chat's own URL is the dock at full size, over the page it came from. The dock owns streaming, so the route draws nothing.
 const ChatScreen = () => can('assistant.use') ? null : <EmptyState icon="lock" title={t('You do not have access to the assistant.')} className="min-h-[50vh]" />
 registry.routes.set('/chat/:id', { path: '/chat/:id', component: ChatScreen, overlay: true })

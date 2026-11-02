@@ -28,10 +28,9 @@ final class AssistantPlugin extends Plugin
     public function boot(): void
     {
         $this->cms()->permissions()->register('assistant.use', __('Use the AI assistant'), __('Assistant'));
-        // Above the account on every screen rather than a row of the list; under More when unpinned. Without an API key only those who can add one see it (it opens the setup).
-        $this->cms()->admin()->section('assistant', __('Assistant'), 90);
+        // Pinned first in the sidebar. It opens the chat beside the page; its path is the chat at full size. Without an API key only those who can add one see it (it opens the setup).
         $this->cms()->admin()->nav('chat', [
-            'label' => 'Chat', 'path' => '/chat/new', 'icon' => 'sparkle', 'section' => 'assistant', 'pinned' => true, 'shortcut' => 'mod+j', 'placement' => 'footer',
+            'label' => 'New Chat', 'path' => '/chat/new', 'icon' => 'compose', 'section' => 'main', 'order' => -10, 'pinned' => true, 'shortcut' => 'mod+j', 'command' => 'assistant',
             'permission' => 'assistant.use',
             'visible' => fn (User $user) => $this->app->make(Claude::class)->configured() || $user->hasPermission('settings.manage'),
         ]);
