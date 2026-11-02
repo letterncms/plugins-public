@@ -218,10 +218,17 @@ final class OAuthController
         $old = ApiToken::query()->find($row->api_token_id);
         $user = User::query()->find($row->user_id);
         DB::table('oauth_refresh_tokens')->where('token_hash', $row->token_hash)->delete();
-        $name = $old?->name ?? 'MCP client';
-        $old?->delete();
 
-        return $user ? $this->issue($user, $row->client_id, preg_replace('/^MCP: /', '', $name), (array) json_decode((string) $row->scopes, true)) : $this->tokenError('invalid_grant');
+        // A refresh token lives only as long as its access token: revoking that one under API Tokens
+        // disconnects the client, so its refresh token must not bring it back.
+        if (! $old || ! $user) {
+            return $this->tokenError('invalid_grant');
+        }
+
+        $name = $old->name;
+        $old->delete();
+
+        return $this->issue($user, $row->client_id, preg_replace('/^MCP: /', '', $name), (array) json_decode((string) $row->scopes, true));
     }
 
     private function issue(User $user, string $clientId, string $clientName, array $scopes): JsonResponse

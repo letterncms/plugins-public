@@ -117,6 +117,27 @@ final class McpTest extends TestCase
         $this->rpc($refreshed['access_token'], 'tools/list')->assertOk();
     }
 
+    public function test_a_revoked_connection_cannot_refresh(): void
+    {
+        $client = $this->postJson('/oauth/register', ['client_name' => 'Test agent', 'redirect_uris' => ['http://127.0.0.1:7777/callback']])->assertCreated()->json();
+        $verifier = str_repeat('v', 50);
+        $challenge = rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=');
+        $query = ['response_type' => 'code', 'client_id' => $client['client_id'], 'redirect_uri' => 'http://127.0.0.1:7777/callback', 'code_challenge' => $challenge, 'code_challenge_method' => 'S256', 'state' => 'xyz'];
+        $admin = $this->admin();
+        $redirect = $this->actingAs($admin)->post('/oauth/authorize', [...$query, 'decision' => 'approve'])->headers->get('Location');
+        parse_str((string) parse_url($redirect, PHP_URL_QUERY), $params);
+        $tokens = $this->postJson('/oauth/token', ['grant_type' => 'authorization_code', 'code' => $params['code'], 'client_id' => $client['client_id'], 'redirect_uri' => 'http://127.0.0.1:7777/callback', 'code_verifier' => $verifier])->assertOk()->json();
+
+        // Revoke under Account → API Tokens, which deletes the access token and knows nothing of refresh tokens.
+        $id = ApiToken::findByPlain($tokens['access_token'])->id;
+        cms()->abilities()->execute('tokens/revoke', ['id' => $id], \Cms\Abilities\AbilityContext::forUser($admin));
+
+        $this->rpc($tokens['access_token'], 'tools/list')->assertUnauthorized();
+        $this->postJson('/oauth/token', ['grant_type' => 'refresh_token', 'refresh_token' => $tokens['refresh_token'], 'client_id' => $client['client_id']])->assertStatus(400)->assertJsonPath('error', 'invalid_grant');
+        $this->assertSame(0, $admin->tokens()->count());
+        $this->assertSame(0, DB::table('oauth_refresh_tokens')->count());
+    }
+
     public function test_agents_lists_oauth_clients_and_their_changes(): void
     {
         $admin = $this->admin();
