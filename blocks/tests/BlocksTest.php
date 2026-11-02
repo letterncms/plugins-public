@@ -194,6 +194,80 @@ final class BlocksTest extends TestCase
         $this->assertSame($first, $second);
         $ids = [$first[0]['id'], $first[1]['id'], $first[1]['children'][0]['id']];
         $this->assertCount(3, array_unique($ids));
-        $this->assertMatchesRegularExpression('/^b[0-9a-f]{10}$/', $ids[0]);
+        $this->assertMatchesRegularExpression('/^m[0-9a-f]{10}$/', $ids[0]);
+    }
+
+    /** What a save does: the editor sends back what it read, the field cleans it, the file gets its Markdown. */
+    private function save(string $markdown): string
+    {
+        $field = \Cms\Content\Fields\Field::fromArray(['handle' => 'body', 'type' => 'blocks']);
+        $type = new \Cms\Blocks\BlocksField;
+
+        return $type->toMarkdown($type->normalize($type->fromMarkdown($markdown, $field), $field), $field);
+    }
+
+    public function test_saving_without_edits_leaves_hand_written_markdown_as_it_was(): void
+    {
+        $markdown = "# Title\n\nSome **bold**, a [link](/x) and a line  \nbreak.\n\n- One\n- Two\n\n> A quote\n\n```php\necho 1;\n```\n\n---\n\n![Alt](/a.png \"Caption\")\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n::: section\n## Inside\n\nText.\n:::";
+
+        $this->assertSame($markdown, $this->save($markdown));
+    }
+
+    public function test_saving_keeps_what_plain_markdown_cannot_say(): void
+    {
+        $markdown = implode("\n\n", [
+            '::: paragraph {"id":"hal-n","props":{"text":"Halden"}}'."\n:::",
+            '::: paragraph {"props":{"text":"portfolio/","tag":"span"}}'."\n:::",
+            '::: heading {"props":{"text":"Hello","level":"2","anchor":"hi"}}'."\n:::",
+            '::: paragraph {"props":{"text":""}}'."\n:::",
+            "- One",
+            '::: list {"props":{"ordered":false,"items":["Two"]}}'."\n:::",
+            '::: box {"id":"b1","logic":{"on":[{"event":"click","actions":[{"do":"toggle","target":"#m1"}]}]}}'."\n:::",
+        ]);
+
+        $saved = $this->save($markdown);
+        $nodes = MarkdownCodec::stableIds(app(MarkdownCodec::class)->decode($saved));
+
+        $this->assertSame(['paragraph', 'paragraph', 'heading', 'paragraph', 'list', 'list', 'box'], array_column($nodes, 'type'));
+        $this->assertSame('hal-n', $nodes[0]['id'], 'an id from the file stays: behaviors point at blocks by id');
+        $this->assertSame('span', $nodes[1]['props']['tag']);
+        $this->assertSame('hi', $nodes[2]['props']['anchor']);
+        $this->assertSame('', $nodes[3]['props']['text'], 'an empty paragraph is still there');
+        $this->assertSame(['Two'], $nodes[5]['props']['items'], 'two lists in a row stay two');
+        $this->assertSame($saved, $this->save($saved), 'a second save changes nothing');
+    }
+
+    public function test_an_id_reading_gave_stays_when_something_points_at_it(): void
+    {
+        $codec = app(MarkdownCodec::class);
+        $nodes = MarkdownCodec::stableIds($codec->decode("Plain text.\n\n::: box\n:::"));
+        $nodes[1]['logic'] = ['on' => [['event' => 'click', 'actions' => [['do' => 'toggle', 'target' => '#'.$nodes[0]['id']]]]]];
+
+        $read = MarkdownCodec::stableIds($codec->decode($codec->encode($nodes)));
+
+        $this->assertSame($nodes[0]['id'], $read[0]['id']);
+        $this->assertStringStartsWith('::: paragraph {"id":"'.$nodes[0]['id'].'"', $codec->encode($nodes));
+    }
+
+    public function test_saving_drops_empty_breakpoints_instead_of_turning_them_into_lists(): void
+    {
+        $saved = $this->save('::: box {"id":"x","style":{"base":{},"tablet":{"color":"token:color.ink"}}}'."\n:::");
+
+        $this->assertSame('::: box {"id":"x","style":{"tablet":{"color":"token:color.ink"}}}'."\n:::", $saved);
+    }
+
+    public function test_saving_keeps_heading_boxes_calc_motion_and_colour_variables(): void
+    {
+        $saved = $this->save(implode("\n\n", [
+            '::: box {"id":"h","props":{"tag":"h2"}}'."\n:::",
+            '::: box {"id":"m","motion":[{"id":"a","trigger":{"type":"appear"},"steps":[{"target":"self","at":0,"duration":0.5,"from":{"y":"calc(-1 * 8.25rem)"},"to":{"y":0}}]}]}'."\n:::",
+            '::: box {"id":"v","attrs":{"style":"--color-primary:#d9432a;--color-panel:#f3e4cf"}}'."\n:::",
+        ]));
+        $nodes = app(MarkdownCodec::class)->decode($saved);
+
+        $this->assertSame('h2', $nodes[0]['props']['tag']);
+        $this->assertSame('calc(-1 * 8.25rem)', $nodes[1]['motion'][0]['steps'][0]['from']['y']);
+        $this->assertSame('--color-primary:#d9432a;--color-panel:#f3e4cf', $nodes[2]['attrs']['style']);
+        $this->assertSame([], Document::attrs(['style' => 'color:red;--x:url(javascript:alert(1))']), 'a style attribute only sets variables');
     }
 }

@@ -12,7 +12,7 @@ use Cms\Support\Html\Sanitizer;
  */
 final class Elements
 {
-    public const array BOX_TAGS = ['div', 'section', 'header', 'footer', 'main', 'nav', 'aside', 'article', 'ul', 'ol', 'li', 'figure', 'figcaption', 'span', 'label', 'button', 'form', 'details', 'summary', 'dialog', 'address', 'blockquote', 'dl', 'dt', 'dd'];
+    public const array BOX_TAGS = ['div', 'section', 'header', 'footer', 'main', 'nav', 'aside', 'article', 'ul', 'ol', 'li', 'figure', 'figcaption', 'span', 'label', 'button', 'form', 'details', 'summary', 'dialog', 'address', 'blockquote', 'dl', 'dt', 'dd', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p'];
 
     public const array TEXT_TAGS = ['p', 'span', 'div', 'small', 'strong', 'em', 'label', 'li', 'figcaption', 'blockquote', 'cite', 'time', 'address', 'dt', 'dd', 'legend', 'kbd', 'code'];
 

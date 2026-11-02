@@ -46,7 +46,8 @@ final class BlocksField extends FieldType
             $value = app(MarkdownCodec::class)->decode($value);
         }
 
-        return app(Document::class)->normalize($value);
+        // Blocks without an id get the one reading would give them, which writing leaves out again.
+        return app(Document::class)->normalize(is_array($value) ? MarkdownCodec::stableIds($value) : $value);
     }
 
     public function defaultValue(Field $field): mixed
@@ -129,33 +130,7 @@ final class BlocksField extends FieldType
 
     public function fromMarkdown(string $markdown, Field $field): mixed
     {
-        return self::stableIds(app(MarkdownCodec::class)->decode($markdown));
-    }
-
-    /**
-     * Hand-written Block Markdown has no block ids, but the editor needs one per
-     * block. Derive them from each block's position so they are the same on
-     * every read; the editor writes them into the file on the next save.
-     */
-    public static function stableIds(array $nodes, string $path = 'r'): array
-    {
-        foreach ($nodes as $i => &$node) {
-            if (! is_array($node)) {
-                continue;
-            }
-
-            $here = $path.'.'.$i.':'.($node['type'] ?? '');
-
-            if (! is_string($node['id'] ?? null) || $node['id'] === '') {
-                $node['id'] = 'b'.substr(md5($here), 0, 10);
-            }
-
-            if (isset($node['children']) && is_array($node['children'])) {
-                $node['children'] = self::stableIds($node['children'], $here);
-            }
-        }
-
-        return $nodes;
+        return MarkdownCodec::stableIds(app(MarkdownCodec::class)->decode($markdown));
     }
 
     public function configFields(): array
