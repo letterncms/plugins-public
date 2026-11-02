@@ -1,4 +1,4 @@
-import { can, events, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, useScreen, type SurfaceAction } from '@letterncms/sdk'
+import { can, events, getManifest, Link, run, t, useAbility, useAction, useLocation, useManifest, useScreen, type ContextItem, type SurfaceAction } from '@letterncms/sdk'
 import { Button, Dock, Icon, IconButton, Menu, Spinner, Surface, Textarea, Tooltip, cn, confirm, toast } from '@letterncms/ui'
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react'
 import { Composer } from './Composer'
@@ -228,7 +228,7 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
             ) : !ready ? (
               <Setup />
             ) : chat.items.length === 0 ? (
-              <Welcome onPick={(text, send) => (send ? chat.send(text) : (setDraft(text), setFocus((f) => f + 1)))} />
+              <Welcome open={open} onPick={(text) => { setDraft(text); setFocus((f) => f + 1) }} />
             ) : (
               <div className="cms-assistant-thread cms-assistant-width space-y-6 py-5">
                 {chat.items.map((item, i) => (
@@ -334,37 +334,27 @@ function Setup() {
   )
 }
 
-function Welcome({ onPick }: { onPick: (text: string, send: boolean) => void }) {
+/** What to work on, fitting what's on view. They go into the composer, to read before sending. */
+function Welcome({ open, onPick }: { open: boolean; onPick: (text: string) => void }) {
   const state = usePanel()
   const screen = useScreen()
   const items = attachments(screen, state)
-  const page = items.some((item) => item.id === 'page')
-  const block = items.some((item) => item.kind === 'block')
-  const ideas: { label: string; text: string; send: boolean }[] = [
-    ...(block ? [
-      { label: t('Rewrite This Block'), text: t('Rewrite the selected block so it reads better. Keep what it says and show me what you changed.'), send: true },
-    ] : []),
-    ...(page && screen.kind === 'entry' ? [
-      { label: t('Tighten This Page'), text: t('Proofread this page: fix mistakes, tighten the copy and improve the SEO description. Show me what you changed.'), send: true },
-    ] : page ? [
-      { label: t('Explain This Screen'), text: t('What am I looking at here, and what stands out?'), send: true },
-    ] : []),
-    { label: t('Build a Landing Page'), text: t('Build a landing page for '), send: false },
-    { label: t('Draft a Blog Post'), text: t('Draft a blog post about '), send: false },
-    { label: t('Audit SEO'), text: t('Check every published page for SEO and accessibility problems and list the most important fixes. Do not change anything yet.'), send: true },
-    { label: t('Adjust the Design'), text: t('Change the design system so the site feels '), send: false },
-  ]
+  const suggested = useSuggestions(items, screen.kind, open)
+  const ideas = suggested.ideas ?? fallbackIdeas()
 
   return (
     <div className="cms-assistant-welcome cms-assistant-width flex min-h-full flex-col justify-end pb-3 pt-2">
       <h2 className="cms-assistant-greeting m-0 font-semibold tracking-[-0.02em] text-ink">{t('What should we work on?')}</h2>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {ideas.slice(0, 5).map((idea) => (
+      <div className="mt-3 flex min-h-7 flex-wrap gap-1.5">
+        {suggested.loading ? [84, 120, 96].map((width) => (
+          <span key={width} aria-hidden="true" className="cms-skeleton h-7 rounded-full bg-sunken" style={{ width }} />
+        )) : ideas.map((idea) => (
           <button
             key={idea.label}
             type="button"
-            onClick={() => onPick(idea.text, idea.send)}
-            className="min-h-7 rounded-full border border-border px-2.5 py-1 text-xs text-muted transition-colors hover:border-border-strong hover:bg-hover hover:text-text"
+            title={idea.prompt}
+            onClick={() => onPick(idea.prompt)}
+            className="min-h-7 rounded-full border border-border px-2.5 py-1 text-left text-xs text-muted transition-colors hover:border-border-strong hover:bg-hover hover:text-text"
           >
             {idea.label}
           </button>
@@ -372,6 +362,52 @@ function Welcome({ onPick }: { onPick: (text: string, send: boolean) => void }) 
       </div>
     </div>
   )
+}
+
+interface Idea {
+  label: string
+  prompt: string
+}
+
+const fallbackIdeas = (): Idea[] => [
+  { label: t('Build a Landing Page'), prompt: t('Build a landing page for ') },
+  { label: t('Draft a Blog Post'), prompt: t('Draft a blog post about ') },
+  { label: t('Audit SEO'), prompt: t('Check every published page for SEO and accessibility problems and list the most important fixes. Do not change anything yet.') },
+  { label: t('Adjust the Design'), prompt: t('Change the design system so the site feels ') },
+]
+
+/** How much of what's on view goes into a suggestion. */
+const SUGGESTION_CONTENT = 8000
+
+/** What the small model suggests for what's on view, once it has settled. Any trouble, and there are the usual ideas. */
+function useSuggestions(items: ContextItem[], kind: string | undefined, open: boolean) {
+  const page = items.find((item) => item.id === 'page')
+  const selected = items.filter((item) => item.id !== 'page' && item.kind !== 'selected_text').map((item) => item.label)
+  const key = page || selected.length ? JSON.stringify([page?.to, page?.label, selected]) : null
+  const [found, setFound] = useState<{ key: string; ideas: Idea[] | null } | null>(null)
+  const items$ = useRef(items)
+  items$.current = items
+
+  useEffect(() => {
+    if (!open || !key || found?.key === key) return
+    let canceled = false
+    // A new screen takes a moment to fill, and passing through one asks nothing.
+    const timer = setTimeout(async () => {
+      const current = items$.current.find((item) => item.id === 'page')
+      const content = await Promise.resolve().then(() => current?.read?.()).catch(() => undefined)
+      const text = typeof content === 'string' ? content : content ? JSON.stringify(content) : undefined
+      const ideas = await run<Idea[]>('assistant/suggest', { title: current?.label, kind, content: text?.slice(0, SUGGESTION_CONTENT), selected: selected.slice(0, 8) }).catch(() => null)
+      if (!canceled) setFound({ key, ideas: ideas?.length ? ideas : null })
+    }, 500)
+    return () => {
+      canceled = true
+      clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, key, found?.key])
+
+  if (!key) return { ideas: null, loading: false }
+  return found?.key === key ? { ideas: found.ideas, loading: false } : { ideas: null, loading: true }
 }
 
 interface SurfaceHostProps {

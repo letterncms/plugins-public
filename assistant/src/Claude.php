@@ -19,6 +19,9 @@ final class Claude
 {
     public const string DEFAULT_MODEL = 'claude-opus-5-5';
 
+    /** For the small jobs around a chat: naming it, suggesting what to do next. */
+    public const string DEFAULT_SMALL_MODEL = 'claude-haiku-5-5';
+
     /** @return array<string, array{name: string, description: string}> The models to choose from, most capable first, described in the reader's language. */
     public static function models(): array
     {
@@ -117,13 +120,21 @@ final class Claude
         ];
     }
 
+    /** The model for small jobs, from Settings → Assistant. */
+    public function smallModel(): string
+    {
+        $model = (string) $this->settings->get('assistant', 'small_model', self::DEFAULT_SMALL_MODEL);
+
+        return isset(self::models()[$model]) ? $model : self::DEFAULT_SMALL_MODEL;
+    }
+
     /**
      * One structured answer: the reply is JSON that matches $schema (structured
      * outputs), streamed so long answers never hit HTTP timeouts.
      */
-    public function json(string $system, string $prompt, array $schema, string $effort = 'low'): array
+    public function json(string $system, string $prompt, array $schema, string $effort = 'low', ?string $model = null): array
     {
-        $model = $this->model();
+        $model ??= $this->model();
         $fallback = in_array($model, self::FALLBACKS, true);
 
         $stream = $this->client()->beta->messages->createStream(
