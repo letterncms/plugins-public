@@ -1,4 +1,4 @@
-import { boot, can, getManifest, navigate, type ComposerOption, type ContextItem } from '@letterncms/sdk'
+import { boot, can, getManifest, navigate, useScreen, type ComposerOption, type ContextItem } from '@letterncms/sdk'
 import { useSyncExternalStore } from 'react'
 
 /** Where the chat is: out of the way, docked beside the page, or taking the whole window (a chat's own URL). */
@@ -6,6 +6,8 @@ export type Mode = 'closed' | 'docked' | 'full'
 
 interface State {
   mode: Mode
+  /** Over the page rather than beside it, by this person's choice. */
+  detached: boolean
   /** In the dock, the list of chats takes the thread's place. */
   history: boolean
   conversation: string | null
@@ -30,15 +32,16 @@ interface State {
 }
 
 const OPEN = 'cms.chat.open'
+const DETACHED = 'cms.chat.detached'
 const CURRENT = 'cms.chat.current'
 
 /** Reloading brings the chat back where it was; a phone or small window starts with the page. */
-function restored(): Pick<State, 'mode' | 'conversation'> {
+function restored(): Pick<State, 'mode' | 'conversation' | 'detached'> {
   try {
     const open = localStorage.getItem(OPEN) === 'true' && window.matchMedia('(min-width: 1024px)').matches
-    return { mode: open ? 'docked' : 'closed', conversation: sessionStorage.getItem(CURRENT) || null }
+    return { mode: open ? 'docked' : 'closed', conversation: sessionStorage.getItem(CURRENT) || null, detached: localStorage.getItem(DETACHED) === 'true' }
   } catch {
-    return { mode: 'closed', conversation: null }
+    return { mode: 'closed', conversation: null, detached: false }
   }
 }
 
@@ -72,6 +75,7 @@ function visit(id: string | null, replace = false) {
 function persist() {
   try {
     localStorage.setItem(OPEN, String(state.mode !== 'closed'))
+    localStorage.setItem(DETACHED, String(state.detached))
     if (state.conversation) sessionStorage.setItem(CURRENT, state.conversation)
     else sessionStorage.removeItem(CURRENT)
   } catch { /* Optional preference. */ }
@@ -84,7 +88,7 @@ export const panel = {
     const before = state
     state = { ...state, ...(patch.conversation !== undefined && patch.conversation !== state.conversation ? { title: '' } : {}), ...patch }
     listeners.forEach((listener) => listener())
-    if (state.mode !== before.mode || state.conversation !== before.conversation) persist()
+    if (state.mode !== before.mode || state.conversation !== before.conversation || state.detached !== before.detached) persist()
   },
   /** Bring it up, with the focus in its composer. */
   open() {
@@ -164,4 +168,9 @@ export const panel = {
 
 export function usePanel(): State {
   return useSyncExternalStore(panel.subscribe, panel.get)
+}
+
+/** Over the page: by choice, or because the screen has the right edge in use. */
+export function useFloating() {
+  return { chosen: usePanel().detached, required: useScreen().rightEdge === true }
 }

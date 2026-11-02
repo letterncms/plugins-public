@@ -5,7 +5,7 @@ import { Composer } from './Composer'
 import { attachments } from './context'
 import { History, NewChatButton } from './History'
 import { Markdown } from './Markdown'
-import { available, conversationAt, panel, usePanel } from './store'
+import { available, conversationAt, panel, useFloating, usePanel } from './store'
 import { useChat, type Call, type Item, type Part } from './useChat'
 
 interface Model {
@@ -50,6 +50,7 @@ const useWide = () => useSyncExternalStore((change) => {
 export function AssistantPanel() {
   const { path } = useLocation()
   const { mode, title } = usePanel()
+  const floating = useFloating()
   const id = conversationAt(path)
   useLayoutEffect(() => {
     const state = panel.get()
@@ -62,7 +63,7 @@ export function AssistantPanel() {
   }, [path, id])
   if (!available()) return null
   return (
-    <Dock open={mode !== 'closed'} full={mode === 'full'} label={title || t('New Chat')} onClose={panel.close}>
+    <Dock open={mode !== 'closed'} full={mode === 'full'} floating={floating.chosen || floating.required} label={title || t('New Chat')}>
       <Chat open={mode !== 'closed'} full={mode === 'full'} />
     </Dock>
   )
@@ -70,6 +71,7 @@ export function AssistantPanel() {
 
 function Chat({ open, full }: { open: boolean; full: boolean }) {
   const { conversation, prompt, drafts, models, focus: requestedFocus, history } = usePanel()
+  const float = useFloating()
   const wide = useWide()
   const canMaximize = useSyncExternalStore((change) => {
     const media = window.matchMedia('(min-width: 768px)')
@@ -172,7 +174,7 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
         </div>
       )}
       <section aria-label={title} data-empty={(full && empty) || undefined} className="cms-assistant-page relative flex min-w-0 flex-1 flex-col">
-        <header className={cn('flex h-12 shrink-0 items-center gap-0.5 border-b border-border pr-2', full && !column ? 'pl-[calc(0.75rem+var(--cms-sidebar-toggle,0px))]' : 'pl-3')}>
+        <header data-dock-drag className={cn('flex h-12 shrink-0 items-center gap-0.5 border-b border-border pr-2', full && !column ? 'pl-[calc(0.75rem+var(--cms-sidebar-toggle,0px))]' : 'pl-3')}>
           {listing && (
             <Tooltip content={t('Back to Chat')} side="bottom">
               <IconButton icon="arrow-left" label={t('Back to Chat')} title={undefined} className="-ml-1 mr-0.5" onClick={() => panel.set({ history: false })} />
@@ -196,6 +198,11 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
                 onSelect: deleteChat,
               }]}
             />
+          )}
+          {canMaximize && !full && !float.required && (
+            <Tooltip content={float.chosen ? t('Dock Beside the Page') : t('Detach')} side="bottom">
+              <IconButton icon={float.chosen ? 'sidebar' : 'detach'} label={float.chosen ? t('Dock Beside the Page') : t('Detach')} title={undefined} onClick={() => panel.set({ detached: !float.chosen })} />
+            </Tooltip>
           )}
           {canMaximize && (
             <Tooltip content={full ? t('Back to the Page') : t('Full Size')} side="bottom">

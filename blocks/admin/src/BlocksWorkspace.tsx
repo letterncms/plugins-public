@@ -1,5 +1,5 @@
 import { events, plural, t, useScreenContext, type EntryEditorProps } from '@letterncms/sdk'
-import { Button, IconButton, InspectorPanel, Popover, QueryError, ScreenSidebar, Spinner, closeDock, fieldControlId, useScreenSidebar, useWideInspector } from '@letterncms/ui'
+import { Button, IconButton, InspectorPanel, Popover, QueryError, ScreenSidebar, Spinner, fieldControlId, useScreenSidebar, useWideInspector } from '@letterncms/ui'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { EditorProvider, useCatalog, useEditorContext, type DocRef } from './core/context'
@@ -53,11 +53,11 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   useScreenContext({
     items: selection.flatMap((id) => {
       const node = tree.find(store.get().nodes, id)
-      return node ? [{ id, kind: 'block', label: types.get(node.type)?.title ?? t('Block'), icon: types.get(node.type)?.icon, read: () => tree.find(store.get().nodes, id) }] : []
+      // Named by what it says: that's how someone tells which one it is.
+      return node ? [{ id, kind: 'block', label: tree.summary(node, 40) || (types.get(node.type)?.title ?? t('Block')), icon: types.get(node.type)?.icon, read: () => tree.find(store.get().nodes, id) }] : []
     }),
   })
-  // Asking for a block's settings gives them the right edge; selecting one leaves a chat there alone.
-  const inspect = (id: string) => { store.select(id, true); setInspecting(true); props.setSidebarOpen(true); closeDock() }
+  const inspect = (id: string) => { store.select(id, true); setInspecting(true); props.setSidebarOpen(true) }
   useEffect(() => {
     if (selected && blockMode) { setInspecting(true); props.setSidebarOpen(true); if (!wide) outline.setOpen(false) }
     // Writing in a block makes it the active block too; it never opens a closed sidebar or a sheet over the text.
@@ -90,7 +90,7 @@ function Workspace({ props }: { props: EntryEditorProps }) {
       <IconButton icon="undo" label={t('Undo')} disabled={!undo} onClick={store.undo} />
       <IconButton icon="redo" label={t('Redo')} disabled={!redo} onClick={store.redo} />
     </>, props.toolbar)}
-    <ScreenSidebar title={t('Outline')}><Layers /></ScreenSidebar>
+    <ScreenSidebar title={t('Outline')} backTo={props.listPath} backLabel={props.collection.title}><Layers /></ScreenSidebar>
     <div className="flex min-h-0 flex-1">
       <main id={fieldControlId(props.bodyField)} tabIndex={-1} aria-label={props.bodyField.label} aria-describedby={props.errors[props.bodyField.handle] ? `${fieldControlId(props.bodyField)}-error` : undefined} className="flex min-w-0 flex-1 flex-col outline-none" data-editor-document>
         <LiveEditor collection={props.collection.handle} entryId={props.entry?.id} content={props.content} onTitleChange={!['templates', 'components'].includes(props.collection.handle) ? props.setTitle : undefined} onInspect={inspect} />
