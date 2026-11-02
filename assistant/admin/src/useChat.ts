@@ -127,6 +127,8 @@ export function useChat(conversation: string | null, { picked, fallback, offered
     let mutated = false
     let accepted = false
     const model = turnModel.current
+    // How a chat starts names it.
+    const starts = typeof body.message === 'string' && (!current.current || (body.edit as { index?: number } | undefined)?.index === 0)
 
     try {
       // Only what someone says carries the page; deciding and clicking go on from there.
@@ -215,9 +217,22 @@ export function useChat(conversation: string | null, { picked, fallback, offered
       }
       if (mutated) void queryClient.invalidateQueries()
       void queryClient.invalidateQueries({ queryKey: ['assistant/conversations'] })
+      if (starts && current.current) void nameChat(current.current)
     }
     return accepted
   }, [])
+
+  /** On the small model, after the first reply; until then the chat goes by its first words. */
+  const nameChat = async (id: string) => {
+    try {
+      const { title: named } = await run<{ title: string }>('assistant/conversation-title', { id })
+      if (current.current === id) {
+        setTitle(named)
+        panel.set({ title: named })
+      }
+      void queryClient.invalidateQueries({ queryKey: ['assistant/conversations'] })
+    } catch { /* It keeps the name it has. */ }
+  }
 
   const edit = useCallback((item: Extract<Item, { role: 'user' }>, text: string, onAccepted?: () => void) => {
     if (abort.current || loading || !current.current || item.messageIndex === undefined || !text.trim()) return Promise.resolve(false)

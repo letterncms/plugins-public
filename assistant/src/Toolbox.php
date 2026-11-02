@@ -101,11 +101,13 @@ final class Toolbox
 
     /**
      * Whether a call waits for the user's go-ahead: always for destructive
-     * actions and for admin-level ones kept away from external agents; for
-     * every change when the site asks for that, or once the chat has read
-     * content that could carry instructions from someone else.
+     * actions and for admin-level ones kept away from external agents, and for
+     * every change when the site asks for that. Once the chat has read content
+     * that could carry instructions from someone else, for anything that reaches
+     * visitors or can't be taken back. A draft does neither: nobody sees it until
+     * it's published, which asks, and its history keeps what was there.
      */
-    public function needsApproval(string $tool, string $mode, bool $untrusted = false): bool
+    public function needsApproval(string $tool, string $mode, bool $untrusted = false, array $input = []): bool
     {
         $ability = $this->ability($tool);
 
@@ -118,7 +120,20 @@ final class Toolbox
             return $untrusted && (bool) ($ability->annotations['openWorld'] ?? false);
         }
 
-        return $mode === 'writes' || $untrusted || $ability->isDestructive() || ! $ability->exposedTo('mcp');
+        if ($mode === 'writes' || $ability->isDestructive() || ! $ability->exposedTo('mcp')) {
+            return true;
+        }
+
+        return $untrusted && ! $this->staysDraft($ability, $input);
+    }
+
+    /** A change an ability marks as `draft` stays one unless this call publishes or schedules it. */
+    private function staysDraft(Ability $ability, array $input): bool
+    {
+        return ($ability->annotations['draft'] ?? false) === true
+            && empty($input['publish'])
+            && empty($input['at'])
+            && ($input['status'] ?? 'draft') === 'draft';
     }
 
     /**
