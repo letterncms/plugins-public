@@ -1,4 +1,4 @@
-import { events, plural, t, type EntryEditorProps } from '@letterncms/sdk'
+import { events, plural, t, useScreenContext, type EntryEditorProps } from '@letterncms/sdk'
 import { Button, IconButton, InspectorPanel, Popover, QueryError, Spinner, Tooltip, fieldControlId, useWideInspector } from '@letterncms/ui'
 import { useEffect, useRef, useState } from 'react'
 import { EditorProvider, useCatalog, useEditorContext, type DocRef } from './core/context'
@@ -48,9 +48,12 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   const [insert, setInsert] = useState(false)
   const [query, setQuery] = useState('')
   const wide = useWideInspector()
+  // Outline and inspector side by side need more room than the inspector alone.
+  const roomy = useWideInspector(1060)
+  useScreenContext({ selection: selected ? { id: selected.id, label: types.get(selected.type)?.title ?? t('Block'), icon: types.get(selected.type)?.icon, data: () => tree.find(store.get().nodes, selected.id) } : null })
   const inspect = (id: string) => { store.select(id, true); setInspecting(true); props.setSidebarOpen(true) }
   useEffect(() => {
-    if (selected && blockMode) { setInspecting(true); props.setSidebarOpen(true); if (!wide) setOutline(false) }
+    if (selected && blockMode) { setInspecting(true); props.setSidebarOpen(true); if (!roomy) setOutline(false) }
     // Writing in a block makes it the active block too; it never opens a closed sidebar or a sheet over the text.
     else if (selected && wide && props.sidebarOpen) setInspecting(true)
   }, [selected?.id, blockMode, wide])
@@ -84,7 +87,7 @@ function Workspace({ props }: { props: EntryEditorProps }) {
       <div className="min-w-0 flex-1" />
     </div>
     <div className="flex min-h-0 flex-1">
-      {outline && <InspectorPanel open onOpenChange={setOutline} title={t('Outline')} className={wide ? 'order-first !w-[248px] !border-l-0 border-r' : undefined}>
+      {outline && <InspectorPanel open docked={roomy} onOpenChange={setOutline} title={t('Outline')} className={roomy ? 'order-first !w-[248px] !border-l-0 border-r' : undefined}>
         <div className="flex h-10 shrink-0 items-center justify-between border-b border-border px-3"><span className="text-xs font-medium">{t('Outline')}</span><IconButton size="xs" icon="close" label={t('Close outline')} onClick={() => setOutline(false)} /></div>
         <div className="min-h-0 flex-1 overflow-y-auto"><Layers /></div>
       </InspectorPanel>}

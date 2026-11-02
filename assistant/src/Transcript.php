@@ -9,10 +9,13 @@ use Illuminate\Support\Str;
 /** Turns the stored model history into what the chat panel shows. */
 final class Transcript
 {
+    /** How the note about the page on view starts, among a user message's blocks. */
+    public const string PAGE_NOTE = '<page_on_view>';
+
     public function __construct(private readonly Toolbox $tools) {}
 
     /**
-     * @return list<array{role: 'user', text: string, messageIndex?: int}|array{role: 'assistant', parts: list<array>}>
+     * @return list<array{role: 'user', text: string, messageIndex?: int, page?: array{title: string, path: string}|null}|array{role: 'assistant', parts: list<array>}>
      */
     public function of(Conversation $conversation): array
     {
@@ -47,13 +50,15 @@ final class Transcript
 
                 $text = implode("\n\n", array_map(
                     static fn ($b) => $b['text'],
-                    array_filter($content, static fn ($b) => ($b['type'] ?? null) === 'text' && ! str_starts_with($b['text'], '<context>')),
+                    array_filter($content, static fn ($b) => ($b['type'] ?? null) === 'text' && ! str_starts_with($b['text'], '<context>') && ! str_starts_with($b['text'], self::PAGE_NOTE)),
                 ));
 
                 if ($text !== '') {
                     $item = ['role' => 'user', 'text' => $text];
                     if (is_string($message['content']) || array_any($content, static fn ($b) => ($b['type'] ?? '') === 'text' && str_starts_with($b['text'], '<context>'))) {
                         $item['messageIndex'] = $index;
+                        $page = self::origin($content);
+                        if ($page) $item['page'] = $page;
                     }
                     $items[] = $item;
                 }
@@ -95,5 +100,23 @@ final class Transcript
         }
 
         return $items;
+    }
+
+    /**
+     * The page a message was sent from, to show with it.
+     *
+     * @return array{title: string, path: string}|null
+     */
+    public static function origin(array $content): ?array
+    {
+        foreach ($content as $block) {
+            if (($block['type'] ?? null) === 'text' && str_starts_with($block['text'], self::PAGE_NOTE)) {
+                $page = json_decode(substr($block['text'], strlen(self::PAGE_NOTE), -strlen('</page_on_view>')), true);
+
+                return isset($page['title'], $page['path']) && preg_match('~^/[A-Za-z0-9/_.-]{0,199}$~', $page['path']) === 1 ? ['title' => $page['title'], 'path' => $page['path']] : null;
+            }
+        }
+
+        return null;
     }
 }

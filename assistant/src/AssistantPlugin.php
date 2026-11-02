@@ -28,13 +28,15 @@ final class AssistantPlugin extends Plugin
     public function boot(): void
     {
         $this->cms()->permissions()->register('assistant.use', __('Use the AI assistant'), __('Assistant'));
-        // Pinned first in the sidebar. Without an API key only those who can add one see it (it opens the setup).
+        // Above the account on every screen rather than a row of the list; under More when unpinned. Without an API key only those who can add one see it (it opens the setup).
+        $this->cms()->admin()->section('assistant', __('Assistant'), 90);
         $this->cms()->admin()->nav('chat', [
-            'label' => 'New Chat', 'path' => '/chat/new', 'icon' => 'compose', 'section' => 'main', 'order' => -10, 'pinned' => true, 'shortcut' => 'mod+j',
+            'label' => 'Chat', 'path' => '/chat/new', 'icon' => 'sparkle', 'section' => 'assistant', 'pinned' => true, 'shortcut' => 'mod+j', 'placement' => 'footer',
             'permission' => 'assistant.use',
             'visible' => fn (User $user) => $this->app->make(Claude::class)->configured() || $user->hasPermission('settings.manage'),
         ]);
-        $this->cms()->admin()->widget('assistant-ask', ['label' => 'Ask {brand}', 'description' => __('Ask the assistant from the home screen and pick up recent chats.'), 'icon' => 'sparkle', 'column' => 'side', 'order' => 15, 'permission' => 'assistant.use', 'assistant' => false]);
+
+        $this->cms()->admin()->widget('assistant-ask', ['label' => 'Ask {brand}', 'description' => __('Ask the assistant from the home screen.'), 'icon' => 'sparkle', 'column' => 'side', 'order' => 15, 'permission' => 'assistant.use', 'assistant' => false]);
 
         $this->cms()->settingsRegistry()->register('assistant', __('Assistant'), [
             ['handle' => 'api_key', 'type' => 'text', 'label' => 'Anthropic API Key', 'secret' => true, 'instructions' => 'From console.anthropic.com → API keys. Stored encrypted; ANTHROPIC_API_KEY in .env works too. For an API gateway or proxy, set ANTHROPIC_BASE_URL in .env.'],
