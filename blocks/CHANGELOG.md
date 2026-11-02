@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 (2026-11-02)
+
 ### Added
 
 - A block shown or hidden on `account` works on pages built in advance: both versions are in the page, and the browser shows the one for someone signed in or out before it's painted.
