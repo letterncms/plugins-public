@@ -4,6 +4,7 @@
 
 ### Fixed
 
+- Clicking into text on the canvas and leaving it no longer saves the page. Text the browser writes differently, such as a non-breaking space, counted as an edit and was changed without anyone typing.
 - The admin's shortcuts, such as `⌘J`, `⌘K` and `⌘\`, work with the cursor on the canvas.
 - A page whose blocks have short ids, or an id used twice, no longer opens with an empty canvas in the editor.
 
