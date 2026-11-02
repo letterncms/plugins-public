@@ -53,7 +53,7 @@ final class AssistantTest extends TestCase
         $this->assertSame('done', end($events)[0]);
 
         $request = $this->api->requests[0];
-        $this->assertSame('claude-opus-5-5', $request['body']['model']);
+        $this->assertSame('claude-sonnet-5-5', $request['body']['model']);
         $this->assertSame(['type' => 'adaptive', 'display' => 'summarized'], $request['body']['thinking']);
         $this->assertSame(['type' => 'ephemeral'], $request['body']['cache_control']);
         $this->assertSame('default', $request['body']['fallbacks']);
@@ -87,17 +87,17 @@ final class AssistantTest extends TestCase
     public function test_each_chat_keeps_the_model_picked_in_it(): void
     {
         $this->actingAs($this->admin());
-        $this->cms()->settingsRegistry()->save('assistant', ['model' => 'claude-sonnet-5-5']);
+        $this->cms()->settingsRegistry()->save('assistant', ['model' => 'claude-opus-5-5']);
 
         $this->postJson('/api/admin/abilities/assistant/status')->assertOk()
-            ->assertJsonPath('data.model', 'claude-sonnet-5-5')
+            ->assertJsonPath('data.model', 'claude-opus-5-5')
             ->assertJsonPath('data.models.0', ['id' => 'claude-fable-5-1', 'name' => 'Claude Fable 5.1', 'description' => 'Most capable, for the hardest tasks']);
 
         // Without a pick, a chat follows the default from Settings.
         $this->api->queue(FakeAnthropic::text('One'));
         $this->chat(['message' => 'First']);
         $conversation = Conversation::query()->sole();
-        $this->assertSame('claude-sonnet-5-5', $this->api->requests[0]['body']['model']);
+        $this->assertSame('claude-opus-5-5', $this->api->requests[0]['body']['model']);
         $this->assertNull($conversation->model);
 
         // A pick applies from that turn on, and stays with the chat.
@@ -433,23 +433,6 @@ final class AssistantTest extends TestCase
 
         $this->actingAs($this->admin(['email' => 'other@example.com']));
         $this->postJson('/api/admin/abilities/assistant/conversation-title', ['id' => $id])->assertNotFound();
-    }
-
-    public function test_suggestions_fit_what_is_on_view_and_are_kept_for_a_while(): void
-    {
-        $this->actingAs($this->admin());
-        $this->api->queue(FakeAnthropic::text('{"ideas":[{"label":"Tighten the Hero","prompt":"Tighten the hero of Home."},{"label":"","prompt":"Dropped"},{"label":"Add a FAQ","prompt":"Add a FAQ to Home."}]}'));
-
-        $screen = ['title' => 'Home', 'kind' => 'entry', 'content' => 'A new site, ready for your words'];
-        $this->postJson('/api/admin/abilities/assistant/suggest', $screen)->assertOk()->assertJsonPath('data', [
-            ['label' => 'Tighten the Hero', 'prompt' => 'Tighten the hero of Home.'],
-            ['label' => 'Add a FAQ', 'prompt' => 'Add a FAQ to Home.'],
-        ]);
-        $this->assertSame('claude-haiku-5-5', $this->api->requests[0]['body']['model']);
-        $this->assertStringContainsString('A new site, ready', json_encode($this->api->requests[0]['body']['messages']));
-
-        $this->postJson('/api/admin/abilities/assistant/suggest', $screen)->assertOk();
-        $this->assertCount(1, $this->api->requests);
     }
 
     public function test_trusted_reads_leave_direct_changes_alone(): void

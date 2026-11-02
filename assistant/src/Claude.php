@@ -17,9 +17,9 @@ use Psr\Http\Client\ClientInterface;
  */
 final class Claude
 {
-    public const string DEFAULT_MODEL = 'claude-opus-5-5';
+    public const string DEFAULT_MODEL = 'claude-sonnet-5-5';
 
-    /** For the small jobs around a chat: naming it, suggesting what to do next. */
+    /** For the small job around a chat: naming it. */
     public const string DEFAULT_SMALL_MODEL = 'claude-haiku-5-5';
 
     /** @return array<string, array{name: string, description: string}> The models to choose from, most capable first, described in the reader's language. */
@@ -27,8 +27,8 @@ final class Claude
     {
         return [
             'claude-fable-5-1' => ['name' => 'Claude Fable 5.1', 'description' => __('Most capable, for the hardest tasks')],
-            'claude-opus-5-5' => ['name' => 'Claude Opus 5.5', 'description' => __('Recommended for most site work')],
-            'claude-sonnet-5-5' => ['name' => 'Claude Sonnet 5.5', 'description' => __('Faster, for everyday edits')],
+            'claude-opus-5-5' => ['name' => 'Claude Opus 5.5', 'description' => __('More capable, for complex work')],
+            'claude-sonnet-5-5' => ['name' => 'Claude Sonnet 5.5', 'description' => __('Recommended for most site work')],
             'claude-haiku-5-5' => ['name' => 'Claude Haiku 5.5', 'description' => __('Fastest, for quick questions')],
         ];
     }
