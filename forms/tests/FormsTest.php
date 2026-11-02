@@ -31,6 +31,19 @@ final class FormsTest extends TestCase
         ]);
     }
 
+    public function test_a_forms_fields_are_not_blocks_of_the_page_it_is_embedded_in(): void
+    {
+        $renderer = app(\Cms\Blocks\BlockRenderer::class);
+        $renderer->editor = true;
+
+        $html = $renderer->withEditorDocument('page', fn () => $renderer->render([['id' => 'embed', 'type' => 'forms/form', 'props' => ['form' => 'quote']]]));
+
+        $this->assertStringContainsString('data-cms-node="embed"', $html);
+        $this->assertStringContainsString('name="email"', $html);
+        // Anything else the canvas found in this document, it would remove as deleted.
+        $this->assertSame(1, substr_count($html, 'data-cms-node='));
+    }
+
     public function test_valid_submission_is_stored(): void
     {
         $this->postJson('/api/forms/quote', ['name' => 'Ada', 'email' => 'ada@example.com', 'type' => 'site'])->assertOk()->assertJsonPath('ok', true);
