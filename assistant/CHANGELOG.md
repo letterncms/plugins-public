@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-02)
+
 ### Added
 
 - The chat works beside the page, on every screen. **Chat** in the top bar or `⌘J` opens it at the right edge, ready to type in. The page stays open and usable, and anything it changes shows there as it happens, in the builder too. Drag it wider, or take it to full size and back without losing your place.
