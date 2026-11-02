@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- **Preview** moved from the editor's top bar into its **More** menu.
+
 ### Added
 
 - Adds `/adjust-design` to the assistant's chat, and a prompt for MCP clients.

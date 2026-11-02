@@ -1,8 +1,8 @@
 import './styles.css'
-import { prefetchAbility, registry } from '@letterncms/sdk'
+import { events, prefetchAbility, registry, t } from '@letterncms/sdk'
 import { lazy } from 'react'
 import { DeclarationsField, EaseField, FileField, FontStackField, ShadowField, SizeField } from './fields'
-import { PreviewButton } from './PreviewButton'
+import { PreviewDialog } from './PreviewDialog'
 import { TemplateField } from './TemplateField'
 
 registry.fields.set('site-template', TemplateField)
@@ -13,5 +13,10 @@ registry.fields.set('site-file', FileField as any)
 registry.fields.set('site-ease', EaseField as any)
 registry.fields.set('site-shadow', ShadowField as any)
 registry.widgets.set('site-status', lazy(() => import('./WidgetSite')))
-registry.panels.set('site-preview', { id: 'site-preview', slot: 'entry.toolbar', component: PreviewButton, order: 10 })
+registry.panels.set('site-preview', { id: 'site-preview', slot: 'entry.toolbar', component: PreviewDialog, order: 10 })
+registry.entryActions.set('site-preview', {
+  id: 'site-preview', label: t('Preview'), icon: 'eye', order: 10,
+  when: ({ collection }) => !!(collection.route || collection.body),
+  perform: () => events.emit('entry.preview'),
+})
 registry.routes.set('/design', { path: '/design', component: lazy(() => import('./DesignTokens')), load: () => prefetchAbility('design/get') })
