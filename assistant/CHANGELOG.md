@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- New chats use Claude Sonnet 5.5 unless you pick another model. It handles everyday site work well, faster and at half the price of Opus. Claude Opus 5.5 is still in the model menu under the chat box. A default you saved under **Settings → Assistant** stays as it is.
+
+### Removed
+
+- A new chat no longer suggests what to work on. The suggestions called the model each time you opened a page, and a new chat is quieter without them. The chat still sees what you have on view.
+
 ## 0.2.0 (2026-11-02)
 
 ### Added

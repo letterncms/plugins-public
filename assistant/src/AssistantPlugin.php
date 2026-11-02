@@ -39,7 +39,7 @@ final class AssistantPlugin extends Plugin
             ['handle' => 'api_key', 'type' => 'text', 'label' => 'Anthropic API Key', 'secret' => true, 'instructions' => 'From console.anthropic.com → API keys. Stored encrypted; ANTHROPIC_API_KEY in .env works too. For an API gateway or proxy, set ANTHROPIC_BASE_URL in .env.'],
             ['handle' => 'model', 'type' => 'select', 'label' => 'Default Model', 'options' => array_map(static fn (array $model) => $model['name'], Claude::models()), 'default' => Claude::DEFAULT_MODEL, 'required' => true, 'display' => 'dropdown', 'width' => 'half'],
             ['handle' => 'effort', 'type' => 'select', 'label' => 'Effort', 'options' => Claude::efforts(), 'default' => 'medium', 'display' => 'dropdown', 'width' => 'half'],
-            ['handle' => 'small_model', 'type' => 'select', 'label' => 'Model for Small Tasks', 'instructions' => 'Names chats and suggests what to do next. These run often, so a fast and inexpensive model is the right one.', 'options' => array_map(static fn (array $model) => $model['name'], Claude::models()), 'default' => Claude::DEFAULT_SMALL_MODEL, 'required' => true, 'display' => 'dropdown', 'width' => 'half'],
+            ['handle' => 'small_model', 'type' => 'select', 'label' => 'Model for Small Tasks', 'instructions' => 'Names each chat after its first reply. A fast, inexpensive model is the right one.', 'options' => array_map(static fn (array $model) => $model['name'], Claude::models()), 'default' => Claude::DEFAULT_SMALL_MODEL, 'required' => true, 'display' => 'dropdown', 'width' => 'half'],
             ['handle' => 'approval', 'type' => 'select', 'label' => 'Ask Before', 'options' => ['destructive' => __('Anything live or hard to undo'), 'writes' => __('Every change')], 'default' => 'destructive', 'display' => 'radio'],
         ], icon: 'sparkle', description: __('The AI assistant in the admin: API key, model and when it asks for approval.'), package: $this->manifest->name, order: 60);
 
@@ -110,22 +110,6 @@ final class AssistantPlugin extends Plugin
             'package' => $this->manifest->name,
             'input' => ['type' => 'object', 'properties' => ['uri' => ['type' => 'string']], 'required' => ['uri']],
             'handler' => fn (array $in, AbilityContext $c) => $this->cms()->context()->read($in['uri'], $c->user)['text'] ?? throw new AbilityException(__('Not found.'), 'not_found'),
-        ]);
-
-        $a->register('assistant/suggest', [
-            'label' => 'Suggest Next Steps',
-            'description' => 'What to ask next, given what is on view. For a new chat.',
-            'permission' => 'assistant.use',
-            'annotations' => ['readOnly' => true],
-            'expose' => $expose,
-            'package' => $this->manifest->name,
-            'input' => ['type' => 'object', 'properties' => [
-                'title' => ['type' => 'string', 'maxLength' => 300],
-                'kind' => ['type' => 'string', 'maxLength' => 40],
-                'content' => ['type' => 'string', 'maxLength' => 8000],
-                'selected' => ['type' => 'array', 'items' => ['type' => 'string', 'maxLength' => 200], 'maxItems' => 8],
-            ]],
-            'handler' => fn (array $in) => $this->app->make(Claude::class)->configured() ? $this->app->make(Helper::class)->suggestions($in) : [],
         ]);
 
         $a->register('assistant/conversation-title', [
