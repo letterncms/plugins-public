@@ -2,7 +2,7 @@
     "name": "letterncms/forms",
     "description": "Form builder on the block editor, spam-protected submissions for static sites, notifications, confirmations, webhooks and an inbox.",
     "type": "cms-plugin",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
