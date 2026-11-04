@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- **Redirects** is one table you edit in place, with **New Redirect** above it; rows left empty are dropped when you save.
+
 ## 0.3.0 (2026-11-04)
 
 ### Changed

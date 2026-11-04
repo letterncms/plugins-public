@@ -151,6 +151,31 @@ final class FormRepository
         return $this->find($handle);
     }
 
+    /**
+     * Change a form as it is on disk now: the tabs of a form save at once (fields, settings,
+     * languages), each its own part, so one never writes back what another just changed.
+     *
+     * @param  callable(?array): array  $change  the form as stored (null when new) to what to save
+     */
+    public function update(string $handle, callable $change): array
+    {
+        if (! Files::isHandle($handle)) {
+            throw new InvalidArgumentException(__('Invalid form handle.'));
+        }
+
+        $lock = fopen(storage_path("framework/form-{$handle}.lock"), 'c');
+        flock($lock, LOCK_EX);
+
+        try {
+            $this->cache = null;
+
+            return $this->save($handle, $change($this->find($handle)));
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
     public function delete(string $handle): void
     {
         if (Files::isHandle($handle)) {

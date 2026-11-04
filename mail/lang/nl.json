@@ -22,7 +22,6 @@
   "Not sent to {recipient}": "Niet verstuurd naar {recipient}",
   "Password": "Wachtwoord",
   "Port": "Poort",
-  "Save your changes first": "Sla eerst je wijzigingen op",
   "Send Test Email": "Testmail versturen",
   "Send With": "Versturen met",
   "Sending failed: :error": "Versturen mislukt: :error",
@@ -38,6 +37,7 @@
   "STARTTLS (587)": "STARTTLS (587)",
   "Test email from :site": "Testmail van :site",
   "Test email sent to {email}": "Testmail verstuurd naar {email}",
+  "Test email sent to {user.email}": "Testmail verstuurd naar {user.email}",
   "This is a test from :site. If you can read it, email works.": "Dit is een test van :site. Kun je dit lezen, dan werkt e-mail.",
   "Username": "Gebruikersnaam"
 }

@@ -54,7 +54,7 @@ final class Toolbox
             ];
             $tools[] = [
                 'name' => self::UI_PRESENT,
-                'description' => 'Present a contextual interface using a json-render spec from ui_catalog. Use ui/stack and ui/grid to compose widgets, metrics, tables and actions. Each element uses type, props, children and optional on: {submit: {action: "namespace/ability", params: {...}}}. Actions run only when clicked, with normal permissions and approvals. Use real tool data; never invent metrics. Reuse an id to replace a surface in this reply.',
+                'description' => 'Present a contextual interface as a spec of components from ui_catalog: {root, elements} where elements maps ids to nodes. Use ui/stack and ui/grid to compose widgets, metrics, tables and actions. Each element uses type, props, children and optional on: {submit: {action: "namespace/ability", params: {...}}}. Actions run only when clicked, with normal permissions and approvals. Use real tool data; never invent metrics. Reuse an id to replace a surface in this reply.',
                 'input_schema' => $this->surfaces->schema(),
                 'eager_input_streaming' => true,
             ];

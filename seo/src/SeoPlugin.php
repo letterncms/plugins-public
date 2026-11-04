@@ -9,7 +9,9 @@ use Cms\Abilities\AbilityContext;
 use Cms\Abilities\AbilityException;
 use Cms\Content\Collections\Collection;
 use Cms\Content\Entries\Entry;
+use Cms\Modules\Settings\SettingsModule;
 use Cms\Packages\Plugin;
+use Cms\Users\User;
 
 final class SeoPlugin extends Plugin
 {
@@ -29,6 +31,24 @@ final class SeoPlugin extends Plugin
         }
     }
 
+    /** Redirects are a tab of the SEO settings: one table, saved from the save bar like the settings beside it. */
+    private function redirectsTab(): void
+    {
+        $this->cms()->hooks()->addFilter('view.settings', static fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'seo' || ! $user->hasPermission('seo.manage') ? $view : SettingsModule::withTab($view, [
+            'type' => 'ui/tab', 'props' => ['id' => 'redirects', 'label' => __('Redirects')], 'children' => [
+                ['type' => 'ui/form', 'props' => [
+                    'source' => ['ability' => 'redirects/list'], 'into' => 'redirects', 'width' => 'wide',
+                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('New Redirect'), 'empty' => __('No redirects'), 'fields' => [
+                        ['handle' => 'from', 'type' => 'text', 'label' => __('From'), 'mono' => true, 'placeholder' => '/old-url'],
+                        ['handle' => 'to', 'type' => 'text', 'label' => __('To'), 'mono' => true, 'placeholder' => __('/new-url or https://…')],
+                        ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('301 Permanent'), '302' => __('302 Temporary')]],
+                    ]]],
+                    'save' => ['ability' => 'redirects/save', 'as' => '*'],
+                ]],
+            ],
+        ]));
+    }
+
     public function boot(): void
     {
         $this->cms()->permissions()->register('seo.manage', __('Manage SEO Settings and Redirects'), __('Site'));
@@ -38,6 +58,7 @@ final class SeoPlugin extends Plugin
         $this->buildOutput();
         $this->routes();
         $this->abilities();
+        $this->redirectsTab();
 
         $this->cms()->admin()->widget('seo-health', ['label' => 'SEO Health', 'description' => __('How published pages score for search and AI answers, and what to fix first.'), 'icon' => 'seo', 'column' => 'main', 'order' => 45]);
         $this->adminModule();
@@ -350,9 +371,10 @@ final class SeoPlugin extends Plugin
             'permission' => 'seo.manage',
             'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['redirects' => ['type' => 'array', 'items' => ['type' => 'object', 'properties' => [
-                'from' => ['type' => 'string'], 'to' => ['type' => 'string'], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
-            ], 'required' => ['from', 'to']]]], 'required' => ['redirects']],
-            'handler' => fn (array $in) => $this->app->make(Redirects::class)->save($in['redirects']),
+                'from' => ['type' => 'string', 'default' => ''], 'to' => ['type' => 'string', 'default' => ''], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
+            ]]]], 'required' => ['redirects']],
+            // Rows left empty are no redirects: a table's new row that was never filled in is dropped, not refused.
+            'handler' => fn (array $in) => $this->app->make(Redirects::class)->save(array_values(array_filter($in['redirects'], static fn (array $r) => trim($r['from']) !== '' && trim($r['to']) !== ''))),
         ]);
     }
 }

@@ -30,9 +30,21 @@ final class Reports
         return [$to->subDays($days - 1), $to];
     }
 
-    private function counting(): bool
+    /** Page views only (the default), rather than visitors, sources and devices. */
+    public function counting(): bool
     {
         return $this->cms->settings(Collector::SETTINGS, 'mode', Collector::COUNTS) !== Collector::VISITORS;
+    }
+
+    public function enabled(): bool
+    {
+        return (bool) $this->cms->settings(Collector::SETTINGS, 'enabled', true);
+    }
+
+    /** Whether anything was ever counted in the current mode. */
+    public function tracked(): bool
+    {
+        return DB::table($this->counting() ? 'analytics_pages' : 'analytics_visitors')->exists();
     }
 
     /** Counts mode: page views only. What it can't know is null, not zero. */
@@ -54,8 +66,8 @@ final class Reports
             'previous' => $metrics($views($previousFrom, $previousTo)),
             'series' => array_map(static fn (string $day) => ['date' => $day, ...$metrics((int) ($days[$day] ?? 0))], $this->days($from, $to)),
             'current' => null,
-            'enabled' => (bool) $this->cms->settings(Collector::SETTINGS, 'enabled', true),
-            'tracked' => DB::table('analytics_pages')->exists(),
+            'enabled' => $this->enabled(),
+            'tracked' => $this->tracked(),
         ];
     }
 
@@ -98,8 +110,8 @@ final class Reports
             'series' => array_values($series),
             // Visitors whose last view was in the past five minutes.
             'current' => DB::table('analytics_visitors')->where('last_at', '>=', CarbonImmutable::now('UTC')->subMinutes(5)->toDateTimeString())->count(),
-            'enabled' => (bool) $this->cms->settings(Collector::SETTINGS, 'enabled', true),
-            'tracked' => DB::table('analytics_visitors')->exists(),
+            'enabled' => $this->enabled(),
+            'tracked' => $this->tracked(),
         ];
     }
 
@@ -110,6 +122,27 @@ final class Reports
      * @return array{dimension: string, total: int, items: list<array{key: ?string, label: string, visitors: int, views?: int, path?: string, entry?: array}>}
      */
     public function breakdown(string $period, string $dimension, int $limit = 10): array
+    {
+        $result = $this->rows($period, $dimension, $limit);
+        $total = $result['total'];
+        $site = rtrim((string) config('app.url'), '/');
+        $kinds = ['desktop' => 'desktop', 'mobile' => 'phone', 'tablet' => 'tablet'];
+
+        // Each value's share of the whole (0 to 1), a page's address on the site, and a kind of device's icon.
+        $result['items'] = array_map(static function (array $item) use ($total, $site, $dimension, $kinds) {
+            $count = $item['visitors'] ?? $item['views'] ?? 0;
+
+            return [...$item,
+                'share' => $total > 0 ? round($count / $total, 4) : 0,
+                ...(isset($item['path']) ? ['url' => $site.$item['path']] : []),
+                ...($dimension === 'devices' && isset($kinds[$item['key'] ?? '']) ? ['icon' => $kinds[$item['key']]] : []),
+            ];
+        }, $result['items']);
+
+        return $result;
+    }
+
+    private function rows(string $period, string $dimension, int $limit): array
     {
         [$from, $to] = $this->range($period);
         $between = [$from->toDateString(), $to->toDateString()];

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- The library's search, kind and folder are in the address, so a link opens it filtered.
+
 ## 0.3.0 (2026-11-04)
 
 ### Changed

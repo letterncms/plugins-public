@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- **Send Test Email** on the Email settings page is a button of the page's bar, sent to whoever presses it.
+
 ## 0.2.0 (2026-11-04)
 
 ### Changed

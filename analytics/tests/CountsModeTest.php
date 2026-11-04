@@ -228,4 +228,16 @@ final class CountsModeTest extends TestCase
         // The helper still works for visitors mode and forms.
         $this->assertNotSame('', DailySalt::today('forms'));
     }
+
+
+    public function test_the_place_is_a_view_of_what_is_counted(): void
+    {
+        $view = fn () => json_encode($this->cms()->abilities()->execute('views/get', ['id' => 'analytics'], AbilityContext::forUser($this->admin(), 'admin'))['root'], JSON_UNESCAPED_SLASHES);
+        $this->assertStringContainsString('No visits yet', $view());
+
+        DB::table('analytics_pages')->insert(['day' => now()->toDateString(), 'path' => '/pricing', 'views' => 3]);
+        $this->assertStringContainsString('analytics/overview', $view());
+        $this->assertStringNotContainsString('"sources"', $view());
+        $this->assertEquals(1, $this->cms()->abilities()->execute('analytics/breakdown', ['dimension' => 'pages'], AbilityContext::system())['items'][0]['share']);
+    }
 }

@@ -1,17 +1,13 @@
-import { can, invalidate, locale, plural, prefetchAbility, run, t, useAbility, type FieldDef } from '@letterncms/sdk'
+import { can, invalidate, locale, plural, run, setQuery, t, useAbility, useLocation, type FieldDef } from '@letterncms/sdk'
 import { Badge, Button, DataView, Dialog, EmptyState, Fields, Icon, IconButton, Menu, NoMatches, SelectionBar, confirm, cn, copyText, toast, readViewPrefs } from '@letterncms/ui'
-import { useState, type ReactNode } from 'react'
-import { formatBytes, upload, type MediaItem } from './upload'
+import { useEffect, useState } from 'react'
+import { formatBytes, libraryFolder, uploadAll, type MediaItem } from './upload'
 
-type Kind = 'all' | 'image' | 'video' | 'audio' | 'pdf' | 'file'
+const KINDS = ['all', 'image', 'video', 'audio', 'pdf', 'file'] as const
+type Kind = (typeof KINDS)[number]
 
 interface MediaFilters { search: string; kind: Kind; folder: string | null }
 const mediaInput = (filters: MediaFilters, page: number, sort: string | null) => ({ search: filters.search || undefined, kind: filters.kind, folder: filters.folder, page, perPage: 60, sort: sort ?? undefined })
-
-/** The route loader and rendered library share the same initial query and saved sort. */
-export function loadMediaLibrary() {
-  return prefetchAbility('media/list', mediaInput({ search: '', kind: 'all', folder: null }, 1, readViewPrefs('overview.media', 'grid').sort))
-}
 
 function filterFields(): FieldDef[] {
   return [
@@ -22,11 +18,25 @@ function filterFields(): FieldDef[] {
 
 /**
  * The media library. In "manage" mode clicking opens details; in "pick" mode
- * clicking selects (for media fields and image blocks).
+ * clicking selects (for media fields and image blocks). `bar`: the page's bar has the
+ * Upload button (the Media place, a view), so the library has none of its own.
  */
-export function Library({ mode = 'manage', accept = '*', multiple = false, selected = [], onSelectionChange, autoUpload = false, frame }: { mode?: 'manage' | 'pick'; accept?: string; multiple?: boolean; selected?: string[]; onSelectionChange?: (ids: string[], items: MediaItem[]) => void; autoUpload?: boolean; frame?: (parts: { upload: ReactNode; total: number | null; body: ReactNode }) => ReactNode }) {
-  const [filters, setFilters] = useState<MediaFilters>({ search: '', kind: accept.startsWith('image') ? 'image' : accept.startsWith('video') ? 'video' : accept === 'application/pdf' ? 'pdf' : 'all', folder: null })
+export function Library({ mode = 'manage', accept = '*', multiple = false, selected = [], onSelectionChange, autoUpload = false, bar = false }: { mode?: 'manage' | 'pick'; accept?: string; multiple?: boolean; selected?: string[]; onSelectionChange?: (ids: string[], items: MediaItem[]) => void; autoUpload?: boolean; bar?: boolean }) {
+  const { query } = useLocation()
+  // On the Media place the filters are in the address too: its count reads them (MediaPlugin::places), and a link keeps them.
+  const [filters, setFilters] = useState<MediaFilters>(() => bar
+    ? { search: query.search ?? '', kind: (KINDS as readonly string[]).includes(query.kind ?? '') ? query.kind as Kind : 'all', folder: query.folder || null }
+    : { search: '', kind: accept.startsWith('image') ? 'image' : accept.startsWith('video') ? 'video' : accept === 'application/pdf' ? 'pdf' : 'all', folder: null })
   const { kind, folder } = filters
+  useEffect(() => {
+    if (bar) setQuery({ search: filters.search || null, kind: filters.kind === 'all' ? null : filters.kind, folder: filters.folder })
+  }, [bar, filters])
+  // The page's Upload puts files in the folder on view.
+  useEffect(() => {
+    if (!bar) return
+    libraryFolder.current = folder ?? ''
+    return () => { libraryFolder.current = '' }
+  }, [bar, folder])
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState(() => readViewPrefs('overview.media', 'grid').sort)
   const [chosen, setChosen] = useState<Set<string>>(new Set())
@@ -39,34 +49,12 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
   // The upload button, in the page's top bar or the picker's toolbar: the one way to add files.
   const uploader = (field: Partial<FieldDef>): FieldDef[] => [{ handle: 'files', type: 'json', component: 'media-upload', label: t('Upload'), multiple: mode === 'manage' || multiple, accept: accept === '*' ? undefined : accept, ...field }]
 
-  // Progress shows where the person is looking, whatever they scroll to: one toast for the batch, then what came of it.
   const send = async (files: FileList | File[]) => {
-    const batch = Array.from(files)
-    if (!batch.length) return
-    const progress = batch.map(() => 0)
-    const title = plural(batch.length, 'Uploading {count} file…', 'Uploading {count} files…')
-    const id = toast.loading(title, { description: '0%' })
-    const report = () => toast.loading(title, { id, description: `${Math.round((progress.reduce((a, b) => a + b, 0) / batch.length) * 100)}%` })
-    const done: MediaItem[] = []
-    const failed: { name: string; error: unknown }[] = []
-    await Promise.all(
-      batch.map(async (file, index) => {
-        try {
-          done.push(await upload(file, folder ?? '', (p) => { progress[index] = p; report() }))
-        } catch (error) {
-          failed.push({ name: file.name, error })
-        }
-        progress[index] = 1
-      }),
-    )
-    invalidate('media/')
+    const done = await uploadAll(files, folder ?? '')
     if (done.length && mode === 'pick') {
       const ids = multiple ? [...selected, ...done.map((d) => d.id)] : [done[0].id]
       onSelectionChange?.(ids, done)
     }
-    if (done.length) toast.success(plural(done.length, '{count} file uploaded', '{count} files uploaded'), { id, description: undefined })
-    else toast.dismiss(id)
-    for (const { name, error } of failed) toast.error(t('Couldn’t upload {name}: {reason}', { name, reason: error instanceof Error ? error.message : String(error) }))
   }
 
   const toggle = (item: MediaItem) => {
@@ -75,7 +63,6 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
     onSelectionChange?.(next, [item])
   }
 
-  // A screen can place the upload button and the count in its own top bar (the Media screen does).
   const uploadButton = (autofocus = false) => allow ? <Fields layout="inline" bare fields={uploader({ variant: mode === 'manage' ? 'primary' : 'secondary', autofocus })} values={{}} onChange={(_, files) => void send(files)} /> : null
 
   const select = (ids: string[], on: boolean, records = items) => {
@@ -114,7 +101,7 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
         selected={(item) => open?.id === item.id}
         toolbar={blank ? undefined : <>
           <Fields layout="inline" bare className="flex min-w-0 flex-wrap items-center gap-2 max-sm:w-full" fields={[...filterFields(), ...(list.data?.folders.length ? [{ handle: 'folder', type: 'select', label: t('Folder'), size: 'sm' as const, placeholder: t('All Folders'), options: list.data.folders.map((f) => ({ value: f, label: f, icon: 'folder' })), className: 'w-44' }] : [])]} values={filters} onChange={filter} />
-          {!frame && uploadButton(autoUpload)}
+          {!bar && uploadButton(autoUpload)}
         </>}
         columns={[
           { id: 'name', label: t('Name'), sort: 'name', render: (item) => item.name },
@@ -129,8 +116,11 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
           { label: t('Copy URL'), icon: 'copy', onSelect: () => void copyText(new URL(item.url, location.origin).href, { copied: t('URL copied'), failed: t('Couldn’t copy the URL') }) },
           mode === 'manage' && can('media.delete') && { label: t('Delete'), icon: 'trash', danger: true, disabled: deleting, onSelect: () => void deleteItems([item.id]) },
         ]} />}
-        empty={filtered ? <NoMatches onClear={() => { setFilters({ search: '', kind: 'all', folder: null }); setPage(1) }} /> : <EmptyState icon="media" title={t('No files yet')} description={allow ? t('Images, videos and documents for your pages.') : undefined} action={frame ? undefined : uploadButton()} />}
+        empty={filtered ? <NoMatches onClear={() => { setFilters({ search: '', kind: 'all', folder: null }); setPage(1) }} /> : <EmptyState icon="media" title={t('No files yet')} description={allow ? t('Images, videos and documents for your pages.') : undefined} action={bar ? undefined : uploadButton()} />}
       />
+
+      {/* Opened to upload (?upload=1): the picker, with the page's own button in its bar. */}
+      {bar && autoUpload && <span className="hidden">{uploadButton(true)}</span>}
 
       {mode === 'manage' && <SelectionBar count={chosen.size} onClear={() => setChosen(new Set())}>{can('media.delete') && <Button size="sm" variant="ghost" loading={deleting} onClick={() => void deleteItems([...chosen])}>{t('Delete')}</Button>}</SelectionBar>}
 
@@ -138,7 +128,7 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
     </div>
   )
 
-  return frame ? frame({ upload: uploadButton(autoUpload), total: list.data?.total ?? null, body }) : body
+  return body
 }
 
 function Details({ item, onClose }: { item: MediaItem; onClose: () => void }) {

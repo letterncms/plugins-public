@@ -152,4 +152,12 @@ final class MediaTest extends TestCase
         $this->assertDirectoryDoesNotExist(public_path("_cms/img/{$item->id}"));
         $this->assertNull(MediaItem::query()->find($item->id));
     }
+
+
+    public function test_the_library_is_a_view(): void
+    {
+        $view = $this->cms()->abilities()->execute('views/get', ['id' => 'media'], AbilityContext::forUser($this->admin(), 'admin'))['root'];
+        $tab = $view['children'][0]['children'][0];
+        $this->assertSame(['media/library', 'media/upload'], [$tab['children'][0]['type'], $tab['props']['actions'][0]['component']]);
+    }
 }

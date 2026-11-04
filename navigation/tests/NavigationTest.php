@@ -116,4 +116,35 @@ final class NavigationTest extends TestCase
         $this->postJson('/api/admin/abilities/navigation/save', ['handle' => 'main', 'items' => []])->assertOk();
         $this->postJson('/api/admin/abilities/navigation/delete', ['handle' => 'main'])->assertOk()->assertJsonPath('data.deleted', true);
     }
+
+    /** @return array the view as the admin draws it for this person */
+    private function place(string $id, array $params = []): array
+    {
+        return $this->cms()->abilities()->execute('views/get', ['id' => $id, 'params' => $params], AbilityContext::forUser($this->admin(), 'admin'))['root'];
+    }
+
+    public function test_menus_are_views_and_made_renamed_and_deleted_from_them(): void
+    {
+        $this->assertSame('ui/records', $this->place('navigation')['children'][0]['type']);
+        $this->assertSame('ui/empty', $this->place('menu', ['handle' => 'gone'])['children'][0]['type']);
+
+        $menu = $this->ability('navigation/create', ['title' => 'Footer Links']);
+        $this->assertSame('footer-links', $menu['handle']);
+        $this->ability('navigation/save', ['handle' => 'footer-links', 'items' => [['url' => '/contact', 'label' => 'Contact']]]);
+        $this->ability('navigation/save', ['handle' => 'footer-links', 'title' => 'Footer']);
+
+        $saved = $this->ability('navigation/get', ['handle' => 'footer-links']);
+        $this->assertSame('Footer', $saved['title']);
+        $this->assertCount(1, $saved['items']);
+        $this->assertSame('navigation/menu', $this->place('menu', ['handle' => 'footer-links'])['children'][0]['type']);
+        $this->assertSame('1 link', $this->ability('navigation/list')[0]['links']);
+
+        // Said on the name in the New Menu dialog.
+        try {
+            $this->ability('navigation/create', ['title' => 'Footer links']);
+            $this->fail('A second footer-links menu was made.');
+        } catch (AbilityException $e) {
+            $this->assertSame(['conflict', 'title'], [$e->type, array_key_first($e->details)]);
+        }
+    }
 }

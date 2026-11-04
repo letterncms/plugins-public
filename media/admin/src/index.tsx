@@ -3,11 +3,14 @@ import { can, registry, run, t } from '@letterncms/sdk'
 import { lazy } from 'react'
 import { UploadField } from './fields'
 import { MediaField } from './MediaField'
-import { loadMediaLibrary } from './Library'
+import UploadAction from './UploadAction'
 
 registry.fields.set('media', MediaField as any)
 registry.fields.set('media-upload', UploadField as any)
-registry.routes.set('/media', { path: '/media', component: lazy(() => import('./MediaScreen')), load: loadMediaLibrary })
+// The place is a view (MediaPlugin::places): the library and its Upload are drawn here.
+registry.components.set('media/library', lazy(() => import('./MediaLibrary')))
+// Not lazy: the file picker opens in the same click.
+registry.components.set('media/upload', UploadAction)
 registry.widgets.set('media-recent', lazy(() => import('./WidgetRecent')))
 
 // @ in a chat: a file from the library, for the assistant to use or to change.

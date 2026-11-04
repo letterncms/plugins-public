@@ -39,9 +39,34 @@ final class MediaPlugin extends Plugin
         $admin->nav('media', ['path' => '/media', 'icon' => 'media', 'section' => 'content', 'order' => 70, 'pinned' => true, 'permission' => 'media.view']);
         $admin->command('upload-media', ['label' => 'Upload Files', 'icon' => 'upload', 'path' => '/media?upload=1', 'permission' => 'media.upload']);
         $admin->widget('media-recent', ['label' => 'Recent Uploads', 'description' => __('The latest files in the media library.'), 'icon' => 'media', 'column' => 'main', 'order' => 40, 'permission' => 'media.view']);
+        $this->places();
         $this->adminModule(import: '@letterncms/media');
 
         $this->cms()->context()->register('cms://media', 'Media library', 'The 50 most recent files with ids, alt text and sizes. Use ids in media fields and image blocks.', fn () => MediaItem::query()->latest()->limit(50)->get()->map->toPublic()->all());
+    }
+
+    /**
+     * The Media place, as data (see Cms\Admin\Views): its name and size, Upload in its bar, and
+     * the library (the plugin's `media/library`: the grid, filters, details and uploads).
+     */
+    private function places(): void
+    {
+        $admin = $this->cms()->admin();
+        $none = ['type' => 'object', 'properties' => (object) [], 'additionalProperties' => false];
+        $admin->component('media/library', ['label' => 'Media library', 'description' => 'Every file, as a grid or a table, to search, filter by kind and folder, open and delete.', 'surface' => false, 'permission' => 'media.view', 'props' => $none]);
+        $admin->component('media/upload', ['label' => 'Upload Files', 'description' => 'The file picker, for files into the library’s folder on view.', 'surface' => false, 'permission' => 'media.upload', 'props' => $none]);
+
+        $this->cms()->views()->register('media', '/media', static fn () => ['type' => 'ui/page', 'props' => [
+            'title' => __('Media'), 'icon' => 'media', 'width' => 'wide',
+            // How many the library shows: its filters are in the address.
+            'count' => ['source' => ['ability' => 'media/list', 'input' => ['perPage' => 1, 'search' => '{query.search}', 'kind' => '{query.kind}', 'folder' => '{query.folder}']], 'at' => 'total'],
+        ], 'children' => [
+            ['type' => 'ui/tabs', 'children' => [
+                ['type' => 'ui/tab', 'props' => ['id' => 'library', 'label' => __('Library'), 'actions' => [
+                    ['label' => __('Upload'), 'icon' => 'upload', 'variant' => 'primary', 'component' => 'media/upload', 'can' => 'media.upload'],
+                ]], 'children' => [['type' => 'media/library']]],
+            ]],
+        ]], permission: 'media.view');
     }
 
     /** content/media comes in with git or FTP: the table follows on sync, install, a full build or an admin visit. */

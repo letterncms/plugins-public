@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- A form's **Rename** and **Delete** are in its top bar, where its name was a field of its own, and its settings are in sections: what it does when sent, **Email** and **Submissions**. Someone who may only read submissions sees the settings and languages as they are.
+- **Export CSV** is in the top bar of the **Submissions** tab.
+- A Form block with no forms to choose from leads to **Forms** for **New Form**.
+
 ## 0.3.0 (2026-11-04)
 
 ### Changed

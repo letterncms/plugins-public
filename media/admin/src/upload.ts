@@ -1,4 +1,5 @@
-import { boot, CmsError, locale, t, xsrfToken, type RecordTimestamps } from '@letterncms/sdk'
+import { boot, CmsError, invalidate, locale, plural, t, xsrfToken, type RecordTimestamps } from '@letterncms/sdk'
+import { toast } from '@letterncms/ui'
 
 export interface MediaItem extends RecordTimestamps {
   id: string
@@ -45,6 +46,39 @@ export function upload(file: File, folder = '', onProgress?: (fraction: number) 
     xhr.send(form)
   })
 }
+
+/**
+ * Upload a batch where the person is looking, whatever they scroll to: one toast for its
+ * progress, then what came of it. Resolves with the files that arrived.
+ */
+export async function uploadAll(files: FileList | File[], folder = ''): Promise<MediaItem[]> {
+  const batch = Array.from(files)
+  if (!batch.length) return []
+  const progress = batch.map(() => 0)
+  const title = plural(batch.length, 'Uploading {count} file…', 'Uploading {count} files…')
+  const id = toast.loading(title, { description: '0%' })
+  const report = () => toast.loading(title, { id, description: `${Math.round((progress.reduce((a, b) => a + b, 0) / batch.length) * 100)}%` })
+  const done: MediaItem[] = []
+  const failed: { name: string; error: unknown }[] = []
+  await Promise.all(
+    batch.map(async (file, index) => {
+      try {
+        done.push(await upload(file, folder, (p) => { progress[index] = p; report() }))
+      } catch (error) {
+        failed.push({ name: file.name, error })
+      }
+      progress[index] = 1
+    }),
+  )
+  invalidate('media/')
+  if (done.length) toast.success(plural(done.length, '{count} file uploaded', '{count} files uploaded'), { id, description: undefined })
+  else toast.dismiss(id)
+  for (const { name, error } of failed) toast.error(t('Couldn’t upload {name}: {reason}', { name, reason: error instanceof Error ? error.message : String(error) }))
+  return done
+}
+
+/** The folder the library on view shows: where the Media place's Upload puts files. */
+export const libraryFolder = { current: '' }
 
 /** A file size in the admin's language (“12 kB”, “1,4 Mo”). */
 export function formatBytes(bytes: number): string {

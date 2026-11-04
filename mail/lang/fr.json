@@ -22,7 +22,6 @@
   "Not sent to {recipient}": "Non envoyé à {recipient}",
   "Password": "Mot de passe",
   "Port": "Port",
-  "Save your changes first": "Enregistrez d’abord vos modifications",
   "Send Test Email": "Envoyer un e-mail de test",
   "Send With": "Envoyer avec",
   "Sending failed: :error": "Échec de l’envoi : :error",
@@ -38,6 +37,7 @@
   "STARTTLS (587)": "STARTTLS (587)",
   "Test email from :site": "E-mail de test de :site",
   "Test email sent to {email}": "E-mail de test envoyé à {email}",
+  "Test email sent to {user.email}": "E-mail de test envoyé à {user.email}",
   "This is a test from :site. If you can read it, email works.": "Ceci est un test de :site. Si vous pouvez le lire, les e-mails fonctionnent.",
   "Username": "Nom d’utilisateur"
 }

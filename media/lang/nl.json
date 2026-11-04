@@ -1,9 +1,7 @@
 {
   "{count} character": "{count} teken",
   "{count} characters": "{count} tekens",
-  "{count} file": "{count} bestand",
   "{count} file uploaded": "{count} bestand geüpload",
-  "{count} files": "{count} bestanden",
   "{count} files uploaded": "{count} bestanden geüpload",
   "{count} selected": "{count} geselecteerd",
   "Actions for {name}": "Acties voor {name}",
@@ -52,6 +50,7 @@
   "MB": "MB",
   "Media": "Media",
   "Media id (see media/list), or an https:// or /path URL": "Media-id (zie media/list), of een https://- of /pad-URL",
+  "Media library": "Mediabibliotheek",
   "Media library: safe uploads, folders, alt text, focal points and responsive AVIF/WebP images.": "Mediabibliotheek: veilige uploads, mappen, alt-tekst, focuspunten en responsieve AVIF/WebP-afbeeldingen.",
   "Name": "Naam",
   "Network error during upload.": "Netwerkfout tijdens het uploaden.",
