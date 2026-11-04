@@ -18,8 +18,7 @@
         "letterncms/assistant": "*",
         "letterncms/brevo": "*",
         "letterncms/forms": "*",
-        "letterncms/seo": "*",
-        "letterncms/site": "*"
+        "letterncms/seo": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.0"
@@ -30,7 +29,6 @@
             "Cms\\Assistant\\Tests\\": "assistant/tests/",
             "Cms\\Forms\\Tests\\": "forms/tests/",
             "Cms\\Seo\\Tests\\": "seo/tests/",
-            "Cms\\Site\\Tests\\": "site/tests/",
             "Cms\\Tests\\": "vendor/letterncms/cms/tests/"
         }
     },

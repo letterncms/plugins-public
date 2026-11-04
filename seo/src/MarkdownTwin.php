@@ -94,8 +94,8 @@ final class MarkdownTwin
     /** Components, Repeats and bindings resolved, so the twin has the words visitors see. */
     private function materialize(Entry $entry, array $nodes): array
     {
-        return class_exists(\Cms\Site\Rendering\Renderer::class) && app()->bound(\Cms\Site\Rendering\Renderer::class)
-            ? app(\Cms\Site\Rendering\Renderer::class)->materialize($entry, $nodes)
+        return app()->bound(\Cms\Modules\Site\Rendering\Renderer::class)
+            ? app(\Cms\Modules\Site\Rendering\Renderer::class)->materialize($entry, $nodes)
             : $nodes;
     }
 

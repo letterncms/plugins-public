@@ -6,7 +6,7 @@ namespace Cms\Seo\Tests;
 
 use Cms\Content\Entries\EntryService;
 use Cms\Seo\Feeds;
-use Cms\Site\Build\SiteBuilder;
+use Cms\Modules\Site\Build\SiteBuilder;
 use Cms\Tests\TestCase;
 
 final class FeedsTest extends TestCase
