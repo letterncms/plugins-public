@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-11-04)
+
 ### Added
 
 - **Add to Menu** (`navigation/add`) adds one link at the end of a menu: a page, or any link. In the workspace, a page you just made, published or duplicated has **Add to Menu** in its answer.
