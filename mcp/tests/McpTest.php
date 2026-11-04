@@ -42,6 +42,18 @@ final class McpTest extends TestCase
         $this->assertNotContains('tokens.create', $adminTools, 'token minting is never exposed to agents');
     }
 
+    public function test_plugins_can_be_turned_on_or_off_and_clients_are_told_to_ask(): void
+    {
+        [, $admin] = ApiToken::issue($this->admin(), 'a');
+        $tools = array_column($this->rpc($admin, 'tools/list')->json('result.tools'), null, 'name');
+
+        foreach (['packages.switch', 'packages.enable', 'packages.disable', 'packages.uninstall'] as $name) {
+            $this->assertArrayHasKey($name, $tools);
+            $this->assertTrue($tools[$name]['annotations']['destructiveHint'], "{$name} asks first");
+        }
+        $this->assertArrayNotHasKey('packages.sync', $tools);
+    }
+
     public function test_tools_call_runs_abilities_and_reports_errors_as_results(): void
     {
         [, $token] = ApiToken::issue($this->admin(), 'a');

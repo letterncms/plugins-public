@@ -4,35 +4,30 @@ declare(strict_types=1);
 
 namespace Cms\Assistant;
 
-use Illuminate\Support\Facades\Route;
 use Cms\Abilities\AbilityContext;
 use Cms\Abilities\AbilityException;
-use Cms\Assistant\Http\ChatController;
 use Cms\Packages\Plugin;
-use Cms\Users\User;
 
 /**
- * Claude inside the admin. It works only through abilities, as the signed-in
- * user and through the `assistant` transport — the same surface MCP agents
- * get — so it can never do more than the person could do by hand.
+ * Claude in the workspace: the agent that answers plain language in its threads
+ * (Cms\Contracts\Agent). It works only through abilities, as the signed-in user
+ * and through the `assistant` transport — the same surface MCP agents get — so it
+ * can never do more than the person could do by hand.
  */
 final class AssistantPlugin extends Plugin
 {
     public function register(): void
     {
-        foreach ([Claude::class, Toolbox::class, Agent::class, Transcript::class, Translator::class, Helper::class] as $service) {
+        foreach ([Claude::class, Toolbox::class, Agent::class, Translator::class, Helper::class] as $service) {
             $this->app->singleton($service);
         }
+
+        $this->app->singleton(\Cms\Contracts\Agent::class, static fn ($app) => $app->make(Agent::class));
     }
 
     public function boot(): void
     {
         $this->cms()->permissions()->register('assistant.use', __('Use the AI Assistant'), __('Assistant'));
-        // Whether there's an API key, for the admin: without one, only those who can add one see the chat (it opens the setup).
-        $this->cms()->hooks()->addFilter('admin.manifest', fn (array $manifest) => [
-            ...$manifest,
-            'config' => [...($manifest['config'] ?? []), 'assistant' => ['configured' => $this->app->make(Claude::class)->configured()]],
-        ]);
         $this->cms()->admin()->widget('assistant-ask', ['label' => 'Ask {brand}', 'description' => __('Ask the assistant from the Dashboard.'), 'icon' => 'sparkle', 'column' => 'side', 'order' => 15, 'permission' => 'assistant.use', 'assistant' => false]);
 
         $this->cms()->settingsRegistry()->register('assistant', fields: [
@@ -43,27 +38,20 @@ final class AssistantPlugin extends Plugin
             ['handle' => 'approval', 'type' => 'select', 'label' => 'Ask Before', 'options' => ['destructive' => __('Deletes and Admin Changes'), 'writes' => __('Every Change')], 'default' => 'destructive', 'display' => 'radio'],
         ], icon: 'sparkle', description: __('API key, models and approvals.'), package: $this->manifest->name);
 
-        Route::middleware(['web', 'cms.installed', 'auth:web', 'cms.admin', 'cms.locale', 'throttle:20,1'])
-            ->post('/api/admin/assistant/chat', ChatController::class);
-
         $this->abilities();
-
-        // The foreign key cascades too; this also covers databases that do not enforce it.
-        User::deleted(static fn (User $user) => Conversation::query()->where('user_id', $user->id)->delete());
 
         // Machine translation for letterncms/i18n, when an API key is set.
         $this->cms()->hooks()->addFilter('i18n.translator', fn (?\Closure $translator) => $translator
             ?? ($this->app->make(Claude::class)->configured() ? $this->app->make(Translator::class)(...) : null));
 
-        $this->adminModule(import: '@letterncms/assistant');
+        $this->adminModule();
     }
 
     private function abilities(): void
     {
         $a = $this->cms()->abilities();
-        // Conversations belong to the admin UI only: no tokens, agents or CLI.
+        // What the workspace's composer asks for: the admin's own, no tokens, agents or CLI.
         $expose = ['rest' => false, 'mcp' => false, 'cli' => false, 'assistant' => false];
-        $mine = static fn (AbilityContext $c) => Conversation::query()->where('user_id', $c->user?->id ?? throw new AbilityException(__('Authentication required.'), 'unauthenticated'));
 
         $a->register('assistant/status', [
             'label' => 'Assistant Status',
@@ -81,7 +69,7 @@ final class AssistantPlugin extends Plugin
 
         $a->register('assistant/skills', [
             'label' => 'List Assistant Skills',
-            'description' => 'What / offers in a chat: the skills this person may use.',
+            'description' => 'What / offers in a thread: the skills this person may use.',
             'permission' => 'assistant.use',
             'annotations' => ['readOnly' => true],
             'expose' => $expose,
@@ -93,7 +81,7 @@ final class AssistantPlugin extends Plugin
 
         $a->register('assistant/resources', [
             'label' => 'List Assistant Resources',
-            'description' => 'What @ offers in a chat besides content: the context resources this person may read.',
+            'description' => 'What @ offers in a thread besides content: the context resources this person may read.',
             'permission' => 'assistant.use',
             'annotations' => ['readOnly' => true],
             'expose' => $expose,
@@ -103,74 +91,13 @@ final class AssistantPlugin extends Plugin
 
         $a->register('assistant/resource', [
             'label' => 'Read Assistant Resource',
-            'description' => 'One context resource, for a chat that attaches it.',
+            'description' => 'One context resource, for a message that attaches it.',
             'permission' => 'assistant.use',
             'annotations' => ['readOnly' => true],
             'expose' => $expose,
             'package' => $this->manifest->name,
             'input' => ['type' => 'object', 'properties' => ['uri' => ['type' => 'string']], 'required' => ['uri']],
             'handler' => fn (array $in, AbilityContext $c) => $this->cms()->context()->read($in['uri'], $c->user)['text'] ?? throw new AbilityException(__('Not found.'), 'not_found'),
-        ]);
-
-        $a->register('assistant/conversation-title', [
-            'label' => 'Name Assistant Chat',
-            'description' => 'Give one of your chats a short name from how it starts.',
-            'permission' => 'assistant.use',
-            'expose' => $expose,
-            'package' => $this->manifest->name,
-            'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']],
-            'handler' => function (array $in, AbilityContext $c) use ($mine) {
-                $conversation = $mine($c)->findOrFail($in['id']);
-                $conversation->title = $this->app->make(Helper::class)->title($conversation);
-                $conversation->save();
-
-                return $conversation->summary();
-            },
-        ]);
-
-        $a->register('assistant/conversations', [
-            'label' => 'List Assistant Chats',
-            'description' => 'Your recent chats with the assistant, newest first.',
-            'permission' => 'assistant.use',
-            'annotations' => ['readOnly' => true],
-            'expose' => $expose,
-            'package' => $this->manifest->name,
-            'input' => ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100], 'offset' => ['type' => 'integer', 'minimum' => 0]]],
-            'handler' => static fn (array $in, AbilityContext $c) => $mine($c)->latest('updated_at')->orderByDesc('id')->offset($in['offset'] ?? 0)->limit($in['limit'] ?? 30)->get()->map->summary()->all(),
-        ]);
-
-        $a->register('assistant/conversation', [
-            'label' => 'Get Assistant Chat',
-            'description' => 'One of your chats as shown in the panel, with calls waiting for approval.',
-            'permission' => 'assistant.use',
-            'annotations' => ['readOnly' => true],
-            'expose' => $expose,
-            'package' => $this->manifest->name,
-            'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']],
-            'handler' => function (array $in, AbilityContext $c) use ($mine) {
-                $conversation = $mine($c)->findOrFail($in['id']);
-                $agent = $this->app->make(Agent::class);
-
-                return [
-                    ...$conversation->summary(),
-                    // Null for chats that follow the default model.
-                    'model' => $conversation->model,
-                    'items' => $this->app->make(Transcript::class)->of($conversation),
-                    'awaiting' => array_map(static fn ($call) => $agent->describe($call, $conversation->untrusted), (array) ($conversation->pending['awaiting'] ?? [])),
-                    'usage' => $conversation->usage,
-                ];
-            },
-        ]);
-
-        $a->register('assistant/conversation-delete', [
-            'label' => 'Delete Assistant Chat',
-            'description' => 'Delete one of your chats.',
-            'permission' => 'assistant.use',
-            'annotations' => ['destructive' => true],
-            'expose' => $expose,
-            'package' => $this->manifest->name,
-            'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']],
-            'handler' => static fn (array $in, AbilityContext $c) => ['deleted' => (bool) $mine($c)->whereKey($in['id'])->delete()],
         ]);
     }
 }

@@ -127,7 +127,7 @@ final class Toolbox
             return $untrusted && (bool) ($ability->annotations['openWorld'] ?? false);
         }
 
-        if ($mode === 'writes' || $ability->isDestructive() || ! $ability->exposedTo('mcp')) {
+        if ($mode === 'writes' || $ability->asksFirst() || ! $ability->exposedTo('mcp')) {
             return true;
         }
 

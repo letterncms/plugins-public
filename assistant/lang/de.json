@@ -1,25 +1,6 @@
 {
-  "An AI assistant inside the admin that builds and edits the site with abilities, as the signed-in user.": "Ein KI-Assistent im Admin-Bereich, der die Website über Abilities baut und bearbeitet, als angemeldeter Nutzer.",
-  "{brand} sees the text you selected": "{brand} sieht den markierten Text",
-  "{brand} sees this block": "{brand} sieht diesen Block",
-  "{brand} sees this page": "{brand} sieht diese Seite",
-  "All Chats": "Alle Chats",
-  "Back to Chat": "Zurück zum Chat",
-  "Back to the Page": "Zurück zur Seite",
-  "Close": "Schließen",
-  "Customize Sidebar…": "Seitenleiste anpassen…",
-  "Explain This Screen": "Diesen Bildschirm erklären",
-  "Full Size": "Vollbild",
-  "Older": "Älter",
-  "Previous 7 Days": "Letzte 7 Tage",
-  "Remove {name}": "{name} entfernen",
-  "Rewrite the selected block so it reads better. Keep what it says and show me what you changed.": "Schreibe den ausgewählten Block so um, dass er sich besser liest. Behalte die Aussage bei und zeig mir, was du geändert hast.",
-  "Rewrite This Block": "Diesen Block umschreiben",
-  "Today": "Heute",
-  "Unpin": "Lösen",
-  "Waiting for your go-ahead": "Wartet auf dein Okay",
-  "What am I looking at here, and what stands out?": "Was sehe ich hier, und was fällt auf?",
   "Ask {brand}": "{brand} fragen",
   "Ask anything about your site": "Frag alles zu deiner Website",
-  "Ask the assistant from the Dashboard.": "Frag den Assistenten vom Dashboard aus."
+  "Ask the assistant from the Dashboard.": "Frag den Assistenten vom Dashboard aus.",
+  "Claude in the workspace: it answers in plain words and builds and edits the site with abilities, as the signed-in user.": "Claude im Arbeitsbereich: antwortet in einfachen Worten und baut und bearbeitet die Website über Abilities, als angemeldeter Nutzer."
 }

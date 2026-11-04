@@ -1,12 +1,12 @@
 {
     "name": "letterncms/assistant",
-    "description": "An AI assistant inside the admin that builds and edits the site with abilities, as the signed-in user.",
+    "description": "Claude in the workspace: it answers in plain words and builds and edits the site with abilities, as the signed-in user.",
     "type": "cms-plugin",
     "version": "0.6.1",
     "license": "MIT",
     "require": {
         "php": "^8.4",
-        "letterncms/cms": ">=0.4 <1"
+        "letterncms/cms": ">=0.6 <1"
     },
     "autoload": {
         "psr-4": {

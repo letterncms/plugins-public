@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Files are found by the workspace's search, by name, alt text or file name.
+
 ## 0.4.1 (2026-11-04)
 
 ### Fixed

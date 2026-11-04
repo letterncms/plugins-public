@@ -1,6 +1,6 @@
 # Assistant
 
-An AI assistant inside the admin that builds and edits the site with abilities, as the signed-in user.
+Claude in the workspace: it answers in plain words and builds and edits the site with abilities, as the signed-in user.
 
 ## Install
 

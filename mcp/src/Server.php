@@ -173,7 +173,7 @@ final class Server
             'annotations' => array_filter([
                 'title' => $ability->label,
                 'readOnlyHint' => $ability->isReadOnly(),
-                'destructiveHint' => $ability->isDestructive() ?: ($ability->isReadOnly() ? null : false),
+                'destructiveHint' => $ability->asksFirst() ?: ($ability->isReadOnly() ? null : false),
                 'idempotentHint' => ($ability->annotations['idempotent'] ?? null) ?: null,
                 'openWorldHint' => false,
             ], static fn ($v) => $v !== null),

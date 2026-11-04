@@ -12,6 +12,7 @@ use Cms\Abilities\AbilityException;
 use Cms\Blocks\BlockRegistry;
 use Cms\Forms\Http\FileController;
 use Cms\Forms\Http\SubmitController;
+use Cms\Modules\Workspace\Answers;
 use Cms\Packages\Plugin;
 use Throwable;
 
@@ -216,6 +217,12 @@ final class FormsPlugin extends Plugin
             'permission' => 'forms.manage',
             'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120]], 'required' => ['title']],
+            // What it starts with is a form to change: open it to, or take it back.
+            'answer' => static fn (array $form) => Answers::done(__('Created :name', ['name' => $form['title']]), null, [
+                ['label' => __('Open'), 'icon' => 'arrow-right', 'variant' => 'primary', 'to' => '/forms/'.$form['handle']],
+                ['label' => __('Delete'), 'icon' => 'trash', 'variant' => 'ghost', 'ability' => 'forms/delete', 'input' => ['handle' => $form['handle']], 'success' => __('Form deleted'),
+                    'confirm' => ['title' => Answers::literal(__('Delete “:title”?', ['title' => $form['title']])), 'confirm' => __('Delete'), 'danger' => true]],
+            ]),
             'handler' => function (array $in) use ($forms) {
                 $base = trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower(\Illuminate\Support\Str::ascii($in['title']))), '-') ?: 'form';
                 $base = substr($base, 0, 60);

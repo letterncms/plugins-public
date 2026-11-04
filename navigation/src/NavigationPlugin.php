@@ -6,6 +6,7 @@ namespace Cms\Navigation;
 
 use Cms\Abilities\AbilityException;
 use Cms\Content\Entries\Entry;
+use Cms\Modules\Workspace\Answers;
 use Cms\Users\User;
 use Cms\Packages\Plugin;
 use Illuminate\Support\Str;
@@ -59,6 +60,7 @@ final class NavigationPlugin extends Plugin
         $this->cms()->admin()->command('navigation', ['label' => 'Edit Menus', 'icon' => 'list-tree', 'path' => '/navigation', 'keywords' => ['menu', 'navigation', 'links', 'header', 'footer'], 'permission' => 'navigation.view']);
         $this->cms()->admin()->widget('navigation-menus', ['label' => 'Menus', 'description' => __('The site’s menus and how many links each has.'), 'icon' => 'list-tree', 'column' => 'side', 'order' => 60, 'permission' => 'navigation.view']);
         $this->places();
+        $this->answers();
         $this->adminModule(import: '@letterncms/navigation');
     }
 
@@ -149,6 +151,11 @@ final class NavigationPlugin extends Plugin
             'permission' => 'navigation.manage',
             'package' => $this->manifest->name,
             'input' => ['type' => 'object', 'properties' => ['title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120]], 'required' => ['title']],
+            'answer' => static fn (array $menu) => Answers::done(__('Created :name', ['name' => $menu['title']]), null, [
+                ['label' => __('Open'), 'icon' => 'arrow-right', 'variant' => 'primary', 'to' => '/navigation/'.$menu['handle']],
+                ['label' => __('Delete'), 'icon' => 'trash', 'variant' => 'ghost', 'ability' => 'navigation/delete', 'input' => ['handle' => $menu['handle']], 'success' => __('Menu deleted'),
+                    'confirm' => ['title' => Answers::literal(__('Delete “:title”?', ['title' => $menu['title']])), 'confirm' => __('Delete'), 'danger' => true]],
+            ]),
             'handler' => function (array $in) use ($menus) {
                 $handle = substr(trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower(Str::ascii($in['title']))), '-'), 0, 64);
 
@@ -181,7 +188,35 @@ final class NavigationPlugin extends Plugin
                 ],
                 'required' => ['handle'],
             ],
+            'answer' => static fn (array $menu) => Answers::done(__('Saved :name', ['name' => $menu['title']]), null, [
+                ['label' => __('Open'), 'icon' => 'arrow-right', 'variant' => 'primary', 'to' => '/navigation/'.$menu['handle']],
+            ]),
             'handler' => fn (array $in) => $this->describe($menus()->save($in['handle'], [...array_intersect_key($menus()->find($in['handle']) ?? [], array_flip(['title', 'maxDepth', 'items'])), ...$in])),
+        ]);
+
+        $a->register('navigation/add', [
+            'label' => 'Add to Menu',
+            'description' => 'Add one link at the end of a menu: a page by its entry id (it follows the page when it moves), or any url. Its label is the page’s title unless one is given.',
+            'permission' => 'navigation.manage',
+            'package' => $this->manifest->name,
+            'input' => ['type' => 'object', 'properties' => [
+                'menu' => ['type' => 'string', 'pattern' => '^[a-z0-9][a-z0-9_-]{0,63}$', 'description' => 'The menu’s handle (main, footer).'],
+                'entry' => ['type' => 'string', 'format' => 'ulid', 'description' => 'Entry id to link to.'],
+                'url' => ['type' => 'string', 'maxLength' => 2000, 'description' => 'https://…, /path, #anchor, mailto: or tel:'],
+                'label' => ['type' => 'string', 'maxLength' => 200],
+            ], 'required' => ['menu']],
+            'answer' => static fn (array $menu, array $in) => Answers::done(__('Added to :name', ['name' => $menu['title']]), null, [
+                ['label' => __('Open'), 'icon' => 'arrow-right', 'variant' => 'primary', 'to' => '/navigation/'.$menu['handle']],
+            ]),
+            'handler' => function (array $in) use ($menus) {
+                $menu = $menus()->find($in['menu']) ?? throw new AbilityException(__('Menu not found.'), 'not_found', ['menu' => __('Menu not found.')]);
+                if (empty($in['entry']) && empty($in['url'])) {
+                    throw AbilityException::invalid($error = __('Choose a page or give a link.'), ['url' => $error]);
+                }
+                $item = array_filter(['entry' => $in['entry'] ?? null, 'url' => empty($in['entry']) ? ($in['url'] ?? null) : null, 'label' => $in['label'] ?? null, 'children' => []], static fn ($v) => $v !== null);
+
+                return $this->describe($menus()->save($in['menu'], [...$menu, 'items' => [...$menu['items'], $item]]));
+            },
         ]);
 
         $a->register('navigation/delete', [
@@ -193,6 +228,38 @@ final class NavigationPlugin extends Plugin
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string']], 'required' => ['handle']],
             'handler' => fn (array $in) => ['deleted' => $menus()->delete($in['handle'])],
         ]);
+    }
+
+    /**
+     * In the workspace, a page just made, saved or published can go in a menu right from its answer.
+     */
+    private function answers(): void
+    {
+        $this->cms()->hooks()->addFilter('workspace.answer', function (array $view, string $ability, mixed $result, array $input, User $user): array {
+            $menus = $this->app->make(Menus::class)->all();
+            if (! in_array($ability, ['entries/create', 'entries/publish', 'entries/duplicate'], true) || ! is_array($result) || empty($result['uri']) || $menus === [] || ! $user->hasPermission('navigation.manage')) {
+                return $view;
+            }
+            $first = array_key_first($menus);
+            $add = ['label' => __('Add to Menu'), 'icon' => 'list-tree', 'ability' => 'navigation/add', 'input' => ['menu' => '{values.menu}', 'entry' => $result['id']], 'success' => __('Added to the menu'),
+                'form' => ['title' => __('Add to Menu'), 'confirm' => __('Add'), 'values' => ['menu' => $first], 'fields' => [
+                    ['handle' => 'menu', 'type' => 'select', 'label' => __('Menu'), 'required' => true, 'display' => 'dropdown', 'options' => array_map(static fn (array $m) => $m['title'], $menus)],
+                ]]];
+
+            foreach ($view['children'] ?? [] as $i => $child) {
+                if (($child['type'] ?? null) === 'ui/actions') {
+                    $items = $child['props']['items'];
+                    // Before the way back, after the ways forward.
+                    $at = array_key_last($items) !== null && ($items[array_key_last($items)]['variant'] ?? null) === 'ghost' ? array_key_last($items) : count($items);
+                    array_splice($items, $at, 0, [$add]);
+                    $view['children'][$i]['props']['items'] = array_slice($items, 0, 6);
+
+                    return $view;
+                }
+            }
+
+            return $view;
+        });
     }
 
     /** Menu with entry details for editors and agents. */

@@ -190,4 +190,14 @@ final class FormsTest extends TestCase
         $csv = $this->get('/api/admin/forms/quote/export')->assertOk()->assertHeader('Content-Disposition')->getContent();
         $this->assertStringContainsString('Ada,ada@example.com', $csv);
     }
+
+    public function test_a_new_form_is_answered_in_the_workspace_with_a_way_to_it_and_back(): void
+    {
+        $admin = $this->admin();
+        $form = $this->cms()->abilities()->execute('forms/create', ['title' => 'Bookings'], \Cms\Abilities\AbilityContext::forUser($admin, 'admin'));
+        $view = $this->app->make(\Cms\Modules\Workspace\Answers::class)->command($this->cms()->abilities()->get('forms/create'), ['title' => 'Bookings'], $form, $admin);
+
+        $this->assertSame('Created Bookings', $view['children'][0]['props']['title']);
+        $this->assertSame([['Open', '/forms/'.$form['handle']], ['Delete', null]], array_map(static fn ($a) => [$a['label'], $a['to'] ?? null], $view['children'][1]['props']['items']));
+    }
 }
