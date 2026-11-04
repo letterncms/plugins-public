@@ -2,7 +2,7 @@
     "name": "letterncms/collab",
     "description": "Work together: who is viewing or editing a page, comment threads with @mentions and email notifications, and an inbox of what needs you.",
     "type": "cms-plugin",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
