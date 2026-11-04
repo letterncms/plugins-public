@@ -162,7 +162,7 @@ export function LogicPanel({ node }: { node: BlockNode }) {
                       label: t('Event'),
                       fields: [
                         { handle: 'event', type: 'select', size: 'sm', label: t('Event'), required: true, options: EVENTS().filter((e) => e.value !== 'init') },
-                        { handle: 'key', type: 'text', size: 'sm', commit: 'blur', label: t('Key'), placeholder: 'escape', mono: true, className: '!w-20 !flex-none', if: { event: ['keydown', 'keyup'] } },
+                        { handle: 'key', type: 'text', size: 'sm', commit: 'blur', label: t('Keyboard Key'), placeholder: 'escape', mono: true, className: '!w-20 !flex-none', if: { event: ['keydown', 'keyup'] } },
                       ],
                     },
                   ]}

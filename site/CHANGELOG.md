@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- Its words read the same as the rest of the admin in Dutch, French and German: where two packages translated a word differently, which one you saw could change from one page to the next.
+- A list of entries is ordered by its **Sort Order**, and easing names read the same as in the block editor.
+
 ## 0.4.0 (2026-11-04)
 
 ### Changed

@@ -112,7 +112,7 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
           { id: 'created', label: t('Uploaded'), width: '120px', sort: 'created_at', render: (item) => new Date(item.createdAt).toLocaleDateString(locale(), { dateStyle: 'medium' }) },
         ]}
         actions={(item) => <Menu trigger={<IconButton icon="more" label={t('Actions for {name}', { name: item.name })} size="xs" />} items={[
-          { label: mode === 'pick' ? t('Select') : t('Open'), icon: 'edit', onSelect: () => toggle(item) },
+          { label: mode === 'pick' ? t('Choose') : t('Open'), icon: 'edit', onSelect: () => toggle(item) },
           { label: t('Copy URL'), icon: 'copy', onSelect: () => void copyText(new URL(item.url, location.origin).href, { copied: t('URL copied'), failed: t('Couldn’t copy the URL') }) },
           mode === 'manage' && can('media.delete') && { label: t('Delete'), icon: 'trash', danger: true, disabled: deleting, onSelect: () => void deleteItems([item.id]) },
         ]} />}

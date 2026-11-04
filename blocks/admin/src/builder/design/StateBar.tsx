@@ -23,7 +23,7 @@ const MORE = () => [
   { value: 'current', label: t('Current Page') },
   { value: 'group-hover', label: t('Hover on Hover Group') },
   { value: 'dark', label: t('Dark Mode') },
-  { value: 'open', label: t('Open') },
+  { value: 'open', label: t('When Open') },
 ]
 
 /**
