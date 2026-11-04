@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 (2026-11-04)
+
 ### Added
 
 - Claude opens places of the admin for you as it answers: "go to the last edited page", "open the General settings at the site name" or "show me the visitors" takes you there, with the thread beside it. Places it mentions are links that open in the admin.
