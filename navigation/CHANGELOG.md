@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- A menu's **Rename** and **Delete** are in its top bar, and in the menu of its row in **Navigation**.
+
 ## 0.3.0 (2026-11-04)
 
 ### Changed

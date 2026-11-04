@@ -6,6 +6,7 @@ namespace Cms\Forms\Tests;
 
 use Cms\Forms\FormRepository;
 use Cms\Forms\Submission;
+use Cms\Abilities\AbilityContext;
 use Cms\Tests\TestCase;
 
 final class FormsTest extends TestCase
@@ -125,5 +126,68 @@ final class FormsTest extends TestCase
         $this->assertSame(1, $data['days'][13]);
         $this->assertCount(1, $data['latest']);
         $this->assertSame(['form' => 'quote', 'formTitle' => 'Quote', 'summary' => 'Grace Hopper', 'status' => 'new'], array_intersect_key($data['latest'][0], array_flip(['form', 'formTitle', 'summary', 'status'])));
+    }
+
+    /** @return array the view as the admin draws it for this person */
+    private function place(string $id, array $params = []): array
+    {
+        return $this->cms()->abilities()->execute('views/get', ['id' => $id, 'params' => $params], AbilityContext::forUser($this->admin(), 'admin'))['root'];
+    }
+
+    public function test_the_forms_places_are_views(): void
+    {
+        $this->assertSame('ui/records', $this->place('forms')['children'][0]['children'][0]['children'][0]['type']);
+        $tabs = array_column(array_column($this->place('form', ['handle' => 'quote'])['children'][0]['children'], 'props'), 'id');
+        $this->assertSame(count($this->cms()->locales()) > 1 ? ['fields', 'options', 'languages', 'submissions'] : ['fields', 'options', 'submissions'], $tabs);
+        $this->assertSame('ui/empty', $this->place('form', ['handle' => 'gone'])['children'][0]['type']);
+    }
+
+    public function test_a_form_page_renames_and_deletes_on_every_tab_and_reads_for_viewers(): void
+    {
+        $page = $this->place('form', ['handle' => 'quote']);
+        $this->assertSame(['Rename', 'Delete'], array_column($page['props']['actions'], 'label'));
+        $this->assertSame('Delete “Quote”?', $page['props']['actions'][1]['confirm']['title']);
+
+        $this->cms()->settingsRegistry()->save('roles', ['roles' => ['viewer' => ['label' => 'Viewer', 'permissions' => ['admin.access', 'forms.view']]]]);
+        $viewer = $this->userWithRole('viewer');
+        $page = $this->cms()->abilities()->execute('views/get', ['id' => 'form', 'params' => ['handle' => 'quote']], AbilityContext::forUser($viewer, 'admin'))['root'];
+        $this->assertArrayNotHasKey('actions', array_filter($page['props'], static fn ($v) => $v !== []));
+        $settings = $page['children'][0]['children'][1];
+        $this->assertSame('options', $settings['props']['id']);
+        $this->assertSame(['ui/section', 'ui/detail'], [$settings['children'][0]['type'], $settings['children'][0]['children'][0]['type']]);
+        $this->assertContains('Accept Submissions', array_column($settings['children'][0]['children'][0]['props']['items'], 'label'));
+    }
+
+    public function test_a_form_is_created_and_changed_a_part_at_a_time(): void
+    {
+        $this->actingAs($this->admin());
+        $run = fn (string $ability, array $input) => $this->postJson("/api/admin/abilities/{$ability}", $input)->assertOk()->json('data');
+
+        $form = $run('forms/create', ['title' => 'Quote']);
+        $this->assertSame('quote-2', $form['handle']);
+        $this->assertCount(3, $form['fields']);
+
+        $this->assertSame('Sent!', $run('forms/configure', ['handle' => 'quote', 'settings' => ['submit' => 'Sent!']])['submit']);
+        $this->assertSame(['de:s:submit' => 'Senden'], $run('forms/translate', ['handle' => 'quote', 'words' => ['de:s:submit' => 'Senden', 'de:f:name:label' => '']]));
+        $run('forms/save', ['handle' => 'quote', 'title' => 'Quotes']);
+
+        $quote = app(FormRepository::class)->find('quote');
+        $this->assertSame('Quotes', $quote['title']);
+        $this->assertSame('Sent!', $quote['settings']['submit']);
+        $this->assertSame(3, $quote['settings']['min_seconds']);
+        $this->assertSame(['de' => ['settings' => ['submit' => 'Senden']]], $quote['locales']);
+        $this->assertCount(4, $quote['fields']);
+    }
+
+    public function test_opening_a_submission_reads_it_and_the_export_downloads(): void
+    {
+        $s = Submission::query()->create(['form' => 'quote', 'data' => ['name' => 'Ada', 'email' => 'ada@example.com'], 'status' => 'new']);
+        $this->actingAs($this->admin());
+
+        $this->postJson('/api/admin/abilities/forms/submission', ['id' => $s->id])->assertOk()->assertJsonPath('data.labels.email', 'Email');
+        $this->assertSame('read', $s->fresh()->status);
+
+        $csv = $this->get('/api/admin/forms/quote/export')->assertOk()->assertHeader('Content-Disposition')->getContent();
+        $this->assertStringContainsString('Ada,ada@example.com', $csv);
     }
 }

@@ -125,6 +125,9 @@ final class I18nPlugin extends Plugin
         $this->cms()->context()->register('cms://languages', 'Languages', 'The site’s languages (default first) with URL prefixes. Translate entries with translations/create.', fn () => $languages()->all());
 
         $this->cms()->admin()->nav('languages', ['path' => '/languages', 'icon' => 'translate', 'section' => 'plugins', 'permission' => 'settings.manage']);
+        $this->cms()->admin()->component('i18n/add-language', ['label' => 'Add Language', 'description' => 'A searchable list of languages to add to the site, chosen with the keyboard; any other xx-YY code works too.', 'surface' => false, 'permission' => 'settings.manage',
+            'props' => ['type' => 'object', 'properties' => [], 'additionalProperties' => false]]);
+        $this->cms()->views()->register('languages', '/languages', fn (User $user) => $this->view($user), permission: 'settings.manage');
         $this->cms()->admin()->widget('i18n-coverage', ['label' => 'Translations', 'description' => __('How much of the content exists in each language.'), 'icon' => 'translate', 'column' => 'side', 'order' => 55]);
         $this->adminModule(import: '@letterncms/i18n');
     }
@@ -148,10 +151,12 @@ final class I18nPlugin extends Plugin
             'annotations' => ['readOnly' => true],
             'package' => $this->manifest->name,
             'handler' => function () use ($languages) {
+                $prefixed = (bool) $this->cms()->settings('i18n', 'prefix_default', false);
+
                 return [
-                    'prefixDefault' => (bool) $this->cms()->settings('i18n', 'prefix_default', false),
+                    'prefixDefault' => $prefixed,
                     'canTranslate' => $this->app->make(Translations::class)->translator() !== null,
-                    'languages' => array_map(fn (array $l) => [...$l, 'entries' => $this->count($l['code'])], $languages()->all()),
+                    'languages' => array_map(fn (array $l) => $this->row([...$l, 'entries' => $this->count($l['code'])], $prefixed), $languages()->all()),
                 ];
             },
         ]);
@@ -171,25 +176,58 @@ final class I18nPlugin extends Plugin
                 ],
                 'required' => ['default', 'languages'],
             ],
+            'handler' => fn (array $in) => $this->saveLanguages($in['default'], $in['languages'], $in['prefixDefault'] ?? null),
+        ]);
+
+        // One change at a time, as the Languages screen makes them.
+        $one = ['type' => 'object', 'properties' => ['code' => $code], 'required' => ['code']];
+        $a->register('languages/add', [
+            'label' => 'Add Language',
+            'description' => 'Add a language to the site.',
+            'permission' => 'settings.manage',
+            'expose' => ['mcp' => false],
+            'package' => $this->manifest->name,
+            'input' => $one,
+            'handler' => fn (array $in) => $this->saveLanguages($languages()->default(), [...$languages()->codes(), $in['code']]),
+        ]);
+
+        $a->register('languages/remove', [
+            'label' => 'Remove Language',
+            'description' => 'Remove a language that has no entries. The default language cannot be removed.',
+            'permission' => 'settings.manage',
+            'annotations' => ['destructive' => true],
+            'expose' => ['mcp' => false],
+            'package' => $this->manifest->name,
+            'input' => $one,
             'handler' => function (array $in) use ($languages) {
-                $codes = array_values(array_unique([$in['default'], ...$in['languages']]));
-
-                foreach (array_diff($languages()->codes(), $codes) as $removed) {
-                    if (($n = $this->count($removed)) > 0) {
-                        throw AbilityException::invalid($n === 1
-                            ? __(':language still has 1 entry. Delete or move it before removing the language.', ['language' => $removed])
-                            : __(':language still has :count entries. Delete or move them before removing the language.', ['language' => $removed, 'count' => $n]));
-                    }
+                if ($in['code'] === $languages()->default()) {
+                    throw AbilityException::invalid(__('Make another language the default first.'));
                 }
 
-                if (isset($in['prefixDefault'])) {
-                    $this->cms()->settingsRegistry()->save('i18n', ['prefix_default' => $in['prefixDefault']]);
-                }
-
-                $this->cms()->saveSite(['locale' => $in['default'], 'locales' => $codes]);
-
-                return $languages()->all();
+                return $this->saveLanguages($languages()->default(), array_values(array_diff($languages()->codes(), [$in['code']])));
             },
+        ]);
+
+        $a->register('languages/default', [
+            'label' => 'Make Language the Default',
+            'description' => 'Make one of the site’s languages the default: its pages move to the root URL.',
+            'permission' => 'settings.manage',
+            'expose' => ['mcp' => false],
+            'package' => $this->manifest->name,
+            'input' => $one,
+            'handler' => fn (array $in) => in_array($in['code'], $languages()->codes(), true)
+                ? $this->saveLanguages($in['code'], $languages()->codes())
+                : throw AbilityException::invalid(__('Add the language first.')),
+        ]);
+
+        $a->register('languages/prefix', [
+            'label' => 'Prefix the Default Language',
+            'description' => 'Whether the default language’s pages are under a prefix (/en/…) too.',
+            'permission' => 'settings.manage',
+            'expose' => ['mcp' => false],
+            'package' => $this->manifest->name,
+            'input' => ['type' => 'object', 'properties' => ['prefixDefault' => ['type' => 'boolean']], 'required' => ['prefixDefault']],
+            'handler' => fn (array $in) => $this->saveLanguages($languages()->default(), $languages()->codes(), $in['prefixDefault']),
         ]);
 
         $a->register('translations/list', [
@@ -240,6 +278,93 @@ final class I18nPlugin extends Plugin
             ],
             'handler' => fn (array $in, AbilityContext $ctx) => $translations()->create($this->cms()->entries()->findOrFail($in['id']), $in['locale'], $ctx->user, (bool) $in['translate'])->toArray(),
         ]);
+    }
+
+    /** The site's languages as given: the default first; one that still has entries stays. */
+    private function saveLanguages(string $default, array $languages, ?bool $prefixDefault = null): array
+    {
+        $codes = array_values(array_unique([$default, ...$languages]));
+        $all = fn () => $this->app->make(Languages::class);
+
+        foreach (array_diff($all()->codes(), $codes) as $removed) {
+            if (($n = $this->count($removed)) > 0) {
+                throw AbilityException::invalid($n === 1
+                    ? __(':language still has 1 entry. Delete or move it before removing the language.', ['language' => $removed])
+                    : __(':language still has :count entries. Delete or move them before removing the language.', ['language' => $removed, 'count' => $n]));
+            }
+        }
+
+        if ($prefixDefault !== null) {
+            $this->cms()->settingsRegistry()->save('i18n', ['prefix_default' => $prefixDefault]);
+        }
+
+        $this->cms()->saveSite(['locale' => $default, 'locales' => $codes]);
+
+        return $all()->all();
+    }
+
+    /** A language as the Languages screen lists it: what it can be done with, in words for the person looking. */
+    private function row(array $l, bool $prefixed): array
+    {
+        return [...$l,
+            'path' => $l['prefix'] !== '' ? '/'.$l['prefix'].'/…' : null,
+            'prefixLabel' => $l['prefix'] !== '' ? '/'.$l['prefix'].'/…' : __('None'),
+            'badge' => $l['default'] ? __('Default') : null,
+            'directionName' => $l['direction'] === 'rtl' ? __('Right to Left') : __('Left to Right'),
+            'removable' => ! $l['default'] && $l['entries'] === 0,
+            'note' => ! $l['default'] && $l['entries'] > 0 ? ($l['entries'] === 1 ? __('It can be removed once its 1 entry is gone.') : __('It can be removed once its :count entries are gone.', ['count' => $l['entries']])) : null,
+            'prefixable' => $l['default'] && ! $prefixed,
+            'prefixed' => $l['default'] && $prefixed,
+        ];
+    }
+
+    /** The Languages screen (see Cms\Admin\Views): the site's languages, what can be done with each, and adding one. */
+    private function view(User $user): array
+    {
+        $fallback = Languages::name($this->app->make(Languages::class)->default());
+        $assistant = isset($this->cms()->settingsRegistry()->schemas()['assistant']);
+        $translator = $this->app->make(Translations::class)->translator() !== null;
+        // A language's own actions: in its row's menu, and under it once opened. Only the default has a prefix to change.
+        $makeDefault = ['label' => __('Make Default'), 'icon' => 'star', 'ability' => 'languages/default', 'input' => ['code' => '{row.code}'], 'then' => 'manifest', 'unless' => '{row.default}', 'success' => __('{row.name} is now the default'),
+            'confirm' => ['title' => __('Make {row.name} the default?'), 'text' => __('Its pages move to the root URL and :current gets a prefix. Old URLs redirect automatically.', ['current' => $fallback]), 'confirm' => __('Make Default')]];
+        $prefix = [
+            ['label' => __('Add URL Prefix'), 'icon' => 'link', 'ability' => 'languages/prefix', 'input' => ['prefixDefault' => true], 'then' => 'manifest', 'when' => '{row.prefixable}', 'success' => __('{row.name} now has a URL prefix'),
+                'confirm' => ['title' => __('Give {row.name} a URL prefix?'), 'text' => __('Its pages move to /{row.code}/….'), 'confirm' => __('Add Prefix')]],
+            ['label' => __('Remove URL Prefix'), 'icon' => 'link', 'ability' => 'languages/prefix', 'input' => ['prefixDefault' => false], 'then' => 'manifest', 'when' => '{row.prefixed}', 'success' => __('{row.name} is now at the root URL'),
+                'confirm' => ['title' => __('Remove the URL prefix of {row.name}?'), 'text' => __('Its pages move to the root URL.'), 'confirm' => __('Remove Prefix')]],
+        ];
+        // Shown while it still has entries, but not possible: the dialog says why.
+        $remove = ['label' => __('Remove'), 'icon' => 'trash', 'variant' => 'danger', 'ability' => 'languages/remove', 'input' => ['code' => '{row.code}'], 'then' => 'manifest', 'unless' => '{row.default}', 'disabled' => '{row.entries}', 'success' => __('{row.name} removed'),
+            'confirm' => ['title' => __('Remove {row.name}?'), 'text' => __('Visitors will no longer see this language. You can add it again later.'), 'confirm' => __('Remove'), 'danger' => true]];
+
+        return ['type' => 'ui/page', 'props' => ['title' => __('Languages'), 'icon' => 'translate', 'width' => 'narrow', 'actions' => [
+            // A searchable list chosen with the keyboard, which takes any other xx-YY code too.
+            ['label' => __('Add Language'), 'name' => 'add-language', 'icon' => 'plus', 'variant' => 'primary', 'can' => 'settings.manage', 'component' => 'i18n/add-language'],
+        ]], 'children' => [['type' => 'ui/stack', 'children' => [
+            ['type' => 'ui/records', 'props' => [
+                'id' => 'languages', 'label' => __('Languages'), 'key' => 'code',
+                'source' => ['ability' => 'languages/list'], 'at' => 'languages',
+                'columns' => [
+                    ['key' => 'name', 'label' => __('Name'), 'muted' => 'badge'],
+                    ['key' => 'code', 'label' => __('Code'), 'width' => '72px', 'format' => 'code'],
+                    ['key' => 'path', 'label' => __('URL Prefix'), 'width' => '120px', 'format' => 'code', 'empty' => __('None')],
+                    ['key' => 'entries', 'label' => __('Entries'), 'width' => '80px', 'align' => 'end', 'format' => 'number'],
+                ],
+                'open' => ['label' => __('Open'), 'dialog' => ['title' => '{row.name}', 'text' => '{row.note}', 'body' => [
+                    ['type' => 'ui/detail', 'props' => ['items' => [
+                        ['label' => __('Code'), 'key' => 'row.code', 'format' => 'code'],
+                        ['label' => __('URL Prefix'), 'key' => 'row.prefixLabel'],
+                        ['label' => __('Direction'), 'key' => 'row.directionName'],
+                        ['label' => __('Entries'), 'key' => 'row.entries', 'format' => 'number'],
+                    ]]],
+                ], 'actions' => [$remove, ...$prefix, $makeDefault]]],
+                'actions' => [$makeDefault, ...$prefix, $remove],
+                'empty' => ['icon' => 'translate', 'title' => __('Languages are not available')],
+            ]],
+            ...($translator
+                ? [['type' => 'ui/text', 'props' => ['text' => __('Translate a page from its language menu.'), 'muted' => true]]]
+                : ($assistant ? [['type' => 'ui/actions', 'can' => 'settings.manage', 'props' => ['items' => [['label' => __('Set Up Automatic Translation'), 'icon' => 'sparkle', 'variant' => 'ghost', 'to' => '/settings/assistant']]]]] : [])),
+        ]]]];
     }
 
     private function count(string $locale): int

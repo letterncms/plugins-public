@@ -1,5 +1,5 @@
-import { can, invalidate, navigate, run, t, useAbility, useManifest, type FieldDef } from '@letterncms/sdk'
-import { Badge, Button, EmptyState, Fields, Icon, IconButton, Page, Popover, SaveBar, Skeleton, SortableTree, Spinner, confirm, toast, cn } from '@letterncms/ui'
+import { can, invalidate, run, t, useAbility, useManifest, type FieldDef, type SurfaceComponentProps } from '@letterncms/sdk'
+import { Badge, Button, EmptyState, Fields, Icon, IconButton, Popover, SaveBar, Skeleton, SortableTree, Spinner, cn } from '@letterncms/ui'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 interface Target {
@@ -36,7 +36,6 @@ interface Found {
   displayStatus: string
 }
 
-const name = (): FieldDef => ({ handle: 'title', type: 'text', label: t('Menu Name') })
 // How deep links may nest, said plainly: 1 is a flat menu, 2 allows one level of submenus.
 const levels = (): FieldDef => ({ handle: 'maxDepth', type: 'select', label: t('Submenus'), size: 'sm', required: true, options: [
   { value: '1', label: t('No Submenus') },
@@ -55,32 +54,35 @@ const words = (locales: Item['locales']) => {
   })
   return filled.length ? Object.fromEntries(filled) : undefined
 }
-const snapshot = (title: string, maxDepth: number, items: Item[]) => JSON.stringify([title.trim(), maxDepth, clean(items)])
+const snapshot = (maxDepth: number, items: Item[]) => JSON.stringify([maxDepth, clean(items)])
 
 const newId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('')
 
-export default function MenuEditor({ params }: { params: Record<string, string> }) {
-  const menu = useAbility<Menu>('navigation/get', { handle: params.handle })
+/**
+ * The links of one menu, as a tree to drag: the place around it (its name, Rename and Delete)
+ * is the view `menu` (NavigationPlugin::places). Saved from the save bar.
+ */
+export default function MenuEditor({ props }: SurfaceComponentProps<{ handle: string }>) {
+  const menu = useAbility<Menu>('navigation/get', { handle: props.handle }, { refetchOnWindowFocus: false })
 
-  if (menu.isLoading) return <Page width="narrow" crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }]}><Skeleton className="h-40" /></Page>
-  if (!menu.data) return <Page width="narrow" crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }, { label: t('Not Found') }]}><EmptyState icon="list-tree" title={t('Not Found')} description={t('It may have been moved or deleted.')} action={<Button onClick={() => navigate('/navigation')}>{t('Back to {label}', { label: t('Navigation') })}</Button>} /></Page>
+  if (menu.isLoading) return <Skeleton className="h-40" />
+  if (!menu.data) return <EmptyState icon="list-tree" title={t('Not Found')} description={t('It may have been moved or deleted.')} />
 
   return <Editor key={menu.data.handle} menu={menu.data} />
 }
 
 function Editor({ menu }: { menu: Menu }) {
-  const [title, setTitle] = useState(menu.title)
   const [items, setItems] = useState<Item[]>(menu.items)
   const [maxDepth, setMaxDepth] = useState(menu.maxDepth)
   const [open, setOpen] = useState<Set<string>>(new Set())
-  const [saved, setSaved] = useState(() => snapshot(menu.title, menu.maxDepth, menu.items))
+  const [saved, setSaved] = useState(() => snapshot(menu.maxDepth, menu.items))
   // What Discard puts back: the menu as last saved.
-  const [base, setBase] = useState<Pick<Menu, 'title' | 'maxDepth' | 'items'>>(menu)
+  const [base, setBase] = useState<Pick<Menu, 'maxDepth' | 'items'>>(menu)
   const [busy, setBusy] = useState(false)
   const [failed, setFailed] = useState<string | null>(null)
   const manage = can('navigation.manage')
   // Changed only while it differs from what was saved: putting something back is no change.
-  const dirty = useMemo(() => snapshot(title, maxDepth, items) !== saved, [title, maxDepth, items, saved])
+  const dirty = useMemo(() => snapshot(maxDepth, items) !== saved, [maxDepth, items, saved])
 
   const change = (next: Item[]) => setItems(next)
 
@@ -109,7 +111,6 @@ function Editor({ menu }: { menu: Menu }) {
   }
 
   const discard = () => {
-    setTitle(base.title)
     setMaxDepth(base.maxDepth)
     setItems(base.items)
     setFailed(null)
@@ -119,11 +120,10 @@ function Editor({ menu }: { menu: Menu }) {
     setBusy(true)
     setFailed(null)
     try {
-      const stored = await run<Menu>('navigation/save', { handle: menu.handle, title, maxDepth, items: clean(items) })
+      const stored = await run<Menu>('navigation/save', { handle: menu.handle, maxDepth, items: clean(items) })
       setItems(stored.items)
-      setTitle(stored.title)
       setMaxDepth(stored.maxDepth)
-      setSaved(snapshot(stored.title, stored.maxDepth, stored.items))
+      setSaved(snapshot(stored.maxDepth, stored.items))
       setBase(stored)
       invalidate('navigation/')
     } catch (e) {
@@ -133,32 +133,8 @@ function Editor({ menu }: { menu: Menu }) {
     }
   }
 
-  const destroy = async () => {
-    if (!(await confirm({ title: t('Delete “{title}”?', { title: title || menu.handle }), description: t('Repeat blocks that list this menu will show nothing.'), confirm: t('Delete'), danger: true }))) return
-    try {
-      await run('navigation/delete', { handle: menu.handle })
-      setSaved(snapshot(title, maxDepth, items))
-      invalidate('navigation/')
-      navigate('/navigation')
-    } catch (e) {
-      toast.error(e)
-    }
-  }
-
   return (
-    <Page
-      width="narrow"
-      crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }, { label: title || menu.handle }]}
-    >
-      <Fields
-        bare
-        fields={[name()]}
-        values={{ title }}
-        disabled={!manage}
-        onChange={(_, v) => setTitle(v ?? '')}
-        className="mb-8 [&_input]:!h-auto [&_input]:!border-0 [&_input]:!p-0 [&_input]:!text-2xl [&_input]:!font-semibold [&_input]:!shadow-none"
-      />
-
+    <>
       {items.length === 0 ? (
         <div className="rounded-md border border-dashed border-border-strong px-6 py-10 text-center text-sm text-muted">{t('This menu is empty.')}</div>
       ) : (
@@ -190,18 +166,8 @@ function Editor({ menu }: { menu: Menu }) {
           </div>
         </div>
       )}
-      {/* Deleting is there to see, at the end, never beside Save. */}
-      {manage && (
-        <section className="mt-12 flex flex-wrap items-center gap-3 border-t border-border pt-6">
-          <div className="min-w-0 flex-1">
-            <h2 className="m-0 text-sm font-semibold text-ink">{t('Delete Menu')}</h2>
-            <p className="m-0 mt-0.5 text-xs text-muted">{t('Repeat blocks that list this menu will show nothing.')}</p>
-          </div>
-          <Button icon="trash" className="!text-danger" onClick={() => { void destroy() }}>{t('Delete Menu')}</Button>
-        </section>
-      )}
       {manage && <SaveBar dirty={dirty} saving={busy} error={failed} onSave={() => void save()} onDiscard={discard} />}
-    </Page>
+    </>
   )
 }
 

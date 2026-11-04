@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- The period and who is on the site now are above the numbers rather than in the top bar, and each list shows its first eight with each one's share of the whole.
+
 ## 0.2.0 (2026-11-04)
 
 ### Changed

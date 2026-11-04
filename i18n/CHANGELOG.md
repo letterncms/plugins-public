@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.5 or later.
+- **Make Default**, **Remove** and the URL prefix are in a language's row menu too, besides the dialog its row opens. **Remove** shows while the language still has entries, and the dialog says why it can't be used yet.
+
 ## 0.2.0 (2026-11-04)
 
 ### Changed

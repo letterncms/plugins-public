@@ -26,7 +26,7 @@ final class AnalyticsAbilities
 
         $a->register('analytics/breakdown', [
             'label' => 'Analytics Breakdown',
-            'description' => 'Views per page (with the entry it shows) or language for a period, most first. In visitors mode also visitors per page, entry page (where visits started), source (referring site or campaign; "Direct" when none), device, browser or operating system; in counts mode (the default) those answer {unavailable: "mode"}.',
+            'description' => 'Views per page (with the entry it shows) or language for a period, most first. In visitors mode also visitors per page, entry page (where visits started), source (referring site or campaign; "Direct" when none), device, browser or operating system; in counts mode (the default) those answer {unavailable: "mode"}. Each item has its share of the whole, from 0 to 1.',
             'permission' => 'analytics.view',
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => [

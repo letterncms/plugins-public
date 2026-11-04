@@ -24,21 +24,6 @@ export interface Summary extends Metrics {
   tracked: boolean
 }
 
-export interface BreakdownItem {
-  key: string | null
-  label: string
-  visitors: number | null
-  views?: number
-  path?: string
-  entry?: { id: string; collection: string } | null
-}
-
-export interface Breakdown {
-  dimension: string
-  total: number
-  items: BreakdownItem[]
-}
-
 export type Metric = keyof Metrics
 
 /** The four headline numbers: how each is named, formatted, and which way is good. */
@@ -63,10 +48,6 @@ export function change(current: number | null, previous: number | null): number 
 
 export function useSummary(period: Period) {
   return useAbility<Summary>('analytics/summary', { period }, { placeholderData: keepPreviousData, refetchInterval: 60_000 })
-}
-
-export function useBreakdown(period: Period, dimension: string, limit = 8) {
-  return useAbility<Breakdown>('analytics/breakdown', { period, dimension, limit }, { placeholderData: keepPreviousData })
 }
 
 /** "Oct 27" in the admin's language. */

@@ -1,9 +1,7 @@
 {
   "{count} character": "{count} caractère",
   "{count} characters": "{count} caractères",
-  "{count} file": "{count} fichier",
   "{count} file uploaded": "{count} fichier importé",
-  "{count} files": "{count} fichiers",
   "{count} files uploaded": "{count} fichiers importés",
   "{count} selected": "{count} sélectionné(s)",
   "Actions for {name}": "Actions pour {name}",
@@ -52,6 +50,7 @@
   "MB": "Mo",
   "Media": "Médias",
   "Media id (see media/list), or an https:// or /path URL": "Identifiant de média (voir media/list), ou une URL https:// ou /chemin",
+  "Media library": "Médiathèque",
   "Media library: safe uploads, folders, alt text, focal points and responsive AVIF/WebP images.": "Médiathèque : imports sécurisés, dossiers, texte alternatif, points focaux et images AVIF/WebP adaptatives.",
   "Name": "Nom",
   "Network error during upload.": "Erreur réseau pendant l’import.",

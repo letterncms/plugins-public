@@ -6,7 +6,9 @@ namespace Cms\Navigation;
 
 use Cms\Abilities\AbilityException;
 use Cms\Content\Entries\Entry;
+use Cms\Users\User;
 use Cms\Packages\Plugin;
+use Illuminate\Support\Str;
 
 final class NavigationPlugin extends Plugin
 {
@@ -56,7 +58,53 @@ final class NavigationPlugin extends Plugin
         $this->cms()->admin()->nav('navigation', ['path' => '/navigation', 'icon' => 'list-tree', 'section' => 'content', 'order' => 72, 'permission' => 'navigation.view']);
         $this->cms()->admin()->command('navigation', ['label' => 'Edit Menus', 'icon' => 'list-tree', 'path' => '/navigation', 'keywords' => ['menu', 'navigation', 'links', 'header', 'footer'], 'permission' => 'navigation.view']);
         $this->cms()->admin()->widget('navigation-menus', ['label' => 'Menus', 'description' => __('The site’s menus and how many links each has.'), 'icon' => 'list-tree', 'column' => 'side', 'order' => 60, 'permission' => 'navigation.view']);
+        $this->places();
         $this->adminModule(import: '@letterncms/navigation');
+    }
+
+    /** The places of Navigation, as data (see Cms\Admin\Views): the menus, and one menu around its tree editor. */
+    private function places(): void
+    {
+        $this->cms()->admin()->component('navigation/menu', ['label' => 'Menu editor', 'description' => 'The links of one menu: pages and links, nested by dragging, with how deep they may go.', 'surface' => false, 'permission' => 'navigation.view',
+            'props' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string']], 'required' => ['handle'], 'additionalProperties' => false]]);
+
+        $rename = static fn (string $handle, string $title) => ['label' => __('Rename'), 'icon' => 'edit', 'ability' => 'navigation/save', 'input' => ['handle' => $handle, 'title' => '{values.title}'],
+            'form' => ['title' => __('Rename Menu'), 'confirm' => __('Rename'), 'values' => ['title' => $title], 'fields' => [['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'required' => true, 'autofocus' => true]]]];
+        $delete = static fn (string $handle, string $question, ?string $then = null) => ['label' => __('Delete'), 'icon' => 'trash', 'variant' => $then ? 'ghost' : 'danger', 'ability' => 'navigation/delete', 'input' => ['handle' => $handle],
+            'confirm' => ['title' => $question, 'text' => __('Repeat blocks that list this menu will show nothing.'), 'confirm' => __('Delete'), 'danger' => true], ...($then ? ['then' => 'open', 'to' => $then] : [])];
+
+        $this->cms()->views()->register('navigation', '/navigation', static fn () => ['type' => 'ui/page', 'props' => ['title' => __('Navigation'), 'icon' => 'list-tree', 'actions' => [
+            ['label' => __('New Menu'), 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'navigation/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/navigation/{result.handle}',
+                'form' => ['title' => __('New Menu'), 'confirm' => __('Create'), 'fields' => [['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Footer'), 'instructions' => __('For example Main, Footer or Legal.'), 'required' => true, 'autofocus' => true]]]],
+        ]], 'children' => [
+            ['type' => 'ui/records', 'props' => [
+                'id' => 'navigation', 'label' => __('Menus'), 'key' => 'handle',
+                'source' => ['ability' => 'navigation/list'],
+                'columns' => [
+                    ['key' => 'title', 'label' => __('Name'), 'icon' => 'icon'],
+                    ['key' => 'handle', 'label' => __('Handle'), 'width' => 'minmax(200px,1fr)', 'format' => 'code'],
+                    ['key' => 'links', 'label' => __('Links'), 'width' => '100px', 'align' => 'end'],
+                ],
+                'open' => ['label' => __('Open'), 'to' => '/navigation/{row.handle}'],
+                'actions' => [$rename('{row.handle}', '{row.title}'), $delete('{row.handle}', __('Delete “{row.title}”?'))],
+                'empty' => ['icon' => 'list-tree', 'title' => __('No menus yet')],
+            ]],
+        ]], permission: 'navigation.view');
+
+        $this->cms()->views()->register('menu', '/navigation/:handle', function (User $user, array $params) use ($rename, $delete) {
+            $menu = $this->app->make(Menus::class)->find((string) ($params['handle'] ?? ''));
+
+            if ($menu === null) {
+                return ['type' => 'ui/page', 'props' => ['title' => __('Not Found'), 'icon' => 'list-tree', 'back' => ['to' => '/navigation', 'label' => __('Navigation')]], 'children' => [
+                    ['type' => 'ui/empty', 'props' => ['icon' => 'list-tree', 'title' => __('Not Found'), 'action' => ['label' => __('Back to Navigation'), 'icon' => 'arrow-left', 'to' => '/navigation']]],
+                ]];
+            }
+
+            return ['type' => 'ui/page', 'props' => ['title' => $menu['title'], 'icon' => 'list-tree', 'width' => 'narrow', 'back' => ['to' => '/navigation', 'label' => __('Navigation')], 'actions' => [
+                $rename($menu['handle'], $menu['title']),
+                $delete($menu['handle'], __('Delete “:title”?', ['title' => $menu['title']]), '/navigation'),
+            ]], 'children' => [['type' => 'navigation/menu', 'props' => ['handle' => $menu['handle']]]]];
+        }, permission: 'navigation.view');
     }
 
     private function abilities(): void
@@ -82,7 +130,7 @@ final class NavigationPlugin extends Plugin
             'permission' => 'navigation.view',
             'annotations' => ['readOnly' => true],
             'package' => $this->manifest->name,
-            'handler' => fn () => array_values(array_map(static fn ($m) => ['handle' => $m['handle'], 'title' => $m['title'], 'maxDepth' => $m['maxDepth'], 'count' => self::count($m['items']), 'publishedAt' => $m['publishedAt'], 'updatedAt' => $m['updatedAt']], $menus()->all())),
+            'handler' => fn () => array_values(array_map(static fn ($m) => ['handle' => $m['handle'], 'title' => $m['title'], 'icon' => 'list-tree', 'maxDepth' => $m['maxDepth'], 'count' => $count = self::count($m['items']), 'links' => $count === 1 ? __('1 link') : __(':count links', ['count' => $count]), 'publishedAt' => $m['publishedAt'], 'updatedAt' => $m['updatedAt']], $menus()->all())),
         ]);
 
         $a->register('navigation/get', [
@@ -95,9 +143,31 @@ final class NavigationPlugin extends Plugin
             'handler' => fn (array $in) => $this->describe($menus()->find($in['handle']) ?? throw new AbilityException(__('Menu not found.'), 'not_found')),
         ]);
 
+        $a->register('navigation/create', [
+            'label' => 'Create Menu',
+            'description' => 'A new, empty menu named title. Its handle is made from the title (main, footer).',
+            'permission' => 'navigation.manage',
+            'package' => $this->manifest->name,
+            'input' => ['type' => 'object', 'properties' => ['title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120]], 'required' => ['title']],
+            'handler' => function (array $in) use ($menus) {
+                $handle = substr(trim((string) preg_replace('/[^a-z0-9]+/', '-', strtolower(Str::ascii($in['title']))), '-'), 0, 64);
+
+                // Said on the name, in the dialog that asked for it.
+                if ($handle === '') {
+                    throw AbilityException::invalid($error = __('Use letters or numbers in the menu’s name.'), ['title' => $error]);
+                }
+
+                if ($menus()->find($handle) !== null) {
+                    throw new AbilityException($error = __('A menu called “:handle” already exists.', ['handle' => $handle]), 'conflict', ['title' => $error]);
+                }
+
+                return $this->describe($menus()->save($handle, ['title' => trim($in['title']), 'items' => []]));
+            },
+        ]);
+
         $a->register('navigation/save', [
             'label' => 'Save Menu',
-            'description' => 'Create a menu or replace its items. Items nest through children (up to maxDepth levels). Link pages by entry id so links survive moves; use url for anything else.',
+            'description' => 'Create a menu or replace its items. Items nest through children (up to maxDepth levels). Link pages by entry id so links survive moves; use url for anything else. On an existing menu, what is left out (title, maxDepth, items) stays as it is.',
             'permission' => 'navigation.manage',
             'annotations' => ['idempotent' => true],
             'package' => $this->manifest->name,
@@ -109,9 +179,9 @@ final class NavigationPlugin extends Plugin
                     'maxDepth' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 5],
                     'items' => ['type' => 'array', 'items' => $item],
                 ],
-                'required' => ['handle', 'items'],
+                'required' => ['handle'],
             ],
-            'handler' => fn (array $in) => $this->describe($menus()->save($in['handle'], $in)),
+            'handler' => fn (array $in) => $this->describe($menus()->save($in['handle'], [...array_intersect_key($menus()->find($in['handle']) ?? [], array_flip(['title', 'maxDepth', 'items'])), ...$in])),
         ]);
 
         $a->register('navigation/delete', [

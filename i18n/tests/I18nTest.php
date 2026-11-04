@@ -198,4 +198,23 @@ final class I18nTest extends TestCase
         $this->assertSame($de['id'], $this->cms()->hooks()->filter('navigation.entry', $enEntry, 'de')->id);
         $this->assertSame('rtl', cms_text_direction('ar'));
     }
+
+
+    public function test_languages_are_a_view_and_change_one_at_a_time(): void
+    {
+        $view = $this->cms()->abilities()->execute('views/get', ['id' => 'languages'], AbilityContext::forUser($this->admin(), 'admin'))['root'];
+        $this->assertSame('ui/records', $view['children'][0]['children'][0]['type']);
+
+        $this->ability('languages/add', ['code' => 'fr']);
+        $this->assertSame(['en', 'de', 'fr'], $this->cms()->locales());
+        $this->ability('languages/default', ['code' => 'de']);
+        $this->ability('languages/prefix', ['prefixDefault' => true]);
+        $languages = $this->ability('languages/list')['languages'];
+        $this->assertSame(['/de/…', true, false], [$languages[0]['path'], $languages[0]['prefixed'], $languages[0]['removable']]);
+        $this->ability('languages/remove', ['code' => 'en']);
+        $this->assertSame(['de', 'fr'], $this->cms()->locales());
+
+        $this->expectException(AbilityException::class);
+        $this->ability('languages/remove', ['code' => 'de']);
+    }
 }

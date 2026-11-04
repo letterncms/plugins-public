@@ -52,6 +52,7 @@ final class AnalyticsPlugin extends Plugin
         $admin = $cms->admin();
         $admin->nav('analytics', ['path' => '/analytics', 'icon' => 'chart', 'section' => 'main', 'order' => 10, 'pinned' => true, 'permission' => 'analytics.view']);
         $admin->widget('analytics-overview', ['label' => 'Analytics', 'description' => 'Page views in the last 30 days.', 'icon' => 'chart', 'column' => 'main', 'enabled' => true, 'order' => 5, 'permission' => 'analytics.view']);
+        $this->app->make(AnalyticsViews::class)->register();
         $admin->command('analytics', ['label' => 'Open Analytics', 'icon' => 'chart', 'path' => '/analytics', 'permission' => 'analytics.view', 'keywords' => ['visitors', 'traffic', 'stats', 'views']]);
         $this->adminModule();
 

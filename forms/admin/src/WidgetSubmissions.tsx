@@ -22,7 +22,7 @@ export default function WidgetSubmissions() {
       query={activity}
       empty={
         a?.forms === 0
-          ? { icon: 'form', title: t('No forms yet'), action: can('forms.manage') && <Button size="sm" icon="plus" onClick={() => navigate('/forms')}>{t('New Form')}</Button> }
+          ? { icon: 'form', title: t('No forms yet'), action: can('forms.manage') && <Button size="sm" icon="plus" onClick={() => navigate('/forms?do=new-form')}>{t('New Form')}</Button> }
           : a?.latest.length === 0 && { icon: 'inbox', title: t('No submissions yet') }
       }
     >

@@ -137,6 +137,8 @@ final class AnalyticsTest extends TestCase
 
         $devices = $this->cms()->abilities()->execute('analytics/breakdown', ['period' => '7d', 'dimension' => 'devices'], $ctx);
         $this->assertEqualsCanonicalizing(['desktop', 'mobile'], array_column($devices['items'], 'key'));
+        $this->assertEqualsCanonicalizing(['desktop', 'phone'], array_column($devices['items'], 'icon'));
+        $this->assertEqualsWithDelta(1, array_sum(array_column($devices['items'], 'share')), 0.001);
     }
 
     public function test_reports_need_the_permission(): void

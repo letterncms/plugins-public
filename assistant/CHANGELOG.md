@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Answers are drawn with the same components as the admin's own screens, and can use notices, charts, details and before-and-after.
+
 ## 0.5.0 (2026-11-04)
 
 ### Changed

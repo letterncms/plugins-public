@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\DB;
 use Cms\Abilities\AbilityException;
 use Cms\Contracts\MailMessage;
 use Cms\Contracts\Mailer;
+use Cms\Modules\Settings\SettingsModule;
 use Cms\Packages\Plugin;
+use Cms\Users\User;
 use Throwable;
 
 final class MailPlugin extends Plugin
@@ -26,6 +28,11 @@ final class MailPlugin extends Plugin
         // Registered once every plugin had the chance to add a transport.
         $this->app->booted(fn () => $this->settingsSchema());
         $this->abilities();
+        // On the Email settings page: try what is saved, sent to whoever presses it.
+        $this->cms()->hooks()->addFilter('view.settings', static fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'mail' ? $view : SettingsModule::withAction($view, [
+            // What is saved is what it tries: with changes waiting, Save comes first.
+            'label' => __('Send Test Email'), 'icon' => 'mail', 'ability' => 'mail/test', 'input' => ['to' => '{user.email}'], 'success' => __('Test email sent to {user.email}'), 'disabled' => '{dirty}',
+        ]));
         // Someone's erased account takes their row in the log with it.
         $this->cms()->hooks()->on('account.deleting', static fn ($user) => DB::table('mail_log')->where('to', $user->email)->delete());
         $this->cms()->admin()->widget('mail-status', ['label' => 'Email', 'description' => __('How email is sent, whether it arrives, and the latest messages.'), 'icon' => 'mail', 'column' => 'side', 'order' => 60, 'permission' => 'settings.manage']);
