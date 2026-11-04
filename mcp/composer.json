@@ -2,7 +2,7 @@
     "name": "letterncms/mcp",
     "description": "Connect AI clients over the Model Context Protocol: every ability becomes a tool, signed in with OAuth.",
     "type": "cms-plugin",
-    "version": "0.2.1",
+    "version": "0.3.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-11-04)
+
 ### Changed
 
 - Needs the CMS 0.4 or later.
