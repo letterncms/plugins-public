@@ -42,6 +42,13 @@ final class MediaPlugin extends Plugin
         $this->places();
         $this->adminModule(import: '@letterncms/media');
 
+        // Files in the workspace's search, for those who may see them: each opens the library at it.
+        $this->cms()->hooks()->addFilter('workspace.search', static fn (array $sections, string $query, \Cms\Users\User $user) => mb_strlen($query) < 2 || ! $user->hasPermission('media.view') ? $sections : [...$sections, [
+            'id' => 'media', 'title' => __('Media'),
+            'items' => MediaItem::query()->where(static fn ($w) => $w->where('name', 'like', "%{$query}%")->orWhere('alt', 'like', "%{$query}%")->orWhere('filename', 'like', "%{$query}%"))->latest()->limit(6)->get()
+                ->map(static fn (MediaItem $m) => ['label' => $m->name, 'detail' => $m->filename, 'icon' => $m->isImage() ? 'image' : 'file', 'to' => '/media?search='.rawurlencode($m->name)])->all(),
+        ]]);
+
         $this->cms()->context()->register('cms://media', 'Media library', 'The 50 most recent files with ids, alt text and sizes. Use ids in media fields and image blocks.', fn () => MediaItem::query()->latest()->limit(50)->get()->map->toPublic()->all());
     }
 

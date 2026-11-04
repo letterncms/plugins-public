@@ -1,9 +1,8 @@
-import { can, navigate, t, useAbility } from '@letterncms/sdk'
+import { can, navigate, registry, t, useAbility } from '@letterncms/sdk'
 import { Button, Fields, Kbd, Widget } from '@letterncms/ui'
 import { useState, type FormEvent } from 'react'
-import { panel } from './store'
 
-/** Home-screen widget: ask the assistant from here. The answer comes in the chat, beside the page. */
+/** Home-screen widget: ask Claude from here. The answer comes in the workspace's thread, beside the page (through its New Chat command). */
 export default function WidgetAsk() {
   const status = useAbility<{ configured: boolean }>('assistant/status', {}, { staleTime: 60_000 })
   const ready = status.data?.configured === true
@@ -13,7 +12,7 @@ export default function WidgetAsk() {
     e.preventDefault()
     const prompt = question.trim()
     if (!prompt) return
-    panel.ask(prompt)
+    void registry.commands.get('workspace')?.perform(prompt)
     setQuestion('')
   }
 

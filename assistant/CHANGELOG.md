@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+### Added
+
+- Claude opens places of the admin for you as it answers: "go to the last edited page", "open the General settings at the site name" or "show me the visitors" takes you there, with the thread beside it. Places it mentions are links that open in the admin.
+
+### Changed
+
+- **Breaking.** Needs the CMS 0.6 or later. Claude answers in the workspace's thread, now part of the CMS, as its agent: the chat, its history, composer and approvals are the workspace's, and work the same with or without the assistant. Claude is told what you ran and searched in the thread since it last answered.
+- Without an API key, or for people without **Use the AI Assistant**, the thread runs commands and searches, and nothing in it mentions Claude. The setup lives in the assistant's settings.
+- The model picker sits in the thread's composer, through the workspace's `workspace.composer` slot, and the **Ask** widget asks in the thread.
+- Claude can turn plugins on and off and uninstall them, and always asks first.
+
+### Removed
+
+- **Breaking.** `/api/admin/assistant/chat`, the conversation abilities (`assistant/conversations`, `assistant/conversation`, `assistant/conversation-title`, `assistant/conversation-delete`) and the `assistant_conversations` table: threads are the workspace's (`/api/admin/workspace/turn`, `threads/*`). Chats from before are not carried over.
+- **Hide Chat**: the thread is the admin's, and works without a key.
+
+### Fixed
+
+- A chat goes on after an update, a renamed site or another plugin. Claude's earlier reasoning in it is set aside when its instructions change, where Anthropic used to refuse the chat with an invalid `signature` in a `thinking` block.
+
 ## 0.6.1 (2026-11-04)
 
 ### Fixed

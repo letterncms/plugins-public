@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- In the workspace, a new form is answered with **Open** and **Delete**.
+
 ## 0.4.1 (2026-11-04)
 
 ### Fixed

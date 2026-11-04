@@ -147,4 +147,33 @@ final class NavigationTest extends TestCase
             $this->assertSame(['conflict', 'title'], [$e->type, array_key_first($e->details)]);
         }
     }
+
+    public function test_a_link_is_added_at_the_end_and_a_new_page_offers_its_menu_in_the_workspace(): void
+    {
+        $admin = $this->admin();
+        $this->ability('navigation/create', ['title' => 'Main']);
+        $page = $this->page('Summer Menu');
+
+        $menu = $this->cms()->abilities()->execute('navigation/add', ['menu' => 'main', 'entry' => $page['id']], AbilityContext::forUser($admin, 'admin'));
+        $this->assertSame($page['id'], end($menu['items'])['entry']);
+        $menu = $this->ability('navigation/add', ['menu' => 'main', 'url' => 'https://example.com', 'label' => 'Elsewhere']);
+        $this->assertSame(['Summer Menu', 'Elsewhere'], array_map(static fn ($i) => $i['label'] ?? $i['target']['title'], $menu['items']));
+
+        try {
+            $this->ability('navigation/add', ['menu' => 'main']);
+            $this->fail('a link needs a page or an address');
+        } catch (AbilityException $e) {
+            $this->assertArrayHasKey('url', $e->details);
+        }
+
+        // In the workspace, a page just made gets Add to Menu, with the menus to choose from; every answer of the plugin validates.
+        $answers = $this->app->make(\Cms\Modules\Workspace\Answers::class);
+        $view = $answers->command($this->cms()->abilities()->get('entries/create'), ['collection' => 'pages', 'title' => 'Summer Menu'], $page, $admin);
+        $add = array_values(array_filter($view['children'][1]['props']['items'], static fn ($a) => ($a['ability'] ?? null) === 'navigation/add'))[0];
+        $this->assertSame(['main' => 'Main'], $add['form']['fields'][0]['options']);
+        foreach (['navigation/create' => ['title' => 'Footer'], 'navigation/save' => ['handle' => 'main', 'title' => 'Main'], 'navigation/add' => ['menu' => 'main', 'url' => '/x', 'label' => 'X']] as $name => $input) {
+            $result = $this->cms()->abilities()->execute($name, $input, AbilityContext::forUser($admin, 'admin'));
+            $this->assertSame('success', $answers->command($this->cms()->abilities()->get($name), $input, $result, $admin)['children'][0]['props']['tone'], $name);
+        }
+    }
 }
