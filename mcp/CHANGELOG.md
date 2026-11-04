@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 (2026-11-04)
+
 ### Changed
 
 - Agents can turn plugins on and off and uninstall them. These tools are marked destructive, so clients ask first. Needs the CMS 0.6 or later.
