@@ -2,7 +2,7 @@
     "name": "letterncms/assistant",
     "description": "Claude in the workspace: it answers in plain words and builds and edits the site with abilities, as the signed-in user.",
     "type": "cms-plugin",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
