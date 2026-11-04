@@ -2,7 +2,7 @@
     "name": "letterncms/i18n",
     "description": "Multilingual sites: languages, translations linked to their original, localized URLs, hreflang, language switcher and AI translation.",
     "type": "cms-plugin",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "license": "MIT",
     "require": {
         "php": "^8.4",
