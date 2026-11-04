@@ -5,7 +5,7 @@ import { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttributes, typ
 /* Field components of the design system editor — the controls core fields can't
    express: fluid sizes, font stacks, CSS declarations, easing curves, shadows and
    font files. Compact (xs) like the canvas inspector, whose value control (a number
-   with its unit, scrubbed or typed) they use when the blocks plugin has drawn it. */
+   with its unit, scrubbed or typed) they use when Blocks has drawn it. */
 
 /** The canvas inspector's value control (`blocks-value`), or a plain input without it. */
 export function ValueInput({ field, value, onChange, disabled }: { field: FieldDef; value: string | number | null; onChange: (value: string | null) => void; disabled?: boolean }) {

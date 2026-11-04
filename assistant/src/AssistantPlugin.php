@@ -40,8 +40,8 @@ final class AssistantPlugin extends Plugin
 
         $this->abilities();
 
-        // Machine translation for letterncms/i18n, when an API key is set.
-        $this->cms()->hooks()->addFilter('i18n.translator', fn (?\Closure $translator) => $translator
+        // Machine translation for letterncms/languages, when an API key is set.
+        $this->cms()->hooks()->addFilter('languages.translator', fn (?\Closure $translator) => $translator
             ?? ($this->app->make(Claude::class)->configured() ? $this->app->make(Translator::class)(...) : null));
 
         $this->adminModule();

@@ -7,7 +7,7 @@ namespace Cms\Brevo;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Cms\Mail\Transports;
+use Cms\Modules\Email\Transports;
 use Cms\Packages\Plugin;
 use Throwable;
 
@@ -41,11 +41,11 @@ final class BrevoPlugin extends Plugin
     /** @return array<string, mixed> */
     private function stats(): array
     {
-        if ($this->cms()->settings('mail', 'transport', 'log') !== 'brevo') {
+        if ($this->cms()->settings('email', 'transport', 'log') !== 'brevo') {
             return ['state' => 'inactive'];
         }
 
-        $key = (string) $this->cms()->settings('mail', 'brevo_api_key', '');
+        $key = (string) $this->cms()->settings('email', 'brevo_api_key', '');
 
         if ($key === '') {
             return ['state' => 'no-key'];

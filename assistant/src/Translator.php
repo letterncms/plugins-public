@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Cms\Assistant;
 
 /**
- * Translates website text with Claude for letterncms/i18n (`i18n.translator`).
+ * Translates website text with Claude for letterncms/languages (`languages.translator`).
  * Strings go out as a keyed object and must come back with exactly the same
  * keys (structured outputs), so nothing can be dropped or reordered.
  */

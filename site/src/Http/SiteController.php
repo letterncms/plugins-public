@@ -12,9 +12,9 @@ use Cms\Content\Entries\Entry;
 use Cms\Content\Entries\EntryGate;
 use Cms\Content\Entries\UriBuilder;
 use Illuminate\Support\Str;
-use Cms\Blocks\Document;
-use Cms\Blocks\Patterns;
-use Cms\Blocks\Templates;
+use Cms\Modules\Blocks\Document;
+use Cms\Modules\Blocks\Patterns;
+use Cms\Modules\Blocks\Templates;
 use Cms\Site\Rendering\Renderer;
 use Cms\Users\User;
 

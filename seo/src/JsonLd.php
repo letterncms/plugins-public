@@ -37,7 +37,7 @@ final class JsonLd
             '@id' => $site.'/#organization',
             'name' => $this->meta->settings('org_name') ?: config('app.name'),
             'url' => $site.'/',
-            'logo' => $this->meta->absolute($this->cms->hooks()->filter('media.url', null, $this->meta->settings('org_logo'))),
+            'logo' => $this->meta->absolute(app(\Cms\Modules\Media\Images::class)->url($this->meta->settings('org_logo'))),
             'sameAs' => array_values(array_filter((array) $this->meta->settings('same_as', []))) ?: null,
         ]);
 

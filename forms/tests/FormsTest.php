@@ -34,7 +34,7 @@ final class FormsTest extends TestCase
 
     public function test_a_forms_fields_are_not_blocks_of_the_page_it_is_embedded_in(): void
     {
-        $renderer = app(\Cms\Blocks\BlockRenderer::class);
+        $renderer = app(\Cms\Modules\Blocks\BlockRenderer::class);
         $renderer->editor = true;
 
         $html = $renderer->withEditorDocument('page', fn () => $renderer->render([['id' => 'embed', 'type' => 'forms/form', 'props' => ['form' => 'quote']]]));

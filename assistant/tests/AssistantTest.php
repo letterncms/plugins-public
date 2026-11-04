@@ -801,7 +801,7 @@ final class AssistantTest extends TestCase
     {
         $this->api->queue(FakeAnthropic::text((string) json_encode(['s0' => 'Preise', 's1' => 'Pläne für jedes Team'])));
 
-        $translator = $this->cms()->hooks()->filter('i18n.translator', null);
+        $translator = $this->cms()->hooks()->filter('languages.translator', null);
         $this->assertInstanceOf(\Closure::class, $translator);
         $this->assertSame(['Preise', 'Pläne für jedes Team'], $translator(['Pricing', 'Plans for every team'], 'en', 'de'));
 
@@ -813,7 +813,7 @@ final class AssistantTest extends TestCase
 
         $this->cms()->settingsRegistry()->save('assistant', ['api_key' => '']);
         putenv('ANTHROPIC_API_KEY');
-        $this->assertNull($this->cms()->hooks()->filter('i18n.translator', null), 'no key, no translator');
+        $this->assertNull($this->cms()->hooks()->filter('languages.translator', null), 'no key, no translator');
     }
 
     /** @return list<array{0: string, 1: array}> */

@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Cms\Admin\Translations;
-use Cms\Contracts\MailMessage;
-use Cms\Contracts\Mailer;
+use Cms\Modules\Email\Message;
+use Cms\Modules\Email\Mailer;
 use Cms\Cms;
 use Cms\Support\DailySalt;
 use Cms\Support\Files;
@@ -219,7 +219,7 @@ final class SubmissionHandler
         // Written for the people who run the site: in the admin's default language.
         $locale = $this->cms->app()->make(Translations::class)->locale();
 
-        app(Mailer::class)->send(new MailMessage(
+        app(Mailer::class)->send(new Message(
             to: $to,
             subject: mb_substr($subject, 0, 200),
             html: '<p style="margin:0 0 16px"><strong>'.e($form['title']).'</strong></p><table cellpadding="0" cellspacing="0" style="font-size:14px">'.$rows.'</table>'.($files ? '<p style="margin-top:16px;color:#6b6b67">'.e(count($files) === 1 ? __('1 file is in the admin.', [], $locale) : __(':count files are in the admin.', ['count' => count($files)], $locale)).'</p>' : ''),
@@ -237,7 +237,7 @@ final class SubmissionHandler
             return;
         }
 
-        app(Mailer::class)->send(new MailMessage(
+        app(Mailer::class)->send(new Message(
             to: $email,
             subject: (string) $s['confirmation_subject'],
             html: \Cms\Support\Html\Sanitizer::clean((string) $s['confirmation_message']),

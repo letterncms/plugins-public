@@ -24,7 +24,7 @@ type Stats =
 export default function WidgetStats() {
   const stats = useAbility<Stats>('brevo/stats', {}, { refetchInterval: 10 * 60_000 })
   const s = stats.data
-  const settings = <Button size="sm" icon="settings" onClick={() => navigate('/settings/mail')}>{t('Open Settings')}</Button>
+  const settings = <Button size="sm" icon="settings" onClick={() => navigate('/settings/email')}>{t('Open Settings')}</Button>
 
   const empty: WidgetEmpty | null =
     s?.state === 'inactive'
@@ -38,7 +38,7 @@ export default function WidgetStats() {
             : null
 
   return (
-    <Widget action={{ label: t('Settings'), to: '/settings/mail' }} query={stats} empty={empty}>
+    <Widget action={{ label: t('Settings'), to: '/settings/email' }} query={stats} empty={empty}>
       {s?.state === 'ok' && <Report s={s} />}
     </Widget>
   )

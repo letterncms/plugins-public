@@ -6,11 +6,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
-        "letterncms/cms": ">=0.5 <1",
-        "letterncms/blocks": ">=0.1 <1"
-    },
-    "suggest": {
-        "letterncms/mail": "Email notifications and confirmations"
+        "letterncms/cms": ">=0.7 <1"
     },
     "autoload": {
         "psr-4": {
@@ -24,6 +20,9 @@
             "provider": "Cms\\Forms\\FormsPlugin",
             "provides": [
                 "forms"
+            ],
+            "modules": [
+                "letterncms/blocks"
             ]
         }
     },
