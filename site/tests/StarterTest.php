@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Cms\Site\Tests;
 
-use Cms\Blocks\Document;
+use Cms\Modules\Blocks\Document;
 use Cms\Content\Collections\Collection;
 use Cms\Site\Build\SiteBuilder;
 use Cms\Site\Starter;

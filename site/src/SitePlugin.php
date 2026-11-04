@@ -6,11 +6,11 @@ namespace Cms\Site;
 
 use Illuminate\Support\Facades\Route;
 use Cms\Abilities\AbilityException;
-use Cms\Blocks\Anchors;
-use Cms\Blocks\BlocksDocument;
-use Cms\Blocks\Scope;
-use Cms\Blocks\StyleCompiler;
-use Cms\Blocks\Templates;
+use Cms\Modules\Blocks\Anchors;
+use Cms\Modules\Blocks\BlocksDocument;
+use Cms\Modules\Blocks\Scope;
+use Cms\Modules\Blocks\StyleCompiler;
+use Cms\Modules\Blocks\Templates;
 use Cms\Content\Collections\Collection;
 use Cms\Content\Entries\Entry;
 use Cms\Contracts\SiteBuilder as SiteBuilderContract;
@@ -81,8 +81,9 @@ final class SitePlugin extends Plugin
         $hooks->on('render.head', static fn (string $key, string $html) => PageContext::current()?->addHead($key, $html));
         $hooks->on('render.foot', static fn (string $key, string $html) => PageContext::current()?->addFoot($key, $html));
         $hooks->on('render.depend', static fn (string $key) => PageContext::depend($key));
+        $hooks->addFilter('render.page', static fn (?array $page) => ($context = PageContext::current()) ? ['entry' => $context->entry, 'uri' => $context->uri, 'locale' => $context->locale()] : $page);
         // Mail wears the site's colours, from whichever tokens this design has.
-        $hooks->addFilter('mail.colors', static function (array $colors) use ($design) {
+        $hooks->addFilter('email.colors', static function (array $colors) use ($design) {
             $token = static fn (string $path, string $fallback) => is_string($value = $design()->json()->token($path)) && $value !== '' ? $value : $fallback;
 
             return [...$colors, 'background' => $token('color.background', $colors['background']), 'card' => $token('color.raised', $colors['card']), 'text' => $token('color.ink', $token('color.foreground', $colors['text'])), 'muted' => $token('color.muted', $colors['muted']), 'line' => $token('color.line', $colors['line']), 'button' => $token('color.primary', $colors['button']), 'button_text' => $token('color.primary-foreground', $colors['button_text'])];

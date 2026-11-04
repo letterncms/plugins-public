@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Cms\Forms;
 
 use Cms\Admin\Translations;
-use Cms\Blocks\BlockRenderer;
+use Cms\Modules\Blocks\BlockRenderer;
 use Cms\Cms;
 
 /**

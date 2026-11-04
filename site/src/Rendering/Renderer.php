@@ -6,10 +6,10 @@ namespace Cms\Site\Rendering;
 
 use Cms\Admin\Translations;
 use Illuminate\Contracts\Support\Htmlable;
-use Cms\Blocks\BlockRenderer;
-use Cms\Blocks\BlocksDocument;
-use Cms\Blocks\Scope;
-use Cms\Blocks\Templates;
+use Cms\Modules\Blocks\BlockRenderer;
+use Cms\Modules\Blocks\BlocksDocument;
+use Cms\Modules\Blocks\Scope;
+use Cms\Modules\Blocks\Templates;
 use Cms\Content\Entries\Entry;
 use Cms\Extend\Hooks;
 use Cms\Cms;
@@ -216,7 +216,7 @@ final class Renderer
             $head[] = '<link rel="preload" href="'.e($href).'" as="font" type="font/woff2" crossorigin>';
         }
 
-        if ($favicon = \Cms\Blocks\Media::url(cms()->settings('site', 'favicon'))) {
+        if ($favicon = \Cms\Modules\Blocks\Media::url(cms()->settings('site', 'favicon'))) {
             $head[] = '<link rel="icon" href="'.e($favicon).'">';
         } else {
             // Without one, every browser asks for /favicon.ico and gets a 404.

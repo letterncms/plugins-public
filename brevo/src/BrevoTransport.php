@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Cms\Brevo;
 
 use Illuminate\Support\Facades\Http;
-use Cms\Mail\Transport;
+use Cms\Modules\Email\Transport;
 use RuntimeException;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;

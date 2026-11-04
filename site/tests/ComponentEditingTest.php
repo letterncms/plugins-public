@@ -132,7 +132,7 @@ final class ComponentEditingTest extends TestCase
     public function test_dynamic_component_reference_choices_refresh_after_creating_another_component(): void
     {
         $this->makeComponent('first', [], []);
-        $registry = $this->app->make(\Cms\Blocks\BlockRegistry::class);
+        $registry = $this->app->make(\Cms\Modules\Blocks\BlockRegistry::class);
         $pattern = $registry->get('pattern');
         $before = $pattern->blueprint()->field('ref')->get('options');
         $this->assertArrayHasKey('first', $before);

@@ -39,7 +39,7 @@ final class RenderingTest extends TestCase
 
     public function test_collection_templates_are_explicit_and_the_picker_only_offers_real_templates(): void
     {
-        $templates = $this->app->make(\Cms\Blocks\Templates::class);
+        $templates = $this->app->make(\Cms\Modules\Blocks\Templates::class);
         $posts = $this->cms()->collections()->find('posts');
         $this->assertSame('', $posts->template);
         $settings = fn () => array_column($this->cms()->collections()->settingsFields($posts), null, 'handle')['template'];
@@ -89,7 +89,7 @@ final class RenderingTest extends TestCase
         $this->assertSame('Content Only', $fields()['template']['placeholder']);
         $this->assertNull($fields()['template']['fallbackHandle']);
         $content = $this->cms()->content();
-        $templates = $this->app->make(\Cms\Blocks\Templates::class);
+        $templates = $this->app->make(\Cms\Modules\Blocks\Templates::class);
         $content->create('templates', ['title' => 'Site default', 'slug' => 'default', 'status' => 'published', 'data' => ['blocks' => [['type' => 'outlet']]]]);
         $templates->flush();
         $this->assertSame('Site default', $fields()['template']['placeholder'], 'a missing collection template falls back exactly like the renderer');
@@ -163,7 +163,7 @@ final class RenderingTest extends TestCase
         ]]]);
 
         $nodes = $this->app->make(Renderer::class)->materialize($this->cms()->entries()->find($page->id), $this->cms()->entries()->find($page->id)->data['content']);
-        $text = $this->app->make(\Cms\Blocks\Document::class)->text($nodes);
+        $text = $this->app->make(\Cms\Modules\Blocks\Document::class)->text($nodes);
 
         $this->assertSame('Built for agencies Launch notes', $text);
     }
@@ -181,7 +181,7 @@ final class RenderingTest extends TestCase
     {
         $this->cms()->abilities()->execute('design/update', ['buttons' => ['on-brand' => ['base' => ['color' => '#000']]]], \Cms\Abilities\AbilityContext::system());
 
-        $field = app(\Cms\Blocks\BlockRegistry::class)->get('button')->blueprint()->field('variant');
+        $field = app(\Cms\Modules\Blocks\BlockRegistry::class)->get('button')->blueprint()->field('variant');
 
         $this->assertSame('On brand', $field->get('options')['on-brand']);
         $this->assertSame('Primary', $field->get('options')['primary']);

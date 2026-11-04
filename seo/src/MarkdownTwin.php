@@ -73,7 +73,7 @@ final class MarkdownTwin
                 'callout' => '> **Note:** '.$this->inline((string) ($p['text'] ?? '')),
                 'code' => "```".($p['language'] ?? '')."\n".($p['code'] ?? '')."\n```",
                 'table' => $this->table($p),
-                'image' => ! empty($p['alt']) ? '!['.$p['alt'].']('.($this->meta->absolute((string) $this->cms->hooks()->filter('media.url', null, $p['image'] ?? null)) ?? '').')' : '',
+                'image' => ! empty($p['alt']) ? '!['.$p['alt'].']('.($this->meta->absolute((string) app(\Cms\Modules\Media\Images::class)->url($p['image'] ?? null)) ?? '').')' : '',
                 'button' => ! empty($p['url']) ? '['.$this->inline((string) ($p['label'] ?? '')).']('.$this->meta->absolute((string) $p['url']).')' : '',
                 'link' => ! empty($p['url']) && trim(strip_tags((string) ($p['label'] ?? ''))) !== '' ? '['.$this->inline((string) $p['label']).']('.$this->meta->absolute((string) $p['url']).')' : '',
                 'accordion' => implode("\n\n", array_map(fn ($i) => '**'.($i['question'] ?? '').'**'."\n\n".$this->inline((string) ($i['answer'] ?? '')), (array) ($p['items'] ?? []))),

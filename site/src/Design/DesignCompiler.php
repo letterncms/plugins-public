@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Cms\Site\Design;
 
-use Cms\Blocks\Css;
-use Cms\Blocks\StyleCompiler;
+use Cms\Modules\Blocks\Css;
+use Cms\Modules\Blocks\StyleCompiler;
 
 /**
  * Turns the design system into one stylesheet: a small reset, @font-face rules,

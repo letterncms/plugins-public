@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Cms\I18n\Tests;
+namespace Cms\Site\Tests;
 
 use Cms\Abilities\AbilityContext;
 use Cms\Forms\FormRepository;
 use Cms\Forms\Submission;
-use Cms\I18n\StringMap;
-use Cms\Navigation\MenuResolver;
+use Cms\Modules\Languages\StringMap;
+use Cms\Modules\Navigation\MenuResolver;
 use Cms\Seo\Meta;
 use Cms\Seo\SiteFiles;
 use Cms\Tests\TestCase;
@@ -18,7 +18,7 @@ final class LocalisedSiteTest extends TestCase
 {
     protected function plugins(): array
     {
-        return ['letterncms/blocks', 'letterncms/site', 'letterncms/i18n', 'letterncms/navigation', 'letterncms/forms', 'letterncms/seo'];
+        return ['letterncms/blocks', 'letterncms/site', 'letterncms/languages', 'letterncms/navigation', 'letterncms/forms', 'letterncms/seo'];
     }
 
     protected function collections(): array

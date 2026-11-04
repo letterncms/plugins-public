@@ -122,7 +122,7 @@ final class Meta
     private function image(Entry $entry, array $seo): ?string
     {
         foreach ([$seo['image'] ?? null, $entry->data['image'] ?? null, $entry->data['cover'] ?? null, $this->settings('default_image')] as $candidate) {
-            $url = $this->cms->hooks()->filter('media.url', null, $candidate);
+            $url = app(\Cms\Modules\Media\Images::class)->item($candidate)?->url();
 
             if (is_string($url) && $url !== '') {
                 return $this->absolute($url);

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Cms\Abilities\AbilityException;
-use Cms\Blocks\BlockRegistry;
+use Cms\Modules\Blocks\BlockRegistry;
 use Cms\Forms\Http\FileController;
 use Cms\Forms\Http\SubmitController;
 use Cms\Modules\Workspace\Answers;

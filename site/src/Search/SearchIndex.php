@@ -57,8 +57,8 @@ final class SearchIndex
         $text = [];
 
         foreach ($entry->data as $value) {
-            if (is_array($value) && array_is_list($value) && isset($value[0]['type']) && class_exists(\Cms\Blocks\BlocksDocument::class)) {
-                $document = new \Cms\Blocks\BlocksDocument(app(\Cms\Site\Rendering\Renderer::class)->materialize($entry, $value));
+            if (is_array($value) && array_is_list($value) && isset($value[0]['type']) && class_exists(\Cms\Modules\Blocks\BlocksDocument::class)) {
+                $document = new \Cms\Modules\Blocks\BlocksDocument(app(\Cms\Site\Rendering\Renderer::class)->materialize($entry, $value));
                 array_push($headings, ...$document->headings(3));
                 $text[] = $document->text();
             } elseif (is_string($value) && mb_strlen($value) > 40) {

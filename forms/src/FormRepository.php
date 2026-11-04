@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Cms\Forms;
 
 use InvalidArgumentException;
-use Cms\Blocks\Document;
+use Cms\Modules\Blocks\Document;
 use Cms\Support\Files;
 use Cms\Support\RecordTimestamps;
 

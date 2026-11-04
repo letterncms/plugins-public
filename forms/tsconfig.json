@@ -6,7 +6,8 @@
     ],
     "paths": {
       "@letterncms/blocks": [
-        "../blocks/admin/src/index.tsx"
+        "../../cms/modules/blocks/admin/src/index.tsx",
+        "../vendor/letterncms/cms/modules/blocks/admin/src/index.tsx"
       ]
     }
   },
