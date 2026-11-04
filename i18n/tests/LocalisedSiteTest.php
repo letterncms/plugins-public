@@ -149,7 +149,7 @@ final class LocalisedSiteTest extends TestCase
         $this->postJson('/api/forms/contact', ['_cms_locale' => 'de', 'kind' => 'site'])
             ->assertStatus(422)
             ->assertJsonPath('errors.name', 'Ihr Name ist erforderlich.')
-            ->assertJsonPath('message', 'Bitte prüfen Sie die markierten Felder und versuchen Sie es erneut.');
+            ->assertJsonPath('message', 'Bitte prüfe die markierten Felder und versuche es erneut.');
 
         $this->postJson('/api/forms/contact', ['_cms_locale' => 'de', 'name' => 'Ada', 'kind' => 'site'])
             ->assertOk()

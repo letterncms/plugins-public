@@ -88,7 +88,7 @@ export function InParent({ s, parentDisplay }: { s: StyleApi; parentDisplay?: st
           grid && { handle: 'gridRow', type: 'text', component: 'blocks-value', label: t('Row'), placeholder: 'auto', unit: '' },
           !grid && { handle: 'flex', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Grow'), options: [{ value: '1 1 0%', label: t('Fill') }, { value: '0 0 auto', label: t('Fixed') }, { value: '0 1 auto', label: t('Shrink') }] },
           { handle: 'alignSelf', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Align Self'), options: [{ value: 'flex-start', icon: 'b-align-top', title: t('Start') }, { value: 'center', icon: 'b-align-center-vertical', title: t('Center') }, { value: 'flex-end', icon: 'b-align-bottom', title: t('End') }, { value: 'stretch', icon: 'b-arrows-out-line-vertical', title: t('Stretch') }] },
-          { handle: 'order', type: 'text', component: 'blocks-value', label: t('Order'), unit: '', placeholder: '0', prefixIcon: 'b-list-numbers' },
+          { handle: 'order', type: 'text', component: 'blocks-value', label: t('Display Order'), unit: '', placeholder: '0', prefixIcon: 'b-list-numbers' },
         ]}
       />
     </Section>

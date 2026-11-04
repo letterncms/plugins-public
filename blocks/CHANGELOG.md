@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- Its words read the same as the rest of the admin in Dutch, French and German: where two packages translated a word differently, which one you saw could change from one page to the next.
+- Labels that meant something other than the same word elsewhere have their own: **Display Order** in Layout, **Keyboard Key** in Logic, **Main Content** in Layers, the **When Open** state, and the **Block Editor**.
+
 ## 0.5.0 (2026-11-04)
 
 ### Added

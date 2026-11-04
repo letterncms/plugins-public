@@ -87,7 +87,7 @@ export function Layers() {
 /** What a box is, by its element or its layout: a section, a row, a grid. */
 function kindOf(node: BlockNode, title: string): string {
   if (node.type !== 'box') return title
-  const tags: Record<string, string> = { section: t('Section'), header: t('Header'), footer: t('Footer'), nav: t('Navigation'), main: t('Main'), aside: t('Aside'), article: t('Article'), ul: t('List'), ol: t('List'), li: t('List Item'), a: t('Link'), button: t('Button'), form: t('Form'), figure: t('Figure') }
+  const tags: Record<string, string> = { section: t('Section'), header: t('Header'), footer: t('Footer'), nav: t('Navigation'), main: t('Main Content'), aside: t('Aside'), article: t('Article'), ul: t('List'), ol: t('List'), li: t('List Item'), a: t('Link'), button: t('Button'), form: t('Form'), figure: t('Figure') }
   const tag = String(node.props?.tag ?? '')
   if (tags[tag]) return tags[tag]
   const base = (node.style?.base ?? {}) as Record<string, unknown>

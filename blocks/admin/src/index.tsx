@@ -17,7 +17,7 @@ registry.fields.set('blocks-easing', EaseField as any)
 registry.panels.set('blocks-editor', {
   id: 'blocks',
   slot: 'entry.editor',
-  label: t('Editor'),
+  label: t('Block Editor'),
   icon: 'layout',
   component: lazy(() => import('./BlocksWorkspace').then((m) => ({ default: m.BlocksWorkspace }))),
   when: (props: { bodyField?: { type: string } }) => props.bodyField?.type === 'blocks',

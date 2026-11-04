@@ -120,7 +120,7 @@ final class SitePlugin extends Plugin
                 'description' => __('Live entries of a collection: posts, projects, team members…'),
                 'fields' => [
                     ['handle' => 'collection', 'type' => 'select', 'label' => 'Collection', 'options' => $collections, 'required' => true],
-                    ['handle' => 'sort', 'type' => 'select', 'label' => 'Order', 'options' => ['-published_at' => __('Newest First'), 'published_at' => __('Oldest First'), 'title' => __('Title A–Z'), '-title' => __('Title Z–A'), 'position' => __('Manual Order')], 'default' => '-published_at'],
+                    ['handle' => 'sort', 'type' => 'select', 'label' => 'Sort Order', 'options' => ['-published_at' => __('Newest First'), 'published_at' => __('Oldest First'), 'title' => __('Title A–Z'), '-title' => __('Title Z–A'), 'position' => __('Manual Order')], 'default' => '-published_at'],
                     ['handle' => 'limit', 'type' => 'number', 'label' => 'How Many', 'min' => 1, 'max' => 200, 'default' => 6],
                     ['handle' => 'offset', 'type' => 'number', 'label' => 'Skip', 'min' => 0, 'max' => 200],
                     ['handle' => 'parent', 'type' => 'select', 'label' => 'Level', 'options' => ['any' => __('All'), 'top' => __('Top Level Only'), 'current' => __('Children of This Page'), 'item' => __('Children of the Outer Item')], 'default' => 'any'],
