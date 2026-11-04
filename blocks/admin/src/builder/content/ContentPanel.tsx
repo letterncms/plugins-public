@@ -1,19 +1,15 @@
 import { navigate, t, useAbility, type FieldDef } from '@letterncms/sdk'
 import { fieldControlId, Button, Fields, Icon, Tooltip, cn } from '@letterncms/ui'
-import type { ReactNode } from 'react'
 import { useAnchors } from '../../core/anchors'
 import { useEditorContext } from '../../core/context'
 import type { PatternDef } from '../../core/Inserter'
 import * as tree from '../../core/tree'
 import type { BlockNode } from '../../core/types'
-import { AddButton, Section } from '../controls'
+import { AddButton, Body, PanelFields, Section, SubHeading, WIDE, labelColumn, stacks } from '../controls'
 import { pairOp } from '../fields/composite'
 import { useDataPaths, type DataPath } from './scope'
 
 type Pattern = PatternDef & { id: string | null; props: FieldDef[] }
-
-/** Field types that need the panel's full width (label above). */
-const WIDE = ['richtext', 'markdown', 'code', 'json', 'textarea', 'media', 'repeater', 'tags', 'entries', 'group', 'properties', 'fields']
 
 /** Text-like property types: an empty value shows the label as placeholder. */
 const TEXTUAL = ['text', 'textarea', 'richtext', 'markdown']
@@ -27,39 +23,54 @@ const applies = (field: FieldDef, props: Record<string, unknown>) =>
 
 export { useAnchors }
 
-/** One row: the label, the control, and a button to connect it to data instead. */
-function Prop({ field, value, bound, paths, onValue, onBind, extra }: { field: FieldDef; value: unknown; bound?: string; paths: DataPath[]; onValue: (v: unknown) => void; onBind: (path: string | null) => void; extra?: Partial<FieldDef> }) {
-  const wide = !bound && WIDE.includes(field.type) && !field.component
+/**
+ * One row: the label, the control, and a way to connect it to data instead. The data button sits
+ * at the end of the label and shows on hover (or when connected), so every control ends at the
+ * panel's edge. Switches have no data button: a fixed on or off is what they are for.
+ */
+function Prop({ field: given, value, bound, paths, onValue, onBind, extra }: { field: FieldDef; value: unknown; bound?: string; paths: DataPath[]; onValue: (v: unknown) => void; onBind: (path: string | null) => void; extra?: Partial<FieldDef> }) {
+  // A label, caption or attribution is one line here (it is written on the canvas), not a rich text box.
+  const field: FieldDef = given.type === 'richtext' && given.inline && given.handle !== 'text' && !given.component ? { ...given, component: 'blocks-inline-text' } : given
+  // Core's own wide controls (rich text, media…) draw as they do in forms; the rest as inspector rows.
+  const core = !bound && WIDE.includes(field.type) && !field.component
+  // The same rule as the Design tab: long choices and long labels put the label above.
+  const wide = !bound && stacks(field)
   const toggle = !bound && field.type === 'toggle'
   const def: FieldDef = bound
     ? { handle: field.handle, type: 'text', component: 'blocks-bind', label: field.label, paths }
-    : { ...field, size: 'xs', width: 'full', ...(field.type === 'url' && !field.component ? { component: 'link' } : {}), ...extra }
-  const control = <Fields layout={wide ? 'stacked' : 'inline'} bare fields={[def]} values={{ [field.handle]: bound ?? value }} onChange={(_, v) => (bound ? onBind(v) : onValue(v))} className="min-w-0 flex-1" />
+    // Whether it applies was judged against the block's props already (`applies`): the row only holds this one value.
+    : { ...field, if: undefined, size: 'sm', width: 'full', ...(field.type === 'url' && !field.component ? { component: 'link' } : {}), ...(wide && field.display === 'segmented' ? { block: true } : {}), ...extra }
+  const values = { [field.handle]: bound ?? value }
+  const change = (_: string, v: unknown) => (bound ? onBind(v as string | null) : onValue(v))
+  const control = core
+    ? <Fields bare fields={[def]} values={values} onChange={change} className="min-w-0" />
+    : <PanelFields bare fields={[def]} values={values} onChange={change} className="min-w-0 flex-1" />
+  if (toggle) return <div className="flex min-h-7 items-center">{control}</div>
   const connect = (
     <Tooltip content={bound ? t('Disconnect from Data') : t('Connect to Data')}>
       <button
         type="button"
         onClick={() => onBind(bound ? null : paths[0]?.path ?? 'entry.title')}
         aria-label={bound ? t('Disconnect from Data') : t('Connect to Data')}
-        className={cn('grid size-5 shrink-0 place-items-center rounded-xs hover:bg-hover', bound ? 'text-focus' : 'text-faint opacity-0 hover:text-text focus-visible:opacity-100 group-hover/prop:opacity-100')}
+        className={cn('grid h-6 shrink-0 place-items-center overflow-hidden rounded-sm hover:bg-hover', bound ? 'w-6 text-ink' : 'w-0 text-faint hover:text-ink focus-visible:w-6 group-hover/prop:w-6 [@media(hover:none)]:w-6')}
       >
-        <Icon name="b-database" size={11} />
+        <Icon name="b-database" size={13} />
       </button>
     </Tooltip>
   )
   const label = (
-    <label htmlFor={fieldControlId(field)} className={cn('truncate text-2xs', bound ? 'text-focus' : 'text-muted')} title={field.instructions}>
-      {field.label}
-    </label>
+    <span className={cn('flex h-7 min-w-0 shrink-0 items-center gap-0.5', !wide && labelColumn)}>
+      <label htmlFor={fieldControlId(field)} className={cn('min-w-0 flex-1 truncate text-xs', bound ? 'text-ink' : 'text-muted')} title={field.instructions}>
+        {field.label}
+      </label>
+      {connect}
+    </span>
   )
 
   if (wide) {
     return (
-      <div className="group/prop space-y-1">
-        <div className="flex h-5 items-center gap-1">
-          <span className="flex-1 truncate">{label}</span>
-          {connect}
-        </div>
+      <div className="group/prop pb-1">
+        {label}
         {control}
       </div>
     )
@@ -67,9 +78,8 @@ function Prop({ field, value, bound, paths, onValue, onBind, extra }: { field: F
 
   return (
     <div className="group/prop flex min-h-7 items-center gap-2">
-      {!toggle && <span className="w-20 shrink-0 truncate">{label}</span>}
+      {label}
       {control}
-      {connect}
     </div>
   )
 }
@@ -93,7 +103,12 @@ export function ContentPanel({ node }: { node: BlockNode }) {
   const all = (type?.fields ?? []).filter((f) => !(f.type === 'json' && ['items', 'rows', 'values'].includes(f.handle)))
   // "Open in New Tab" lives in the link picker when the block has both.
   const merged = all.some((f) => f.component === 'link') && all.some((f) => f.handle === 'new_tab')
-  const fields = all.filter((f) => !(merged && f.handle === 'new_tab') && applies(f, props))
+  const shown = all.filter((f) => !(merged && f.handle === 'new_tab') && applies(f, props))
+  // Technical settings (the HTML tag, how an image loads) wait under Advanced.
+  const fields = shown.filter((f) => !f.advanced)
+  const advanced = shown.filter((f) => f.advanced)
+  const prop = (f: FieldDef) => <Prop key={f.handle} field={f} value={node.props?.[f.handle]} bound={bind[f.handle]} paths={paths} onValue={(v) => setProp(f.handle, v)} onBind={(p) => setBind(f.handle, p)} extra={linkExtra(f)} />
+  const repeat = node.type === 'repeat'
   const linkExtra = (f: FieldDef): Partial<FieldDef> | undefined =>
     f.component === 'link' || f.type === 'url' ? { anchors, ...(merged ? { newTab: !!node.props?.new_tab, onNewTab: (on: boolean) => setProp('new_tab', on || undefined) } : {}) } : undefined
 
@@ -101,22 +116,16 @@ export function ContentPanel({ node }: { node: BlockNode }) {
     <div>
       {node.type === 'pattern' ? (
         <ComponentInstance node={node} paths={paths} setBind={setBind} anchors={anchors} />
-      ) : node.type === 'repeat' ? (
+      ) : repeat ? (
         <RepeatSource node={node} />
       ) : (
-        <Section title={t('Content')} empty={fields.length === 0}>
-          {fields.length === 0 && <p className="m-0 text-2xs text-faint">{t('Nothing to set here. Style it in Design.')}</p>}
-          {fields.map((f) => (
-            <Prop key={f.handle} field={f} value={node.props?.[f.handle]} bound={bind[f.handle]} paths={paths} onValue={(v) => setProp(f.handle, v)} onBind={(p) => setBind(f.handle, p)} extra={linkExtra(f)} />
-          ))}
-        </Section>
+        fields.length > 0 && <Body>{fields.map(prop)}</Body>
       )}
 
       <Section title={t('Visibility')} open={!!(bind.visible || bind.hidden || node.hidden)} empty={!bind.visible && !bind.hidden && !node.hidden}>
-        <Fields
-          layout="inline"
+        <PanelFields
           fields={[
-            { handle: 'shown', type: 'toggle', size: 'xs', label: t('Show on the Site') },
+            { handle: 'shown', type: 'toggle', size: 'sm', label: t('Show on the Site') },
             { handle: 'visible', type: 'text', component: 'blocks-bind', label: t('Only If'), paths, placeholder: t('Always'), status: bind.visible ? 'own' : undefined, reset: () => setBind('visible', null), instructions: t('Shown only when this data has a value') },
             { handle: 'hidden', type: 'text', component: 'blocks-bind', label: t('Hide If'), paths, placeholder: t('Never'), status: bind.hidden ? 'own' : undefined, reset: () => setBind('hidden', null) },
           ]}
@@ -125,20 +134,19 @@ export function ContentPanel({ node }: { node: BlockNode }) {
         />
       </Section>
 
-      <Section title={t('Element')} open={false} empty={!node.anchor && !node.attrs && !node.class}>
-        <Fields
-          layout="inline"
+      <Section title={t('Advanced')} open={false} empty={!node.anchor && !node.attrs && !node.class && !advanced.some((f) => node.props?.[f.handle] !== undefined && node.props?.[f.handle] !== f.default)}>
+        {repeat ? <RepeatAdvanced node={node} /> : advanced.map(prop)}
+        <PanelFields
           fields={[
-            { handle: 'label', type: 'text', size: 'xs', commit: 'blur', label: t('Layer Name'), placeholder: type?.title },
-            { handle: 'anchor', type: 'text', size: 'xs', commit: 'blur', label: t('Anchor'), placeholder: t('None'), mono: true, instructions: t('Link to it with #anchor') },
-            { handle: 'class', type: 'text', size: 'xs', commit: 'blur', label: t('Classes'), placeholder: t('None'), mono: true, instructions: t('Extra CSS classes, styled in custom CSS') },
+            { handle: 'label', type: 'text', size: 'sm', commit: 'blur', label: t('Layer Name'), placeholder: type?.title },
+            { handle: 'anchor', type: 'text', size: 'sm', commit: 'blur', label: t('Anchor'), placeholder: t('None'), mono: true, instructions: t('Link to it with #anchor') },
+            { handle: 'class', type: 'text', size: 'sm', commit: 'blur', label: t('Classes'), placeholder: t('None'), mono: true, instructions: t('Extra CSS classes, styled in custom CSS') },
           ]}
           values={{ label: node.label, anchor: node.anchor, class: node.class }}
           onChange={(h, v: string) => store.updateNode(node.id, { [h]: (h === 'anchor' ? v.toLowerCase().replace(/[^a-z0-9-]/g, '') : v) || undefined })}
         />
         <SubHeading title={t('Attributes')} action={<AddButton label={t('Add Attribute')} onClick={() => store.updateNode(node.id, { attrs: { ...(node.attrs ?? {}), 'aria-label': '' } })} />} />
-        <Fields
-          layout="inline"
+        <PanelFields
           bare
           fields={[
             {
@@ -148,7 +156,7 @@ export function ContentPanel({ node }: { node: BlockNode }) {
               className: 'items-start',
               label: t('Attributes'),
               key: { lower: true },
-              item: { handle: 'value', type: 'text', size: 'xs', commit: 'blur', label: t('Value') },
+              item: { handle: 'value', type: 'text', size: 'sm', commit: 'blur', label: t('Value') },
               items: Object.fromEntries(Object.keys(node.attrs ?? {}).filter((name) => bind[`attr:${name}`]).map((name) => [name, { handle: 'bind', type: 'text', component: 'blocks-bind', label: t('Data'), paths }])),
             },
           ]}
@@ -168,8 +176,7 @@ export function ContentPanel({ node }: { node: BlockNode }) {
           }}
         />
         <SubHeading title={t('States from Data')} action={<AddButton label={t('Add State from Data')} onClick={() => setBind('state:active', paths[0]?.path ?? 'item.active')} />} />
-        <Fields
-          layout="inline"
+        <PanelFields
           bare
           fields={[
             {
@@ -190,18 +197,8 @@ export function ContentPanel({ node }: { node: BlockNode }) {
             store.updateNode(node.id, { bind: Object.keys(all).length ? all : undefined }, `bind:${node.id}:states`)
           }}
         />
-        <p className="m-0 select-all pt-1 font-mono text-[10px] text-faint">{node.id}</p>
+        <p className="m-0 select-all pt-2 font-mono text-2xs text-faint">{node.id}</p>
       </Section>
-    </div>
-  )
-}
-
-/** A small heading inside a section, with an add button. */
-export function SubHeading({ title, action }: { title: string; action?: ReactNode }) {
-  return (
-    <div className="flex h-6 items-center justify-between pt-1">
-      <span className="text-2xs font-medium text-muted">{title}</span>
-      {action}
     </div>
   )
 }
@@ -224,21 +221,9 @@ function ComponentInstance({ node, paths, setBind, anchors }: { node: BlockNode;
   }
 
   return (
-    <Section
-      title={t('Component')}
-      actions={
-        pattern?.id ? (
-          <Tooltip content={t('Edit Component')}>
-            <button type="button" onClick={() => navigate(`/content/components/${pattern.id}`)} className="grid size-5 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" aria-label={t('Edit Component')}>
-              <Icon name="b-pencil-simple" size={12} />
-            </button>
-          </Tooltip>
-        ) : undefined
-      }
-    >
-      <Fields
-        layout="inline"
-        fields={[{ handle: 'ref', type: 'select', size: 'xs', label: t('Component'), required: true, options: (list.data ?? []).filter((p) => p.synced).map((p) => ({ value: p.handle, label: p.title })) }]}
+    <Body>
+      <PanelFields
+        fields={[{ handle: 'ref', type: 'select', size: 'sm', label: t('Component'), required: true, options: (list.data ?? []).filter((p) => p.synced).map((p) => ({ value: p.handle, label: p.title })) }]}
         values={{ ref: node.props?.ref }}
         onChange={(_, ref) => ref && store.updateProps(node.id, { ref, values: {} })}
       />
@@ -254,13 +239,13 @@ function ComponentInstance({ node, paths, setBind, anchors }: { node: BlockNode;
           extra={f.type === 'url' ? { component: 'link', reference: true, anchors } : undefined}
         />
       ))}
-      {pattern && (pattern.props ?? []).length === 0 && <p className="m-0 text-2xs text-faint">{t('No properties. Add them in the component to vary each instance.')}</p>}
-      <div className="pt-1">
-        <Button size="xs" variant="ghost" icon="b-scissors" onClick={detach} disabled={!pattern}>
-          {t('Detach from Component')}
+      <div className="-ml-2 flex gap-1 pt-1">
+        {pattern?.id && <Button size="sm" variant="ghost" icon="b-pencil-simple" onClick={() => navigate(`/content/components/${pattern.id}`)}>{t('Edit Component')}</Button>}
+        <Button size="sm" variant="ghost" icon="b-scissors" onClick={detach} disabled={!pattern}>
+          {t('Detach')}
         </Button>
       </div>
-    </Section>
+    </Body>
   )
 }
 
@@ -271,29 +256,38 @@ function RepeatSource({ node }: { node: BlockNode }) {
   const set = (handle: string, v: unknown) => store.updateProps(node.id, { [handle]: v }, `repeat:${node.id}:${handle}`)
 
   return (
-    <Section title={t('Repeat')}>
-      <Fields
-        layout="inline"
-        fields={[{ handle: 'source', type: 'select', size: 'xs', label: t('List'), required: true, options: (catalog.sources ?? []).map((s) => ({ value: s.name, label: s.label })), instructions: source?.description }]}
+    <Body>
+      <PanelFields
+        fields={[{ handle: 'source', type: 'select', size: 'sm', label: t('List'), required: true, options: (catalog.sources ?? []).map((s) => ({ value: s.name, label: s.label })), instructions: source?.description }]}
         values={{ source: node.props?.source }}
         onChange={(_, v) => v && set('source', v)}
       />
-      <Fields
-        layout="inline"
-        fields={(source?.fields ?? []).map((f) => ({ ...f, size: 'xs' as const, width: 'full' as const }))}
+      <PanelFields
+        fields={(source?.fields ?? []).map((f) => ({ ...f, size: 'sm' as const, width: 'full' as const }))}
         values={Object.fromEntries((source?.fields ?? []).map((f) => [f.handle, node.props?.[f.handle]]))}
         onChange={(h, v) => set(h, v)}
       />
-      <Fields
-        layout="inline"
-        fields={[
-          { handle: 'tag', type: 'select', size: 'xs', label: t('HTML Tag'), required: true, options: ['div', 'ul', 'ol', 'section', 'nav'] },
-          { handle: 'as', type: 'text', size: 'xs', commit: 'blur', label: t('Item Name'), placeholder: 'item', mono: true, instructions: t('For nested lists: inner blocks read it as name.title') },
-          { handle: 'empty', type: 'text', size: 'xs', commit: 'blur', label: t('When Empty'), placeholder: t('Show Nothing') },
-        ]}
-        values={{ tag: node.props?.tag ?? 'div', as: node.props?.as, empty: node.props?.empty }}
-        onChange={(h, v) => set(h, h === 'tag' ? v ?? 'div' : (h === 'as' ? String(v).replace(/[^a-z_]/gi, '') : v) || undefined)}
+      <PanelFields
+        fields={[{ handle: 'empty', type: 'text', size: 'sm', commit: 'blur', label: t('When Empty'), placeholder: t('Show Nothing') }]}
+        values={{ empty: node.props?.empty }}
+        onChange={(h, v) => set(h, v || undefined)}
       />
-    </Section>
+    </Body>
+  )
+}
+
+/** A Repeat's technical settings: the HTML tag, and the name its blocks read each item by. */
+function RepeatAdvanced({ node }: { node: BlockNode }) {
+  const { store } = useEditorContext()
+  const set = (handle: string, v: unknown) => store.updateProps(node.id, { [handle]: v }, `repeat:${node.id}:${handle}`)
+  return (
+    <PanelFields
+      fields={[
+        { handle: 'tag', type: 'select', size: 'sm', label: t('HTML Tag'), required: true, options: ['div', 'ul', 'ol', 'section', 'nav'] },
+        { handle: 'as', type: 'text', size: 'sm', commit: 'blur', label: t('Item Name'), placeholder: 'item', mono: true },
+      ]}
+      values={{ tag: node.props?.tag ?? 'div', as: node.props?.as }}
+      onChange={(h, v) => set(h, h === 'tag' ? v ?? 'div' : String(v ?? '').replace(/[^a-z_]/gi, '') || undefined)}
+    />
   )
 }

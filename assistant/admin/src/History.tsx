@@ -9,7 +9,7 @@ const pageSize = 30
 
 function useChats() {
   const allowed = can('assistant.use')
-  const { working } = usePanel()
+  const { working, conversation, title } = usePanel()
   const history = useInfiniteQuery({
     queryKey: ['assistant/conversations', 'list'],
     initialPageParam: 0,
@@ -17,7 +17,11 @@ function useChats() {
     getNextPageParam: (last, pages) => last.length === pageSize ? pages.length * pageSize : undefined,
     enabled: allowed,
   })
-  const saved = history.data?.pages.flat() ?? []
+  const loaded = history.data?.pages.flat() ?? []
+  // The chat on view is in the list even when it is older than the pages loaded so far (opened by its address).
+  const saved = conversation && history.data && !loaded.some((chat) => chat.id === conversation)
+    ? [{ id: conversation, title, updatedAt: null }, ...loaded]
+    : loaded
   const chats = working?.conversation
     ? [{ id: working.conversation, title: working.title, updatedAt: saved.find((chat) => chat.id === working.conversation)?.updatedAt ?? null }, ...saved.filter((chat) => chat.id !== working.conversation)]
     : saved
@@ -120,7 +124,7 @@ export function History() {
 export function NewChatButton() {
   return (
     <Tooltip content={t('New Chat')}>
-      <IconButton icon="plus" label={t('New Chat')} title={undefined} onClick={() => panel.select(null)} />
+      <IconButton icon="plus" label={t('New Chat')} title={undefined} onClick={() => panel.newChat()} />
     </Tooltip>
   )
 }

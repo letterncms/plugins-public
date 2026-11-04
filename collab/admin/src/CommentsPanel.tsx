@@ -39,21 +39,17 @@ export function CommentsPanel({ entry }: { entry: Entry | null }) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
+      <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-4 py-3">
         {threads.isLoading ? (
           <div className="grid place-items-center py-10 text-faint"><Spinner /></div>
         ) : open.length === 0 && resolved.length === 0 ? (
-          <div className="px-2 py-10 text-center">
-            <Icon name="comment" size={18} className="mx-auto text-faint" />
-            <p className="m-0 mt-2 text-sm font-medium text-text">{t('No comments yet')}</p>
-            <p className="m-0 mt-1 text-xs text-muted">{t('Type @ to mention someone. They get an email.')}</p>
-          </div>
+          <p className="m-0 py-0.5 text-sm text-muted">{t('No comments yet.')}</p>
         ) : (
           <>
             {open.map((thread) => <Thread key={thread.id} thread={thread} entryId={entryId} people={people.data ?? []} onChange={refresh} writable={writable} />)}
             {resolved.length > 0 && (
-              <button type="button" onClick={() => setShowResolved(!showResolved)} className="flex items-center gap-1 px-1 text-xs text-faint hover:text-muted" aria-expanded={showResolved}>
-                <Icon name={showResolved ? 'chevron-down' : 'chevron-right'} size={11} /> {t('{count} resolved', { count: resolved.length })}
+              <button type="button" onClick={() => setShowResolved(!showResolved)} className="flex h-7 items-center gap-1.5 rounded-sm px-1.5 text-xs text-muted hover:bg-hover hover:text-ink" aria-expanded={showResolved}>
+                <Icon name="chevron-down" size={12} className={cn('transition-transform duration-120', !showResolved && '-rotate-90')} /> {t('{count} resolved', { count: resolved.length })}
               </button>
             )}
             {showResolved && resolved.map((thread) => <Thread key={thread.id} thread={thread} entryId={entryId} people={people.data ?? []} onChange={refresh} writable={writable} />)}
@@ -61,8 +57,8 @@ export function CommentsPanel({ entry }: { entry: Entry | null }) {
         )}
       </div>
       {writable && (
-        <div className="border-t border-border p-3">
-          <Composer entryId={entryId} people={people.data ?? []} onPosted={refresh} placeholder={t('Add a Comment…')} />
+        <div className="shrink-0 px-4 pb-4">
+          <Composer entryId={entryId} people={people.data ?? []} onPosted={refresh} placeholder={t('Add a comment…')} />
         </div>
       )}
     </div>
@@ -82,8 +78,8 @@ function Thread({ thread, entryId, people, onChange, writable }: { thread: Comme
   }
 
   return (
-    <article className={cn('rounded-md border border-border bg-bg', thread.resolved && 'opacity-70')}>
-      <div className="space-y-3 p-3">
+    <article className={cn('rounded-lg bg-bg shadow-[0_0_0_1px_var(--cms-border)]', thread.resolved && 'opacity-70')}>
+      <div className="space-y-3 px-3 pb-3 pt-2.5">
         <CommentView comment={thread} onChange={onChange} actions={writable && (
           <IconButton icon={thread.resolved ? 'refresh' : 'check'} label={thread.resolved ? t('Reopen') : t('Resolve')} size="xs" onClick={resolve} />
         )} />
@@ -94,7 +90,7 @@ function Thread({ thread, entryId, people, onChange, writable }: { thread: Comme
           {replying ? (
             <Composer entryId={entryId} parentId={thread.id} people={people} autoFocus placeholder={t('Reply…')} onPosted={() => { setReplying(false); onChange() }} onCancel={() => setReplying(false)} />
           ) : (
-            <button type="button" onClick={() => setReplying(true)} className="text-xs text-muted hover:text-text">{t('Reply')}</button>
+            <button type="button" onClick={() => setReplying(true)} className="-mx-1.5 flex h-6 items-center rounded-sm px-1.5 text-xs text-muted hover:bg-hover hover:text-ink">{t('Reply')}</button>
           )}
         </div>
       )}
@@ -195,11 +191,21 @@ function Composer({ entryId, parentId, people, onPosted, onCancel, placeholder, 
       onSubmit={(e) => { e.preventDefault(); void submit() }}
       onKeyDown={(e) => e.key === 'Escape' && !e.defaultPrevented && onCancel?.()}
     >
-      <Fields bare fields={[{ handle: 'body', type: 'textarea', component: 'collab-composer', label: placeholder, placeholder, autofocus: autoFocus, people }]} values={{ body }} onChange={(_, v) => setBody(v)} />
-      <div className="mt-1.5 flex items-center justify-end gap-1.5">
-        {onCancel && <Button size="xs" variant="ghost" onClick={onCancel}>{t('Cancel')}</Button>}
-        <Button size="xs" variant="primary" disabled={!body.trim()} loading={busy} onClick={submit} title={t('Send (⌘↵)')}>{parentId ? t('Reply') : t('Comment')}</Button>
-      </div>
+      <Fields
+        bare
+        fields={[{
+          handle: 'body', type: 'textarea', component: 'collab-composer', label: placeholder, placeholder, autofocus: autoFocus, people,
+          trailing: (
+            <>
+              {onCancel && <IconButton icon="close" label={t('Cancel')} size="sm" onClick={onCancel} />}
+              {/* Quiet until there is something to send. */}
+              <IconButton icon="arrow-up" label={parentId ? t('Reply') : t('Comment')} variant={body.trim() ? 'primary' : 'ghost'} size="sm" type="submit" disabled={!body.trim()} loading={busy} />
+            </>
+          ),
+        }]}
+        values={{ body }}
+        onChange={(_, v) => setBody(v)}
+      />
     </form>
   )
 }

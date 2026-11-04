@@ -5,7 +5,6 @@
   "Add Your Brevo API Key": "Voeg je Brevo API-sleutel toe",
   "Bounced": "Gebounced",
   "Brevo": "Brevo",
-  "Brevo → SMTP & API → API keys. Your sender domain must be verified.": "Brevo → SMTP & API → API keys. Je afzenderdomein moet geverifieerd zijn.",
   "Brevo answered with an error (:status).": "Brevo antwoordde met een fout (:status).",
   "Brevo API Key": "Brevo API-sleutel",
   "Brevo could not be reached.": "Brevo is niet bereikbaar.",
@@ -16,12 +15,13 @@
   "Delivered": "Bezorgd",
   "Delivery Rate": "Bezorgratio",
   "Delivery, opens, clicks and bounces of the email Brevo sent this week.": "Bezorging, opens, kliks en bounces van de e-mail die Brevo deze week verstuurde.",
+  "From Brevo → SMTP & API → API keys.": "Uit Brevo → SMTP & API → API keys.",
   "Last 7 days, updated {time}": "Afgelopen 7 dagen, bijgewerkt {time}",
   "No email sent through Brevo this week": "Deze week geen e-mail via Brevo verstuurd",
   "No stats from Brevo": "Geen statistieken van Brevo",
   "Open Rate": "Openratio",
   "Open Settings": "Instellingen openen",
-  "Send email through Brevo's transactional API.": "Verstuur e-mail via de transactionele API van Brevo.",
+  "Send email through Brevo’s transactional API.": "Verstuur e-mail via de transactionele API van Brevo.",
   "Settings": "Instellingen",
   "Try Again": "Opnieuw proberen"
 }

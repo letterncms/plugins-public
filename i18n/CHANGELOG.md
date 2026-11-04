@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.4 or later.
+- **Languages** is listed under Plugins in Settings.
+- **Add Language** is a button at the top of Languages that opens a list you can search, each language named once. Any language code works too.
+- A language's row opens it, with what can be done: **Make Default** and **Remove**, or for the default language **Add URL Prefix** or **Remove URL Prefix**, instead of a switch under the list.
+- The list of languages fits its page: name, code, URL prefix and entries, each named on a phone.
+
 ## 0.1.0 (2026-11-01)
 
 ### Added

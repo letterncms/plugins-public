@@ -1,4 +1,4 @@
-import { can, invalidate, navigate, run, t, useAbility, type RecordTimestamps } from '@letterncms/sdk'
+import { can, invalidate, navigate, plural, run, t, useAbility, type RecordTimestamps } from '@letterncms/sdk'
 import { Button, DataView, Dialog, EmptyState, Fields, Icon, Page, toast } from '@letterncms/ui'
 import { useState } from 'react'
 
@@ -20,14 +20,15 @@ export default function MenusScreen() {
       crumbs={[{ label: t('Navigation'), icon: 'list-tree' }]}
       actions={manage && <Button variant="primary" icon="plus" onClick={() => setOpen(true)}>{t('New Menu')}</Button>}
     >
-      <DataView id="navigation" label={t('Navigation')} items={list.data ?? []} rowKey={(m) => m.handle} rowHref={(m) => `/navigation/${m.handle}`}
+      <DataView id="navigation" label={t('Menus')} items={list.data ?? []} rowKey={(m) => m.handle} rowHref={(m) => `/navigation/${m.handle}`}
         loading={list.isLoading} error={list.isError} onRetry={() => void list.refetch()} searchText={(m) => `${m.title} ${m.handle}`}
         columns={[
           { id: 'title', label: t('Name'), value: (m) => m.title, render: (m) => <span className="flex items-center gap-2"><Icon name="list-tree" size={16} className="shrink-0 text-muted" /><span className="truncate">{m.title}</span></span> },
           { id: 'handle', label: t('Handle'), width: 'minmax(200px,1fr)', value: (m) => m.handle, render: (m) => <span className="font-mono text-xs">{m.handle}</span> },
-          { id: 'count', label: t('Links'), width: '100px', align: 'end', value: (m) => m.count, render: (m) => m.count },
+          // Said in words, so it reads on its own where there are no column headers (a phone).
+          { id: 'count', label: t('Links'), width: '100px', align: 'end', value: (m) => m.count, render: (m) => plural(m.count, '{count} link', '{count} links') },
         ]}
-        empty={<EmptyState icon="list-tree" title={t('No menus yet')} description={t('Start with the main menu.')} action={manage && <Button variant="primary" icon="plus" onClick={() => setOpen(true)}>{t('New Menu')}</Button>} />}
+        empty={<EmptyState icon="list-tree" title={t('No menus yet')} description={t('Start with the main menu.')} />}
       />
       {open && <NewMenu onClose={() => setOpen(false)} taken={(list.data ?? []).map((m) => m.handle)} />}
     </Page>

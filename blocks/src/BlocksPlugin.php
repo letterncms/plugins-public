@@ -32,11 +32,14 @@ final class BlocksPlugin extends Plugin
             $registry->register([...$block, 'package' => $this->manifest->name]);
         }
 
-        $permissions = $this->cms()->permissions();
-        $permissions->register('blocks.html', 'Add custom HTML blocks', 'Content', 'Raw HTML can break layouts or add scripts — give this only to trusted people.');
+        foreach (CoreBlocks::categories() as $category) {
+            $registry->category($category['name'], $category['label']);
+        }
 
-        $this->cms()->admin()->section('design', 'Design', 14, settings: true);
-        $this->cms()->admin()->widget('blocks-design', ['label' => 'Design System', 'description' => 'Components and templates changed last.', 'icon' => 'palette', 'column' => 'main', 'order' => 50, 'permission' => 'entries.components.view']);
+        $permissions = $this->cms()->permissions();
+        $permissions->register('blocks.html', 'Add Custom HTML Blocks', 'Content', trusted: true);
+
+        $this->cms()->admin()->widget('blocks-design', ['label' => 'Components and Templates', 'description' => 'Components and templates changed last.', 'icon' => 'palette', 'column' => 'main', 'order' => 50, 'permission' => 'entries.components.view']);
         $this->collections();
         $this->guardHtmlBlocks();
         $this->cms()->hooks()->addFilter('blocks.data-sources', fn (array $sources) => [...$sources, ...$this->app->make(CmsSources::class)->sources()]);
@@ -62,8 +65,8 @@ final class BlocksPlugin extends Plugin
         $this->cms()->hooks()->addFilter('collections', static function (array $collections) {
             $collections[Templates::COLLECTION] ??= \Cms\Content\Collections\Collection::fromArray(Templates::COLLECTION, [
                 'title' => 'Templates', 'singular' => 'Template', 'icon' => 'layout', 'driver' => 'files', 'structure' => 'list',
-                'section' => 'design', 'system' => true, 'body' => 'blocks', 'sort' => 'title',
-                'description' => 'Page templates: the header, footer and layout around each page. Collections and entries pick one; `default` frames everything else, `404` shows missing pages.',
+                'section' => 'design', 'nav_order' => 20, 'system' => true, 'body' => 'blocks', 'sort' => 'title',
+                'description' => 'The frame around each page: header, footer and layout. Default frames every page without one of its own; Not found shows when a page is missing.',
                 'fields' => [
                     ['handle' => 'blocks', 'type' => 'blocks', 'label' => 'Template'],
                     ['handle' => 'description', 'type' => 'textarea', 'label' => 'Description', 'section' => 'sidebar'],
@@ -72,14 +75,15 @@ final class BlocksPlugin extends Plugin
             ]);
             $collections[Patterns::COLLECTION] ??= \Cms\Content\Collections\Collection::fromArray(Patterns::COLLECTION, [
                 'title' => 'Components', 'singular' => 'Component', 'icon' => 'symbol', 'driver' => 'files', 'structure' => 'list',
-                'section' => 'design', 'system' => true, 'body' => 'blocks', 'sort' => 'title',
-                'description' => 'Reusable designs. Synced components (header, footer, cards) update everywhere they are used; sections are copied when inserted.',
+                'section' => 'design', 'nav_order' => 30, 'system' => true, 'body' => 'blocks', 'sort' => 'title',
+                'description' => 'Reusable designs. A synced one (a header, a card) changes everywhere it is used; a section is copied when you insert it.',
                 'fields' => [
                     ['handle' => 'blocks', 'type' => 'blocks', 'label' => 'Component'],
-                    ['handle' => 'synced', 'type' => 'toggle', 'label' => 'Synced Component', 'default' => true, 'section' => 'sidebar', 'instructions' => 'On: every instance updates when this changes. Off: a section that is copied on insert.'],
+                    // With the handle, in the details' first group: one group of rows, labeled alike, then Info.
+                    ['handle' => 'synced', 'type' => 'toggle', 'label' => 'Synced', 'default' => true, 'section' => 'sidebar'],
                     ['handle' => 'category', 'type' => 'text', 'label' => 'Category', 'section' => 'sidebar'],
                     ['handle' => 'description', 'type' => 'textarea', 'label' => 'Description', 'section' => 'sidebar'],
-                    ['handle' => 'props', 'type' => 'properties', 'label' => 'Properties', 'section' => 'sidebar', 'placeholder' => 'No properties yet.', 'add' => 'Add Property', 'instructions' => 'What each instance can set (a title, an image…). Inside, bind blocks to props.<handle>.'],
+                    ['handle' => 'props', 'type' => 'properties', 'label' => 'Properties', 'section' => 'sidebar', 'placeholder' => 'No properties yet.', 'add' => 'Add Property'],
                 ],
             ]);
 
@@ -283,6 +287,14 @@ final class BlocksPlugin extends Plugin
         ], $this->app->make(BlockRegistry::class)->catalog());
     }
 
+    /** Block categories in the inserter's order and the user's language. */
+    private function translatedCategories(): array
+    {
+        $t = $this->app->make(\Cms\Admin\Translations::class);
+
+        return array_map(static fn (array $category) => [...$category, 'label' => $t->label($category['label'])], $this->app->make(BlockRegistry::class)->categories());
+    }
+
     /** Data sources for Repeat in the user's language: names, descriptions, settings and item labels. */
     private function translatedSources(): array
     {
@@ -314,6 +326,7 @@ final class BlocksPlugin extends Plugin
             'package' => $package,
             'handler' => fn () => [
                 'blocks' => $this->translatedBlocks(),
+                'categories' => $this->translatedCategories(),
                 'styles' => array_map(static fn ($p) => ['property' => $p[0], 'group' => $p[1]], StyleCompiler::PROPERTIES),
                 'aliases' => StyleCompiler::ALIASES,
                 'states' => [...array_keys(StyleCompiler::STATES), 'is-<name>', 'in-<name>'],

@@ -205,7 +205,9 @@ final class CmsSources
             ];
         }
 
-        return array_values(array_map(static fn ($category, $blocks) => ['name' => ucfirst($category), 'id' => 'cat-'.$category, 'blocks' => $blocks], array_keys($groups), $groups));
+        $labels = array_column($this->blocks->categories(), 'label', 'name');
+
+        return array_values(array_map(static fn ($category, $blocks) => ['name' => $labels[$category] ?? ucfirst($category), 'id' => 'cat-'.$category, 'blocks' => $blocks], array_keys($groups), $groups));
     }
 
     private function fieldTypes(): array

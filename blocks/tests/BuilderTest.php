@@ -183,6 +183,32 @@ final class BuilderTest extends TestCase
         $this->assertSame(['logic' => true, 'motion' => true], app(BlockRenderer::class)->features);
     }
 
+    public function test_the_canvas_marks_the_blocks_a_repeat_draws_so_they_can_be_selected(): void
+    {
+        $renderer = app(BlockRenderer::class);
+        $renderer->editor = true;
+        $html = $this->render([
+            ['id' => 'list', 'type' => 'repeat', 'props' => ['source' => 'list', 'path' => 'menu'], 'children' => [
+                ['id' => 'card', 'type' => 'box', 'children' => [['id' => 'name', 'type' => 'paragraph', 'bind' => ['text' => 'item.label']]]],
+            ]],
+        ], ['menu' => [['label' => 'Docs'], ['label' => 'Blog']]]);
+        $renderer->editor = false;
+
+        $this->assertStringContainsString('data-cms-node="list"', $html);
+        $this->assertSame(2, substr_count($html, 'data-cms-proto="card"'), 'every item stands for the block');
+        $this->assertSame(2, substr_count($html, 'data-cms-proto-document="test-source" data-cms-proto="name"'));
+        $this->assertStringNotContainsString('data-cms-node="card"', $html, 'not a source block: its text is not edited in place');
+        $this->assertStringNotContainsString('data-cms-prop', $html);
+    }
+
+    public function test_excerpts_keep_words_of_separate_blocks_apart(): void
+    {
+        $html = new \Illuminate\Support\HtmlString('<h2>Details</h2><p>That vary.</p><ul><li>One</li><li>Two</li></ul><p>Choose what<br>fits.</p>');
+
+        $this->assertSame('Details That vary. One Two Choose what fits.', Scope::text($html));
+        $this->assertSame('Details That…', (new Scope(['body' => $html]))->resolve('body|excerpt:12'));
+    }
+
     public function test_the_canvas_shows_conditional_elements_as_they_first_appear(): void
     {
         $this->assertFalse(Expression::evaluate('open', ['open' => false]));

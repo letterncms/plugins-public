@@ -115,7 +115,7 @@ final class OAuthController
                 'heading' => __('Connect :app to :site?', ['app' => $app, 'site' => $site]),
                 'as' => __('It will act as :name, with your permissions.', ['name' => $user->name]),
                 'can' => [__('Read your content, design system, blocks and settings'), __('Create and edit what you are allowed to change'), __('Every change is recorded in the audit log')],
-                'full' => __('Full access'),
+                'full' => __('Full Access'),
                 'fullHint' => __('Everything you can do in the admin'),
                 'read' => __('Read Only'),
                 'readHint' => __('Look, never change anything'),

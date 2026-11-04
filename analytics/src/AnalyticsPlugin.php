@@ -33,16 +33,16 @@ final class AnalyticsPlugin extends Plugin
     public function boot(): void
     {
         $cms = $this->cms();
-        $cms->permissions()->register('analytics.view', 'View site analytics', 'Analytics');
+        $cms->permissions()->register('analytics.view', 'View Site Analytics', 'Analytics');
 
-        $cms->settingsRegistry()->register(Collector::SETTINGS, 'Analytics', [
-            ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true, 'instructions' => 'Visitors who opt out of tracking are skipped.'],
-            ['handle' => 'mode', 'type' => 'select', 'label' => 'What to Count', 'default' => Collector::COUNTS, 'options' => [Collector::COUNTS => __('Page views only'), Collector::VISITORS => __('Visitors, sources and devices')], 'instructions' => 'Page views only reads nothing from the browser and keeps nothing about visitors. Visitors stores a daily pseudonymous hash and reads data from the browser: check the rules for your visitors\' countries, as many require consent. Going back to page views only deletes the visitor data.'],
-            ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['mode' => Collector::VISITORS], 'instructions' => 'Count a visitor only after your consent tool sets window.cmsConsent.analytics or sends a cms:consent event.'],
-            ['handle' => 'exclude', 'type' => 'tags', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'instructions' => 'A path, or a pattern with *.'],
-            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Days to Keep Data', 'min' => 0, 'default' => 730, 'instructions' => '0 keeps it forever.'],
-            ['handle' => 'endpoint', 'type' => 'url', 'label' => '{brand} URL', 'placeholder' => 'https://cms.example.com', 'instructions' => 'Where pages report visits. Only needed when the site runs on another domain.'],
-        ], icon: 'chart', description: 'Visitor counting on the published site.', order: 55);
+        $cms->settingsRegistry()->register(Collector::SETTINGS, fields: [
+            ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true, 'instructions' => 'Visitors who opt out are skipped.'],
+            ['handle' => 'mode', 'type' => 'select', 'label' => 'What to Count', 'default' => Collector::COUNTS, 'options' => [Collector::COUNTS => __('Page Views Only'), Collector::VISITORS => __('Visitors, Sources and Devices')], 'display' => 'radio', 'instructions' => 'Switching back to page views deletes visitor data.', 'if' => ['enabled' => true]],
+            ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS], 'instructions' => 'Many countries require it for visitor data.'],
+            ['handle' => 'exclude', 'type' => 'tags', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'instructions' => 'A path, or a pattern like /drafts/*.', 'if' => ['enabled' => true]],
+            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Visits For', 'suffix' => 'days', 'min' => 0, 'default' => 730, 'instructions' => '0 keeps them forever.', 'if' => ['enabled' => true]],
+            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Reporting Address', 'placeholder' => 'https://cms.example.com', 'instructions' => 'Only when the site is hosted elsewhere.', 'if' => ['enabled' => true]],
+        ], icon: 'chart', description: 'Visitor counting on the published site.', order: 55, home: 'analytics');
 
         $this->routes();
         $this->snippet();
@@ -50,7 +50,7 @@ final class AnalyticsPlugin extends Plugin
         $this->app->make(AnalyticsAbilities::class)->register($cms->abilities());
 
         $admin = $cms->admin();
-        $admin->nav('analytics', ['label' => 'Analytics', 'path' => '/analytics', 'icon' => 'chart', 'section' => 'main', 'order' => 10, 'pinned' => true, 'permission' => 'analytics.view']);
+        $admin->nav('analytics', ['path' => '/analytics', 'icon' => 'chart', 'section' => 'main', 'order' => 10, 'pinned' => true, 'permission' => 'analytics.view']);
         $admin->widget('analytics-overview', ['label' => 'Analytics', 'description' => 'Page views in the last 30 days.', 'icon' => 'chart', 'column' => 'main', 'enabled' => true, 'order' => 5, 'permission' => 'analytics.view']);
         $admin->command('analytics', ['label' => 'Open Analytics', 'icon' => 'chart', 'path' => '/analytics', 'permission' => 'analytics.view', 'keywords' => ['visitors', 'traffic', 'stats', 'views']]);
         $this->adminModule();

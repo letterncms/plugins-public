@@ -14,11 +14,11 @@ use Cms\Packages\Plugin;
 final class SeoPlugin extends Plugin
 {
     public const array FIELDS = [
-        ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120, 'instructions' => 'Defaults to the entry title.'],
+        ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120, 'instructions' => 'Defaults to the page title.'],
         ['handle' => 'description', 'type' => 'textarea', 'label' => 'Meta Description', 'max' => 320, 'instructions' => '70–160 characters. Defaults to the first paragraph.'],
         ['handle' => 'image', 'type' => 'media', 'fallback' => 'url', 'label' => 'Social Image', 'max' => 1],
         ['handle' => 'canonical', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'Canonical URL', 'placeholder' => 'This Page'],
-        ['handle' => 'schema', 'type' => 'select', 'label' => 'Page Type', 'options' => ['WebPage' => 'Web page', 'Article' => 'Article', 'AboutPage' => 'About page', 'ContactPage' => 'Contact page', 'CollectionPage' => 'Collection page', 'FAQPage' => 'FAQ page', 'ProfilePage' => 'Profile page']],
+        ['handle' => 'schema', 'type' => 'select', 'label' => 'Page Type', 'options' => ['WebPage' => 'Web Page', 'Article' => 'Article', 'AboutPage' => 'About Page', 'ContactPage' => 'Contact Page', 'CollectionPage' => 'Collection Page', 'FAQPage' => 'FAQ Page', 'ProfilePage' => 'Profile Page']],
         ['handle' => 'noindex', 'type' => 'toggle', 'label' => 'Hide from Search Engines'],
     ];
 
@@ -31,7 +31,7 @@ final class SeoPlugin extends Plugin
 
     public function boot(): void
     {
-        $this->cms()->permissions()->register('seo.manage', __('Manage SEO settings and redirects'), __('Site'));
+        $this->cms()->permissions()->register('seo.manage', __('Manage SEO Settings and Redirects'), __('Site'));
         $this->addSeoField();
         $this->settingsSchema();
         $this->rendering();
@@ -39,7 +39,6 @@ final class SeoPlugin extends Plugin
         $this->routes();
         $this->abilities();
 
-        $this->cms()->admin()->nav('redirects', ['label' => 'Redirects', 'path' => '/redirects', 'icon' => 'arrow-up-right', 'section' => 'tools', 'order' => 40, 'permission' => 'seo.manage']);
         $this->cms()->admin()->widget('seo-health', ['label' => 'SEO Health', 'description' => __('How published pages score for search and AI answers, and what to fix first.'), 'icon' => 'seo', 'column' => 'main', 'order' => 45]);
         $this->adminModule();
     }
@@ -57,7 +56,9 @@ final class SeoPlugin extends Plugin
                 }
 
                 $definition = $collection->toYaml();
-                $definition['fields'][] = ['handle' => 'seo', 'type' => 'group', 'label' => 'SEO', 'section' => 'seo', 'localizable' => true, 'fields' => $fields];
+                // Left empty, the page type is what Meta falls back to: an article for dated entries, a web page otherwise.
+                $own = array_map(static fn (array $f) => $f['handle'] === 'schema' ? [...$f, 'placeholder' => $collection->isDated() ? 'Article' : 'Web Page'] : $f, $fields);
+                $definition['fields'][] = ['handle' => 'seo', 'type' => 'group', 'label' => 'SEO', 'section' => 'seo', 'localizable' => true, 'fields' => $own];
                 $collections[$handle] = Collection::fromArray($handle, $definition);
             }
 
@@ -78,19 +79,19 @@ final class SeoPlugin extends Plugin
     {
         $crawlers = SiteFiles::AI_CRAWLERS;
 
-        $this->cms()->settingsRegistry()->register('seo', __('SEO & AI visibility'), [
-            ['handle' => 'title_format', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'instructions' => 'Use {title} and {site}.'],
-            ['handle' => 'home_title', 'type' => 'text', 'label' => 'Home Page Title', 'instructions' => 'Defaults to the site name.'],
+        $this->cms()->settingsRegistry()->register('seo', fields: [
+            ['handle' => 'title_format', 'width' => 'half', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'instructions' => 'Use {title} and {site}.'],
+            ['handle' => 'home_title', 'width' => 'half', 'type' => 'text', 'label' => 'Home Page Title', 'instructions' => 'Defaults to the site name.'],
             ['handle' => 'default_image', 'type' => 'media', 'fallback' => 'url', 'label' => 'Default Social Image', 'max' => 1],
-            ['handle' => 'org_type', 'type' => 'select', 'label' => 'You Are', 'options' => ['Organization' => __('An organization'), 'LocalBusiness' => __('A local business'), 'Person' => __('A person')], 'default' => 'Organization'],
-            ['handle' => 'org_name', 'type' => 'text', 'label' => 'Name'],
-            ['handle' => 'org_logo', 'type' => 'media', 'fallback' => 'url', 'label' => 'Logo', 'max' => 1],
-            ['handle' => 'same_as', 'type' => 'tags', 'label' => 'Profiles', 'instructions' => 'Your social and directory profiles (LinkedIn, GitHub…).'],
-            ['handle' => 'llms_summary', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)', 'instructions' => 'One or two sentences on who you are and what the site offers.'],
-            ['handle' => 'markdown_twins', 'type' => 'toggle', 'label' => 'Publish Markdown versions of pages (/page.md)', 'default' => true],
-            ['handle' => 'blocked_crawlers', 'type' => 'select', 'label' => 'Block These AI Crawlers', 'multiple' => true, 'options' => array_combine(array_keys($crawlers), array_map(static fn ($label, $agent) => "{$agent} — {$label}", $crawlers, array_keys($crawlers))), 'instructions' => 'Blocking search crawlers (OAI-SearchBot, Claude-SearchBot, PerplexityBot) stops AI assistants from citing you.'],
-            ['handle' => 'security_contact', 'type' => 'text', 'label' => 'Security Contact', 'instructions' => 'An email address or a page where people report vulnerabilities. Publishes /.well-known/security.txt.'],
-            ['handle' => 'discourage_indexing', 'type' => 'toggle', 'label' => 'Discourage All Indexing (Staging Sites)'],
+            ['handle' => 'org_type', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
+            ['handle' => 'org_name', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
+            ['handle' => 'org_logo', 'section' => 'Who You Are', 'type' => 'media', 'fallback' => 'url', 'label' => 'Logo', 'max' => 1],
+            ['handle' => 'same_as', 'section' => 'Who You Are', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://…', 'instructions' => 'Like LinkedIn or GitHub.'],
+            ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)', 'instructions' => 'Who you are and what you offer.'],
+            ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'instructions' => 'At the page’s address with .md, like /about.md.', 'default' => true],
+            ['handle' => 'blocked_crawlers', 'section' => 'AI Crawlers', 'type' => 'select', 'label' => 'Block These AI Crawlers', 'multiple' => true, 'options' => array_combine(array_keys($crawlers), array_map(static fn ($label, $agent) => "{$agent} — {$label}", $crawlers, array_keys($crawlers))), 'instructions' => 'Blocked search crawlers can’t cite you.'],
+            ['handle' => 'security_contact', 'section' => 'Indexing and Security', 'type' => 'text', 'label' => 'Security Contact', 'instructions' => 'Where people report vulnerabilities.'],
+            ['handle' => 'discourage_indexing', 'section' => 'Indexing and Security', 'type' => 'toggle', 'label' => 'Discourage All Indexing', 'instructions' => 'For staging sites.'],
         ], icon: 'seo', description: __('Titles, social cards, structured data, sitemap and AI crawlers.'), package: $this->manifest->name, permission: 'seo.manage', order: 20);
     }
 
@@ -295,7 +296,7 @@ final class SeoPlugin extends Plugin
         $package = $this->manifest->name;
 
         $a->register('seo/analyze', [
-            'label' => 'Check SEO & GEO',
+            'label' => 'Check SEO',
             'description' => 'On-page checks for search engines and AI answers (title, description, headings, alt text, answer-first, questions, links) with a score.',
             'permission' => fn ($user, array $in) => ($e = $this->cms()->entries()->find((string) $in['id'])) && $user?->hasPermission("entries.{$e->collection}.view"),
             'annotations' => ['readOnly' => true],

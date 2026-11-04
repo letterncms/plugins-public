@@ -44,19 +44,19 @@ export function SpacingField({ field, value, onChange, context }: FieldProps<Rec
 
   return (
     <div className="min-w-0 flex-1 select-none">
-      <div className="relative grid grid-cols-[44px_1fr_44px] grid-rows-[22px_auto_22px] rounded-sm border border-border bg-sunken/70">
-        <span className="pointer-events-none absolute left-1.5 top-1 text-[9px] font-semibold uppercase tracking-[0.06em] text-faint">{t('Margin')}</span>
+      <div className="relative grid grid-cols-[44px_1fr_44px] grid-rows-[24px_auto_24px] rounded-md bg-active/60">
+        <span className="pointer-events-none absolute left-2 top-1 text-2xs text-faint">{t('Margin')}</span>
         <span />
         {side('margin', 0)}
         <span />
         {side('margin', 3)}
-        <div className="relative grid grid-cols-[44px_1fr_44px] grid-rows-[22px_20px_22px] rounded-[5px] border border-border-strong bg-bg">
-          <span className="pointer-events-none absolute left-1.5 top-1 text-[9px] font-semibold uppercase tracking-[0.06em] text-faint">{t('Padding')}</span>
+        <div className="relative grid grid-cols-[44px_1fr_44px] grid-rows-[24px_20px_24px] rounded-sm bg-bg shadow-[0_0_0_1px_var(--cms-border)]">
+          <span className="pointer-events-none absolute left-2 top-1 text-2xs text-faint">{t('Padding')}</span>
           <span />
           {side('padding', 0)}
           <span />
           {side('padding', 3)}
-          <span className="my-1 rounded-[3px] border border-dashed border-border-strong bg-sunken/60" />
+          <span className="my-1 rounded-xs bg-active" />
           {side('padding', 1)}
           <span />
           {side('padding', 2)}
@@ -130,13 +130,13 @@ function SideValue({ box, index, value, status, onChange, context }: { box: Box;
           aria-label={title(box, [index])}
           title={`${title(box, [index])}${chosen ? ` · ${chosen.token.path}` : ''}\n${t('Drag to change. Alt: opposite side too, Shift: all sides.')}`}
           className={cn(
-            'mx-auto flex h-full min-w-0 max-w-full items-center justify-center rounded-[3px] px-1 text-2xs tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus',
+            'mx-auto flex h-full min-w-0 max-w-full items-center justify-center rounded-xs px-1 text-xs tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus',
             index % 2 ? 'cursor-ew-resize' : 'cursor-ns-resize',
-            status === 'own' ? 'font-medium text-focus' : status === 'inherited' ? 'text-warning' : 'text-faint',
-            (open || dragging) ? 'bg-focus/12' : 'hover:bg-hover',
+            status === 'own' ? 'font-medium text-ink' : status === 'inherited' ? 'text-text' : 'text-faint',
+            (open || dragging) ? 'bg-active' : 'hover:bg-hover',
           )}
         >
-          <span className={cn('truncate', chosen && 'rounded-[3px] px-1 leading-4', chosen && (status === 'own' ? 'bg-focus/10' : 'bg-warning/10'))}>{shown}</span>
+          <span className={cn('truncate', chosen && 'rounded-[3px] px-1 leading-4', chosen && 'bg-active')}>{shown}</span>
         </button>
       }
     >
@@ -184,7 +184,7 @@ function SideEditor({ box, sides, value, onChange, close, context }: { box: Box;
       />
       {tokens.length > 0 ? (
         <>
-          <p className="cms-caps m-0 mb-1 mt-2.5 !text-[10px]">{t('Space Tokens')}</p>
+          <p className="cms-label m-0 mb-1 mt-2.5 !text-2xs">{t('Space Tokens')}</p>
           <div className="flex flex-wrap gap-1">
             {tokens.map((token) => (
               <button

@@ -1,15 +1,15 @@
 import { can, t } from '@letterncms/sdk'
-import { Fields, Icon, IconButton, Menu, Tabs, Tooltip } from '@letterncms/ui'
+import { Icon, IconButton, Menu, Tabs, cn } from '@letterncms/ui'
 import { Fragment, useId, useLayoutEffect, useRef, useState } from 'react'
-import { useEditorContext } from '../core/context'
+import { blockName, useComponentTitles, useEditorContext } from '../core/context'
 import { savePattern } from '../core/SavePattern'
-import { useEditor } from '../core/store'
 import type { BlockNode } from '../core/types'
 import { patternFits } from '../core/insert'
 import { ContentPanel } from './content/ContentPanel'
 import { DesignPanel } from './design/DesignPanel'
 import { LogicPanel } from './logic/LogicPanel'
 import { MotionPanel } from './motion/MotionPanel'
+import { PanelFields } from './controls'
 
 const tabIds = ['content', 'design', 'interact'] as const
 type Tab = typeof tabIds[number]
@@ -44,12 +44,10 @@ function initialTab(): Tab {
 }
 
 /** Shared block inspector: content first, with design and interactions available in the same frame. */
-export function Inspector({ node, onClose }: { node: BlockNode; onClose?: () => void }) {
+export function Inspector({ node, onBack, backLabel, onClose }: { node: BlockNode; onBack?: () => void; backLabel?: string; onClose?: () => void }) {
   const { store, types, allowed, readOnly } = useEditorContext()
   const type = types.get(node.type)
-  const breakpoint = useEditor(store, (state) => state.breakpoint)
-  const screens = [{ value: 'base', label: t('Desktop'), icon: 'b-monitor' }, { value: 'tablet', label: t('Tablet'), icon: 'b-device-tablet' }, { value: 'mobile', label: t('Phone'), icon: 'b-device-mobile' }] as const
-  const screen = screens.find((item) => item.value === breakpoint) ?? screens[0]
+  const components = useComponentTitles()
   const [tab, setTab] = useState<Tab>(initialTab)
   const tabsId = `block-inspector-${useId()}`
   const [renaming, setRenaming] = useState(false)
@@ -71,53 +69,49 @@ export function Inspector({ node, onClose }: { node: BlockNode; onClose?: () => 
     try { sessionStorage.setItem(tabKey, next) } catch { /* Optional preference. */ }
     setTab(next)
   }
-  const badges = { design: Object.keys(node.style ?? {}).length > 0, content: Object.keys(node.bind ?? {}).length > 0, interact: !!node.motion?.length || !!node.logic }
+  const component = !readOnly && node.type !== 'pattern' && can('entries.components.create')
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col">
-      <div className="border-b border-border px-3 pb-2 pt-2.5">
-        <div className="flex items-center gap-2">
-          <span className="grid size-6 shrink-0 place-items-center rounded-xs bg-focus/12 text-focus">
-            <Icon name={type?.icon ?? 'square'} size={13} />
-          </span>
-          {renaming ? (
-            <div className="min-w-0 flex-1" onBlur={() => setRenaming(false)} onKeyUp={(e) => e.key === 'Escape' && (e.target as HTMLElement).blur()}>
-              <Fields
-                layout="inline"
-                bare
-                fields={[{ handle: 'label', type: 'text', size: 'sm', commit: 'blur', label: t('Name'), autofocus: true, placeholder: type?.title }]}
-                values={{ label: node.label ?? '' }}
-                onChange={(_, v: string) => store.updateNode(node.id, { label: v.trim() || undefined })}
-              />
-            </div>
-          ) : (
-            <button type="button" onDoubleClick={() => !readOnly && setRenaming(true)} className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-ink" title={readOnly ? undefined : t('Double-Click to Rename')}>
-              {node.label || type?.title || node.type}
-            </button>
-          )}
-          {!readOnly && node.type !== 'pattern' && can('entries.components.create') && (
-            <Tooltip content={t('Make a Component')}>
-              <IconButton
-                icon="b-diamonds-four"
-                label={t('Make a Component')}
-                size="xs"
-                onClick={() => {
-                  if (!store.selection().includes(node.id)) store.select(node.id)
-                  savePattern(store, patternFits(store, types, allowed))
-                }}
-              />
-            </Tooltip>
-          )}
-          <Tooltip content={t('Duplicate')} shortcut="mod+d">
-            <IconButton icon="b-copy" label={t('Duplicate')} disabled={readOnly} size="xs" onClick={() => store.duplicate(node.id)} />
-          </Tooltip>
-          <Tooltip content={t('Delete')} shortcut="backspace">
-            <IconButton icon="b-trash" label={t('Delete')} disabled={readOnly} size="xs" onClick={() => store.remove(node.id)} />
-          </Tooltip>
-          {onClose && <IconButton icon="b-x" label={t('Close')} size="xs" onClick={onClose} />}
-        </div>
+    <div className="flex h-full min-h-0 min-w-0 flex-col" data-blocks-inspector>
+      {/* The first row lines up with the sheet's top bar: the way back, what is selected, and what to do with it. */}
+      <div className={cn('flex h-12 shrink-0 items-center gap-1 pr-3', onBack ? 'pl-2' : 'pl-4')}>
+        {onBack && <IconButton icon="arrow-left" label={backLabel ? t('Back to {name}', { name: backLabel }) : t('Back')} size="sm" onClick={onBack} />}
+        <Icon name={node.type === 'pattern' ? 'b-diamonds-four' : type?.icon ?? 'square'} size={16} className="ml-1 shrink-0 text-muted" />
+        {renaming ? (
+          <div className="min-w-0 flex-1 pl-1" onBlur={() => setRenaming(false)} onKeyUp={(e) => e.key === 'Escape' && (e.target as HTMLElement).blur()}>
+            <PanelFields
+              bare
+              fields={[{ handle: 'label', type: 'text', size: 'sm', commit: 'blur', label: t('Name'), autofocus: true, placeholder: type?.title }]}
+              values={{ label: node.label ?? '' }}
+              onChange={(_, v: string) => store.updateNode(node.id, { label: v.trim() || undefined })}
+            />
+          </div>
+        ) : (
+          <button type="button" onDoubleClick={() => !readOnly && setRenaming(true)} className="min-w-0 flex-1 truncate pl-1 text-left text-sm font-semibold text-ink" title={readOnly ? undefined : t('Double-Click to Rename')}>
+            {blockName(node, types, components)}
+          </button>
+        )}
+        <Menu
+          align="end"
+          trigger={<IconButton icon="more" label={t('Block Actions')} size="sm" />}
+          items={[
+            { label: t('Rename'), icon: 'b-pencil-simple', disabled: readOnly, onSelect: () => setRenaming(true) },
+            { label: t('Duplicate'), icon: 'b-copy', shortcut: 'mod+d', disabled: readOnly, onSelect: () => store.duplicate(node.id) },
+            component && {
+              label: t('Make a Component'),
+              icon: 'b-diamonds-four',
+              onSelect: () => {
+                if (!store.selection().includes(node.id)) store.select(node.id)
+                savePattern(store, patternFits(store, types, allowed))
+              },
+            },
+            { separator: true, label: '' },
+            { label: t('Delete'), icon: 'b-trash', shortcut: '⌫', danger: true, disabled: readOnly, onSelect: () => store.remove(node.id) },
+          ]}
+        />
+        {onClose && <IconButton icon="close" label={t('Close Panel')} size="sm" onClick={onClose} />}
       </div>
-      <div className="flex h-10 shrink-0 items-center gap-1 border-b border-border px-3">
+      <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border pl-4 pr-3">
         <Tabs<Tab>
           id={tabsId}
           value={tab}
@@ -125,11 +119,8 @@ export function Inspector({ node, onClose }: { node: BlockNode; onClose?: () => 
           bordered={false}
           size="sm"
           className="h-full min-w-0 flex-1"
-          tabs={tabIds.map((id) => ({ value: id, label: { content: t('Content'), design: t('Design'), interact: t('Interact') }[id], indicator: badges[id] }))}
+          tabs={tabIds.map((id) => ({ value: id, label: { content: t('Content'), design: t('Design'), interact: t('Interact') }[id] }))}
         />
-        <Tooltip content={`${t('Breakpoint')}: ${screen.label}`}>
-          <span><Menu align="end" trigger={<IconButton size="xs" icon={screen.icon} label={`${t('Breakpoint')}: ${screen.label}`} />} items={screens.map((item) => ({ label: item.label, icon: item.icon, checked: item.value === breakpoint, onSelect: () => store.setBreakpoint(item.value) }))} /></span>
-        </Tooltip>
       </div>
       <fieldset ref={panel} role="tabpanel" id={`${tabsId}-${tab}-panel`} aria-labelledby={`${tabsId}-${tab}`} disabled={readOnly} className="m-0 min-h-0 min-w-0 flex-1 overflow-y-auto border-0 p-0">
         {/* Keyed by block so panel state (chosen border side, open rows, drafts) starts fresh per selection. */}

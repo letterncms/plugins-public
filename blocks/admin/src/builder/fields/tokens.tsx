@@ -35,9 +35,9 @@ export const tokenValue = (token: ThemeToken) => display(token.value)
 /** The chip a token value shows as: `space.4`, or a color's name with its swatch. */
 export function TokenChip({ token, alpha, className }: { token: ThemeToken; alpha?: string; className?: string }) {
   return (
-    <span className={cn('inline-flex min-w-0 items-center gap-1 truncate rounded-[3px] bg-focus/10 px-1 font-medium leading-4 text-focus', className)} title={`${token.path} · ${tokenValue(token)}`}>
+    <span className={cn('inline-flex min-w-0 items-center gap-1 truncate rounded-xs bg-active px-1.5 leading-5 text-ink', className)} title={`${token.path} · ${tokenValue(token)}`}>
       <span className="truncate">{token.group === 'color' ? token.name : token.path}</span>
-      {alpha && <span className="font-normal text-focus/60">/{alpha}</span>}
+      {alpha && <span className="text-muted">/{alpha}</span>}
     </span>
   )
 }
@@ -50,7 +50,7 @@ export function TokenList({ group, value, onPick, detach }: { group: string; val
   if (!tokens.length) return <p className="m-0 px-2 py-2 text-2xs text-faint">{t('No {group} tokens in the design system.', { group })}</p>
   return (
     <div>
-      <p className="cms-caps m-0 px-2 pb-1 pt-1.5 !text-[10px]">{t('Tokens')}</p>
+      <p className="cms-label m-0 px-2 pb-1 pt-1.5 !text-2xs">{t('Tokens')}</p>
       <div className="max-h-60 overflow-y-auto">
         {tokens.map((token) => (
           <button
@@ -104,7 +104,7 @@ export function TokenButton({ group, value, onPick, active, className, trigger }
         trigger ?? (
           <button
             type="button"
-            className={cn('grid size-5 shrink-0 place-items-center rounded-xs text-faint transition-opacity hover:bg-hover hover:text-focus', !active && !open && 'opacity-0 group-hover/value:opacity-100 group-focus-within/value:opacity-100', (active || open) && 'text-focus', className)}
+            className={cn('grid size-5 shrink-0 place-items-center rounded-xs text-faint transition-opacity hover:bg-hover hover:text-ink', !active && !open && 'opacity-0 group-hover/value:opacity-100 group-focus-within/value:opacity-100', (active || open) && 'text-ink', className)}
             aria-label={t('Design Tokens')}
             title={t('Design Tokens')}
           >

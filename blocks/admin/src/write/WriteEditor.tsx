@@ -139,7 +139,7 @@ export function WriteEditor({ onInspect }: { onInspect?: (id: string) => void } 
         {!readOnly && <button type="button" tabIndex={-1} aria-label={t('Continue Writing')} onClick={continueWriting} className="block h-28 w-full cursor-text" />}
         <FormatToolbar />
         <SlashMenu />
-        {settings && !onInspect && <InspectorPanel open onOpenChange={(open) => !open && setSettings(null)} title={t('Block')}><div className="flex h-10 items-center justify-end border-b border-border px-2"><IconButton icon="close" size="xs" label={t('Close Panel')} onClick={() => setSettings(null)} /></div>{tree.find(nodes, settings) && <Inspector node={tree.find(nodes, settings)!} />}</InspectorPanel>}
+        {settings && !onInspect && <InspectorPanel open onOpenChange={(open) => !open && setSettings(null)} title={t('Block')}>{tree.find(nodes, settings) && <Inspector node={tree.find(nodes, settings)!} onClose={() => setSettings(null)} />}</InspectorPanel>}
       </div>
     </WriteContext.Provider>
   )

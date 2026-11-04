@@ -1,5 +1,5 @@
-import { can, locale, navigate, t, useManifest, useTab } from '@letterncms/sdk'
-import { BarRow, Button, Delta, EmptyState, IconButton, Icon, Page, Segmented, Skeleton, Tooltip, Widget, cn, compactNumber } from '@letterncms/ui'
+import { can, locale, t, useManifest, useTab } from '@letterncms/sdk'
+import { BarRow, Button, Delta, EmptyState, Icon, Page, ScreenTabs, Segmented, Skeleton, Tooltip, Widget, cn, compactNumber, useScreenTabs } from '@letterncms/ui'
 import type { ReactNode } from 'react'
 import { AreaChart } from './Chart'
 import { METRICS, PERIODS, change, format, useBreakdown, useSummary, type Breakdown, type BreakdownItem, type Period } from './data'
@@ -18,36 +18,32 @@ export default function AnalyticsScreen() {
   const counting = s?.mode === 'counts'
   const metrics = counting ? METRICS.filter((m) => m.counts) : METRICS
   const metric = counting ? 'views' : picked
+  const [tab, setTab] = useScreenTabs(['overview'])
+  const settings = () => setTab('settings')
 
   const actions = (
     <>
       {s && !!s.current && <Live count={s.current} />}
       <Segmented value={period} onChange={setPeriod} options={(['7d', '30d', '90d'] as Period[]).map((p) => ({ value: p, label: periodLabels[p]() }))} />
-      {can('settings.manage') && <IconButton icon="settings" label={t('Analytics Settings')} onClick={() => navigate('/settings/analytics')} />}
     </>
   )
 
-  if (s && !s.tracked) {
-    return (
-      <Page crumbs={[{ label: t('Analytics'), icon: 'chart' }]} actions={can('settings.manage') && <IconButton icon="settings" label={t('Analytics Settings')} onClick={() => navigate('/settings/analytics')} />} width="default">
-        {s.enabled ? (
-          <EmptyState icon="chart" title={t('No visits yet')} description={t('Visits appear here as people open your published site.')} />
-        ) : (
-          <EmptyState icon="chart" title={t('Analytics is off')} description={t('Turn it on to see who visits your site.')} action={can('settings.manage') && <Button variant="primary" onClick={() => navigate('/settings/analytics')}>{t('Open Settings')}</Button>} />
-        )}
-      </Page>
-    )
-  }
-
   const chosen = METRICS.find((m) => m.key === metric)!
+  const untracked = !!s && !s.tracked
 
   return (
-    <Page crumbs={[{ label: t('Analytics'), icon: 'chart' }]} actions={actions} width="default">
+    <Page crumbs={[{ label: t('Analytics'), icon: 'chart' }]} actions={tab === 'overview' && !untracked && actions} width="wide">
+      <ScreenTabs value={tab} onChange={setTab} tabs={[{ value: 'overview', label: t('Overview') }]}>
+      {untracked ? (s!.enabled ? (
+        <EmptyState icon="chart" title={t('No visits yet')} description={t('Visits appear here as people open your published site.')} />
+      ) : (
+        <EmptyState icon="chart" title={t('Analytics is off')} description={t('Turn it on to see who visits your site.')} action={can('settings.manage') && <Button variant="primary" onClick={settings}>{t('Open Settings')}</Button>} />
+      )) : (<>
       {s && !s.enabled && (
         <div className="mb-6 flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm text-muted">
           <Icon name="pause" size={14} className="text-faint" />
           <span className="flex-1">{t('Counting visits is paused.')}</span>
-          {can('settings.manage') && <Button size="xs" variant="ghost" onClick={() => navigate('/settings/analytics')}>{t('Settings')}</Button>}
+          {can('settings.manage') && <Button size="xs" variant="ghost" onClick={settings}>{t('Settings')}</Button>}
         </div>
       )}
 
@@ -94,12 +90,14 @@ export default function AnalyticsScreen() {
         <p className="m-0 mt-10 text-sm text-muted">
           {t('Counting page views only: nothing is read from the browser or kept about visitors.')}{' '}
           {can('settings.manage') && (
-            <button type="button" className="underline underline-offset-2 hover:text-text" onClick={() => navigate('/settings/analytics')}>
+            <button type="button" className="underline underline-offset-2 hover:text-text" onClick={settings}>
               {t('Change what is counted')}
             </button>
           )}
         </p>
       )}
+      </>)}
+      </ScreenTabs>
     </Page>
   )
 }

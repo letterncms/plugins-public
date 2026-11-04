@@ -83,7 +83,7 @@ export function ClipField({ field, value: raw, onChange, context, disabled }: Fi
         field={{
           handle: `${field.handle}-kind`,
           type: 'select',
-          size: 'xs',
+          size: 'sm',
           label: field.label,
           placeholder: t('None'),
           options: [

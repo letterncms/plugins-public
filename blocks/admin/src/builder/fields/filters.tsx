@@ -51,13 +51,13 @@ export function FiltersField({ field, value, onChange, context, disabled }: Fiel
     <div className="min-w-0 flex-1">
       <div className="flex h-7 items-center gap-2">
         <RowLabel field={field} />
-        <span className="min-w-0 flex-1 truncate text-2xs text-faint">{parts.length ? '' : t('None')}</span>
+        <span className="min-w-0 flex-1 truncate text-xs text-faint">{parts.length ? '' : t('None')}</span>
         {missing.length > 0 && (
           <Menu
             align="end"
             trigger={
-              <button type="button" disabled={disabled} className="grid size-5 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" aria-label={t('Add a Filter')} title={t('Add a Filter')}>
-                <Icon name="b-plus" size={12} />
+              <button type="button" disabled={disabled} className="grid size-6 shrink-0 place-items-center rounded-sm text-muted hover:bg-hover hover:text-ink" aria-label={t('Add a Filter')} title={t('Add a Filter')}>
+                <Icon name="b-plus" size={14} />
               </button>
             }
             items={missing.map((f) => ({ label: f.label(), icon: f.icon, onSelect: () => set([...parts, { name: f.name, value: f.initial }]) }))}
@@ -71,8 +71,8 @@ export function FiltersField({ field, value, onChange, context, disabled }: Fiel
           : { handle: `${field.handle}-${part.name}`, type: 'text', component: 'blocks-value', label: part.name, unit: '' }
         return (
           <div key={part.name + i} className="flex h-7 items-center gap-2">
-            <span className="flex w-20 shrink-0 items-center gap-1.5 truncate pl-2 text-2xs text-muted">
-              <Icon name={fn?.icon ?? 'b-faders'} size={11} className="shrink-0 text-faint" />
+            <span className="flex w-[88px] shrink-0 items-center gap-1.5 truncate pl-2 text-xs text-muted">
+              <Icon name={fn?.icon ?? 'b-faders'} size={13} className="shrink-0 text-faint" />
               {fn?.label() ?? part.name}
             </span>
             <SubField field={sub} value={fn?.unit === '%' && /^[\d.]+$/.test(part.value) ? `${Math.round(parseFloat(part.value) * 1000) / 10}%` : part.value || null} onChange={(v) => set(parts.map((p, j) => (j === i ? { ...p, value: String(v ?? fn?.initial ?? '') } : p)))} disabled={disabled} context={context} />

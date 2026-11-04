@@ -20,7 +20,7 @@ export function BindField({ field, value: raw, onChange, disabled }: FieldProps<
   return (
     <Control>
       <div className="relative flex min-w-0 flex-1 items-center">
-        <Icon name="b-database" size={11} className="pointer-events-none absolute left-1.5 text-focus" />
+        <Icon name="b-database" size={13} className="pointer-events-none absolute left-2 text-ink" />
         <input
           id={fieldControlId(field)}
           value={draft ?? value ?? ''}
@@ -35,7 +35,7 @@ export function BindField({ field, value: raw, onChange, disabled }: FieldProps<
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
           title={label}
           aria-label={field.label}
-          className={cn(inputClass, 'bg-focus/8 !pl-5 font-mono text-focus placeholder:font-sans')}
+          className={cn(inputClass, '!pl-7 font-mono text-ink placeholder:font-sans')}
         />
       </div>
       <Popover
@@ -45,14 +45,14 @@ export function BindField({ field, value: raw, onChange, disabled }: FieldProps<
         className="w-64 !p-1"
         trigger={
           <button type="button" className="grid size-6 shrink-0 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" aria-label={t('Choose Data')}>
-            <Icon name="b-caret-down" size={10} />
+            <Icon name="b-caret-down" size={12} />
           </button>
         }
       >
         <div className="max-h-80 overflow-y-auto">
           {groups.map((g) => (
             <div key={g} className="py-1">
-              <p className="cms-caps m-0 px-2 pb-1">{g}</p>
+              <p className="cms-label m-0 px-2 pb-1">{g}</p>
               {paths.filter((p) => p.group === g).map((p) => (
                 <button
                   key={p.path}
@@ -64,14 +64,14 @@ export function BindField({ field, value: raw, onChange, disabled }: FieldProps<
                   className={cn('flex h-7 w-full items-center gap-2 rounded-xs px-2 text-left text-xs hover:bg-hover', value === p.path && 'bg-active')}
                 >
                   <span className="min-w-0 flex-1 truncate">{p.label}</span>
-                  <span className="max-w-[50%] shrink-0 truncate font-mono text-[10px] text-faint">{p.path}</span>
+                  <span className="max-w-[50%] shrink-0 truncate font-mono text-2xs text-faint">{p.path}</span>
                   {value === p.path && <Icon name="check" size={11} className="shrink-0" />}
                 </button>
               ))}
             </div>
           ))}
         </div>
-        <p className="m-0 border-t border-border px-2 py-1.5 font-mono text-[10px] leading-relaxed text-faint" title={t('Filters, and text mixed with data')}>
+        <p className="m-0 border-t border-border px-2 py-1.5 font-mono text-2xs leading-relaxed text-faint" title={t('Filters, and text mixed with data')}>
           |date:M j, Y · |excerpt:120 · |upper · |default:Text · By {'{entry.author}'}
         </p>
       </Popover>

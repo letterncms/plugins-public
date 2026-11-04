@@ -1,6 +1,6 @@
-import { blockNavigation, can, invalidate, navigate, run, t, useAbility, useManifest, type FieldDef } from '@letterncms/sdk'
-import { Badge, Button, EmptyState, Fields, Icon, IconButton, Page, Popover, Skeleton, SortableTree, Spinner, confirm, toast, cn } from '@letterncms/ui'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { can, invalidate, navigate, run, t, useAbility, useManifest, type FieldDef } from '@letterncms/sdk'
+import { Badge, Button, EmptyState, Fields, Icon, IconButton, Page, Popover, SaveBar, Skeleton, SortableTree, Spinner, confirm, toast, cn } from '@letterncms/ui'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 interface Target {
   title: string | null
@@ -37,8 +37,25 @@ interface Found {
 }
 
 const name = (): FieldDef => ({ handle: 'title', type: 'text', label: t('Menu Name') })
-const levels = (): FieldDef => ({ handle: 'maxDepth', type: 'select', label: t('Levels'), display: 'segmented', required: true, options: ['1', '2', '3', '4', '5'] })
+// How deep links may nest, said plainly: 1 is a flat menu, 2 allows one level of submenus.
+const levels = (): FieldDef => ({ handle: 'maxDepth', type: 'select', label: t('Submenus'), size: 'sm', required: true, options: [
+  { value: '1', label: t('No Submenus') },
+  { value: '2', label: t('One Level') },
+  ...[3, 4, 5].map((n) => ({ value: String(n), label: t('{count} Levels', { count: n - 1 }) })),
+] })
 const search = (): FieldDef => ({ handle: 'query', type: 'text', label: t('Search Content'), autofocus: true, placeholder: t('Search pages and posts…') })
+
+/** What is saved of a menu: its items without what is looked up for showing them, and nothing empty. */
+const clean = (list: Item[]): Record<string, unknown>[] =>
+  list.map(({ target: _t, ...i }) => ({ ...i, label: i.label?.trim() || undefined, url: i.url?.trim() || undefined, newTab: i.newTab || undefined, locales: words(i.locales), children: clean(i.children) }))
+const words = (locales: Item['locales']) => {
+  const filled = Object.entries(locales ?? {}).flatMap(([code, row]) => {
+    const kept = Object.fromEntries(Object.entries(row ?? {}).filter(([, value]) => typeof value === 'string' && value.trim() !== ''))
+    return Object.keys(kept).length ? [[code, kept]] : []
+  })
+  return filled.length ? Object.fromEntries(filled) : undefined
+}
+const snapshot = (title: string, maxDepth: number, items: Item[]) => JSON.stringify([title.trim(), maxDepth, clean(items)])
 
 const newId = () => Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('')
 
@@ -46,7 +63,7 @@ export default function MenuEditor({ params }: { params: Record<string, string> 
   const menu = useAbility<Menu>('navigation/get', { handle: params.handle })
 
   if (menu.isLoading) return <Page width="narrow" crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }]}><Skeleton className="h-40" /></Page>
-  if (!menu.data) return <Page width="narrow" crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }, { label: t('Not Found') }]}><EmptyState title={t('Menu not found')} /></Page>
+  if (!menu.data) return <Page width="narrow" crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }, { label: t('Not Found') }]}><EmptyState icon="list-tree" title={t('Not Found')} description={t('It may have been moved or deleted.')} action={<Button onClick={() => navigate('/navigation')}>{t('Back to {label}', { label: t('Navigation') })}</Button>} /></Page>
 
   return <Editor key={menu.data.handle} menu={menu.data} />
 }
@@ -56,16 +73,16 @@ function Editor({ menu }: { menu: Menu }) {
   const [items, setItems] = useState<Item[]>(menu.items)
   const [maxDepth, setMaxDepth] = useState(menu.maxDepth)
   const [open, setOpen] = useState<Set<string>>(new Set())
-  const [dirty, setDirty] = useState(false)
+  const [saved, setSaved] = useState(() => snapshot(menu.title, menu.maxDepth, menu.items))
+  // What Discard puts back: the menu as last saved.
+  const [base, setBase] = useState<Pick<Menu, 'title' | 'maxDepth' | 'items'>>(menu)
   const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
   const manage = can('navigation.manage')
+  // Changed only while it differs from what was saved: putting something back is no change.
+  const dirty = useMemo(() => snapshot(title, maxDepth, items) !== saved, [title, maxDepth, items, saved])
 
-  useEffect(() => blockNavigation(() => (dirty ? t('Discard unsaved changes to this menu?') : null)), [dirty])
-
-  const change = (next: Item[]) => {
-    setItems(next)
-    setDirty(true)
-  }
+  const change = (next: Item[]) => setItems(next)
 
   const patch = (id: string, values: Partial<Item>) => {
     const walk = (list: Item[]): Item[] => list.map((i) => (i.id === id ? { ...i, ...values } : { ...i, children: walk(i.children) }))
@@ -91,18 +108,26 @@ function Editor({ menu }: { menu: Menu }) {
     setOpen((s) => new Set(s).add(id))
   }
 
+  const discard = () => {
+    setTitle(base.title)
+    setMaxDepth(base.maxDepth)
+    setItems(base.items)
+    setFailed(null)
+  }
+
   const save = async () => {
-    const clean = (list: Item[]): Record<string, unknown>[] =>
-      list.map(({ target: _t, ...i }) => ({ ...i, label: i.label?.trim() || undefined, url: i.url?.trim() || undefined, children: clean(i.children) }))
     setBusy(true)
+    setFailed(null)
     try {
-      const saved = await run<Menu>('navigation/save', { handle: menu.handle, title, maxDepth, items: clean(items) })
-      setItems(saved.items)
-      setDirty(false)
+      const stored = await run<Menu>('navigation/save', { handle: menu.handle, title, maxDepth, items: clean(items) })
+      setItems(stored.items)
+      setTitle(stored.title)
+      setMaxDepth(stored.maxDepth)
+      setSaved(snapshot(stored.title, stored.maxDepth, stored.items))
+      setBase(stored)
       invalidate('navigation/')
-      toast.success(t('Menu saved'))
     } catch (e) {
-      toast.error(e)
+      setFailed(e instanceof Error ? e.message : String(e))
     } finally {
       setBusy(false)
     }
@@ -112,7 +137,7 @@ function Editor({ menu }: { menu: Menu }) {
     if (!(await confirm({ title: t('Delete “{title}”?', { title: title || menu.handle }), description: t('Repeat blocks that list this menu will show nothing.'), confirm: t('Delete'), danger: true }))) return
     try {
       await run('navigation/delete', { handle: menu.handle })
-      setDirty(false)
+      setSaved(snapshot(title, maxDepth, items))
       invalidate('navigation/')
       navigate('/navigation')
     } catch (e) {
@@ -124,29 +149,18 @@ function Editor({ menu }: { menu: Menu }) {
     <Page
       width="narrow"
       crumbs={[{ label: t('Navigation'), to: '/navigation', icon: 'list-tree' }, { label: title || menu.handle }]}
-      actions={
-        manage && (
-          <>
-            <Button variant="ghost" icon="trash" onClick={destroy}>{t('Delete')}</Button>
-            <Button variant="primary" disabled={!dirty} loading={busy} onClick={save}>{t('Save')}</Button>
-          </>
-        )
-      }
     >
       <Fields
         bare
         fields={[name()]}
         values={{ title }}
         disabled={!manage}
-        onChange={(_, v) => { setTitle(v); setDirty(true) }}
-        className="mb-1 [&_input]:!h-auto [&_input]:!border-0 [&_input]:!p-0 [&_input]:!text-2xl [&_input]:!font-semibold [&_input]:!shadow-none"
+        onChange={(_, v) => setTitle(v ?? '')}
+        className="mb-8 [&_input]:!h-auto [&_input]:!border-0 [&_input]:!p-0 [&_input]:!text-2xl [&_input]:!font-semibold [&_input]:!shadow-none"
       />
-      <p className="m-0 mb-8 text-sm text-muted">
-        {t('Drag to reorder, sideways to nest. Show it on the site with a Repeat block.')}
-      </p>
 
       {items.length === 0 ? (
-        <div className="rounded-md border border-dashed border-border-strong px-6 py-10 text-center text-sm text-muted">{t('This menu is empty. Add pages or links below.')}</div>
+        <div className="rounded-md border border-dashed border-border-strong px-6 py-10 text-center text-sm text-muted">{t('This menu is empty.')}</div>
       ) : (
         <SortableTree<Item>
           items={items}
@@ -167,15 +181,26 @@ function Editor({ menu }: { menu: Menu }) {
       )}
 
       {manage && (
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <AddPage onPick={addEntry} />
           <Button icon="link" onClick={addLink}>{t('Add Link')}</Button>
-          <div className="ml-auto flex items-center gap-2 text-xs text-muted">
-            {t('Levels')}
-            <Fields bare fields={[levels()]} values={{ maxDepth: String(maxDepth) }} onChange={(_, v) => { setMaxDepth(Number(v)); setDirty(true) }} />
+          <div className="ml-auto flex items-center gap-2 text-sm text-muted">
+            <span aria-hidden>{t('Submenus')}</span>
+            <span className="w-36"><Fields bare fields={[levels()]} values={{ maxDepth: String(maxDepth) }} onChange={(_, v) => setMaxDepth(Number(v))} /></span>
           </div>
         </div>
       )}
+      {/* Deleting is there to see, at the end, never beside Save. */}
+      {manage && (
+        <section className="mt-12 flex flex-wrap items-center gap-3 border-t border-border pt-6">
+          <div className="min-w-0 flex-1">
+            <h2 className="m-0 text-sm font-semibold text-ink">{t('Delete Menu')}</h2>
+            <p className="m-0 mt-0.5 text-xs text-muted">{t('Repeat blocks that list this menu will show nothing.')}</p>
+          </div>
+          <Button icon="trash" className="!text-danger" onClick={() => { void destroy() }}>{t('Delete Menu')}</Button>
+        </section>
+      )}
+      {manage && <SaveBar dirty={dirty} saving={busy} error={failed} onSave={() => void save()} onDiscard={discard} />}
     </Page>
   )
 }
@@ -206,7 +231,7 @@ function Row({ item, ctx, expanded, disabled, onToggle, onPatch, onRemove }: { i
         <span className={cn('max-w-[38%] truncate text-xs', link && !item.url ? 'text-warning' : 'text-faint')}>{where}</span>
         {status && status !== 'published' && status !== 'changed' && <Badge tone={status === 'missing' ? 'danger' : 'neutral'}>{status === 'missing' ? t('Missing') : t('Hidden until live')}</Badge>}
         {!disabled && (
-          <div className="flex items-center opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+          <div className="flex items-center text-faint">
             <IconButton icon="arrow-left" label={t('Move Out a Level')} size="xs" disabled={!ctx.canOutdent} onClick={ctx.outdent} />
             <IconButton icon="arrow-right" label={t('Nest Under the Item Above')} size="xs" disabled={!ctx.canIndent} onClick={ctx.indent} />
             <IconButton icon="settings" label={t('Link Options')} size="xs" active={expanded} onClick={onToggle} />
@@ -270,7 +295,7 @@ function AddPage({ onPick }: { onPick: (e: Found) => void }) {
           <p className="m-0 px-3 py-6 text-center text-sm text-faint">{debounced ? t('Nothing found') : t('No pages yet')}</p>
         ) : (
           <>
-            {!debounced && <div className="cms-caps px-2 pb-1 pt-1.5">{t('Recently Edited')}</div>}
+            {!debounced && <div className="cms-label px-2 pb-1 pt-1.5">{t('Recently Edited')}</div>}
             {routable.map((e) => (
               <button
                 key={e.id}

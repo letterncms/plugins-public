@@ -1,10 +1,10 @@
 import { t, type FieldDef } from '@letterncms/sdk'
-import { Fields, Icon, Menu, Tooltip, cn } from '@letterncms/ui'
+import { Icon, Menu, Tooltip, cn } from '@letterncms/ui'
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useEditorContext } from '../../core/context'
 import type { BlockNode, MotionDef, MotionStep } from '../../core/types'
 import { bus } from '../bus'
-import { RemoveButton, Section } from '../controls'
+import { RemoveButton, Section, PanelFields } from '../controls'
 import { groupLabel, presets, propertyLabels, triggers, type Preset } from './presets'
 
 /** Fields shown only when `on`. */
@@ -50,8 +50,8 @@ export function MotionPanel({ node }: { node: BlockNode }) {
         <Menu
           align="end"
           trigger={
-            <button type="button" className="grid size-5 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" aria-label={t('Add Animation')}>
-              <Icon name="b-plus" size={12} />
+            <button type="button" className="grid size-6 shrink-0 place-items-center rounded-sm text-muted hover:bg-hover hover:text-ink" aria-label={t('Add Animation')}>
+              <Icon name="b-plus" size={14} />
             </button>
           }
           items={[
@@ -62,18 +62,17 @@ export function MotionPanel({ node }: { node: BlockNode }) {
         />
       }
     >
-      {list.length === 0 && <p className="m-0 text-2xs text-faint">{t('Fade in on appear, follow the scroll or react to hover.')}</p>}
       {list.map((m) => (
         <div key={m.id} className={cn('rounded-sm border', open === m.id ? 'border-border-strong' : 'border-border')}>
           <div className="flex h-8 items-center gap-1.5 pl-2 pr-1">
             <Icon name={kinds[m.trigger.type]?.icon ?? 'b-magic-wand'} size={13} className="shrink-0 text-muted" />
             <button type="button" onClick={() => setOpen(open === m.id ? null : m.id)} aria-expanded={open === m.id} className="flex min-w-0 flex-1 items-baseline gap-1.5 text-left">
               <span className="truncate text-xs font-medium text-ink">{m.name || kinds[m.trigger.type]?.label}</span>
-              <span className="shrink-0 text-2xs text-faint">{kinds[m.trigger.type]?.label}</span>
+              <span className="shrink-0 text-xs text-faint">{kinds[m.trigger.type]?.label}</span>
             </button>
-            <Tooltip content={t('Preview animation')}>
-              <button type="button" onClick={() => bus.emit('preview-motion', { node: node.id, motion: m })} className="grid size-5 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" aria-label={t('Preview')}>
-                <Icon name="b-play" size={11} />
+            <Tooltip content={t('Preview Animation')}>
+              <button type="button" onClick={() => bus.emit('preview-motion', { node: node.id, motion: m })} className="grid size-6 shrink-0 place-items-center rounded-sm text-muted hover:bg-hover hover:text-ink" aria-label={t('Preview')}>
+                <Icon name="b-play" size={14} />
               </button>
             </Tooltip>
             <RemoveButton onClick={() => save(list.filter((x) => x.id !== m.id))} label={t('Remove Animation')} />
@@ -95,30 +94,30 @@ function MotionEditor({ node, motion, onChange }: { node: BlockNode; motion: Mot
   const step = Math.min(active, motion.steps.length - 1)
 
   const fields: FieldDef[] = [
-    { handle: 'name', type: 'text', size: 'xs', commit: 'blur', label: t('Name') },
-    { handle: 'type', type: 'select', size: 'xs', label: t('Trigger'), required: true, options: Object.entries(kinds).map(([value, d]) => ({ value, label: d.label })), instructions: kinds[trigger.type]?.help },
+    { handle: 'name', type: 'text', size: 'sm', commit: 'blur', label: t('Name') },
+    { handle: 'type', type: 'select', size: 'sm', label: t('Trigger'), required: true, options: Object.entries(kinds).map(([value, d]) => ({ value, label: d.label })), instructions: kinds[trigger.type]?.help },
   ]
   const after: FieldDef[] = [
     ...when(
       trigger.type === 'appear',
-      { handle: 'start', type: 'select', size: 'xs', label: t('Starts'), placeholder: t('A little into view'), options: [{ value: 'top 95%', label: t('As soon as it peeks in') }, { value: 'top 85%', label: t('A little into view') }, { value: 'top 65%', label: t('A third into view') }, { value: 'center center', label: t('At the Center') }] },
-      { handle: 'replay', type: 'toggle', size: 'xs', label: t('Reverse When Scrolled Back') },
+      { handle: 'start', type: 'select', size: 'sm', label: t('Starts'), placeholder: t('A little into view'), options: [{ value: 'top 95%', label: t('As soon as it peeks in') }, { value: 'top 85%', label: t('A little into view') }, { value: 'top 65%', label: t('A third into view') }, { value: 'center center', label: t('At the Center') }] },
+      { handle: 'replay', type: 'toggle', size: 'sm', label: t('Reverse When Scrolled Back') },
     ),
     ...when(
       trigger.type === 'scroll',
-      { handle: 'start', type: 'select', size: 'xs', label: t('From'), placeholder: t('Enters the Screen'), options: [{ value: 'top bottom', label: t('Enters the Screen') }, { value: 'top 80%', label: t('Top at 80%') }, { value: 'top center', label: t('Top at Center') }, { value: 'top top', label: t('Top at Top') }, { value: 'center center', label: t('Centered') }] },
-      { handle: 'end', type: 'select', size: 'xs', label: t('To'), placeholder: t('Leaves the Screen'), options: [{ value: 'bottom top', label: t('Leaves the Screen') }, { value: 'center center', label: t('Centered') }, { value: 'top top', label: t('Top at Top') }, { value: 'bottom center', label: t('Bottom at Center') }, { value: 'bottom bottom', label: t('Bottom at Bottom') }] },
+      { handle: 'start', type: 'select', size: 'sm', label: t('From'), placeholder: t('Enters the Screen'), options: [{ value: 'top bottom', label: t('Enters the Screen') }, { value: 'top 80%', label: t('Top at 80%') }, { value: 'top center', label: t('Top at Center') }, { value: 'top top', label: t('Top at Top') }, { value: 'center center', label: t('Centered') }] },
+      { handle: 'end', type: 'select', size: 'sm', label: t('To'), placeholder: t('Leaves the Screen'), options: [{ value: 'bottom top', label: t('Leaves the Screen') }, { value: 'center center', label: t('Centered') }, { value: 'top top', label: t('Top at Top') }, { value: 'bottom center', label: t('Bottom at Center') }, { value: 'bottom bottom', label: t('Bottom at Bottom') }] },
     ),
     ...when(
       loop,
-      { handle: 'repeat', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Repeat'), required: true, options: [{ value: '0', label: t('Once') }, { value: '1', label: t('Twice') }, { value: '-1', label: t('Forever') }] },
-      { handle: 'yoyo', type: 'toggle', size: 'xs', label: t('Back and Forth') },
-      { handle: 'hold', type: 'number', size: 'xs', label: t('Loop as a Timeline, Resting (s)'), if: { repeat: '-1' }, instructions: t('On Appear: all steps loop together while on screen.') },
+      { handle: 'repeat', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Repeat'), required: true, options: [{ value: '0', label: t('Once') }, { value: '1', label: t('Twice') }, { value: '-1', label: t('Forever') }] },
+      { handle: 'yoyo', type: 'toggle', size: 'sm', label: t('Back and Forth') },
+      { handle: 'hold', type: 'number', size: 'sm', label: t('Loop as a Timeline, Resting (s)'), if: { repeat: '-1' }, instructions: t('On Appear: all steps loop together while on screen.') },
     ),
     ...when(trigger.type === 'scroll' || trigger.type === 'appear', { handle: 'watch', type: 'select', component: 'blocks-node', label: t('Watch'), placeholder: t('This Element'), exclude: node.id }),
-    { handle: 'desktop', type: 'toggle', size: 'xs', label: t('Plays on Desktop') },
-    { handle: 'tablet', type: 'toggle', size: 'xs', label: t('Plays on Tablet') },
-    { handle: 'mobile', type: 'toggle', size: 'xs', label: t('Plays on Phone') },
+    { handle: 'desktop', type: 'toggle', size: 'sm', label: t('Plays on Desktop') },
+    { handle: 'tablet', type: 'toggle', size: 'sm', label: t('Plays on Tablet') },
+    { handle: 'mobile', type: 'toggle', size: 'sm', label: t('Plays on Phone') },
   ]
   const on = motion.on ?? ['desktop', 'tablet', 'mobile']
   const values = {
@@ -157,10 +156,10 @@ function MotionEditor({ node, motion, onChange }: { node: BlockNode; motion: Mot
 
   return (
     <div className="space-y-2 border-t border-border p-2">
-      <Fields layout="inline" fields={[...fields, ...after]} values={values} onChange={apply} />
+      <PanelFields fields={[...fields, ...after]} values={values} onChange={apply} />
       {trigger.type === 'event' && (
-        <p className="m-0 flex h-5 items-center gap-2 text-2xs">
-          <span className="w-20 shrink-0 text-muted">{t('Animation ID')}</span>
+        <p className="m-0 flex h-7 items-center gap-2 text-xs">
+          <span className="w-[88px] shrink-0 text-muted">{t('Animation ID')}</span>
           <code className="select-all font-mono text-text">{motion.id}</code>
         </p>
       )}
@@ -238,9 +237,9 @@ function Timeline({ steps, active, onSelect, onChange, onAdd }: { steps: MotionS
   }
 
   return (
-    <div className="rounded-xs bg-sunken/60 py-1.5">
+    <div className="rounded-md bg-active/60 py-1.5">
       <div className="mb-1 flex items-end pr-2">
-        <span className="w-16 shrink-0 pl-2 text-[10px] font-medium text-faint">{t('Timeline')}</span>
+        <span className="w-16 shrink-0 pl-2 text-2xs font-medium text-faint">{t('Timeline')}</span>
         <div className="relative h-3 flex-1">
           {/* Every other tick is labeled when they would crowd the narrow panel. */}
           {ticks.filter((_, i) => ticks.length <= 5 || i % 2 === 0).map((s) => (
@@ -253,8 +252,8 @@ function Timeline({ steps, active, onSelect, onChange, onAdd }: { steps: MotionS
       {steps.map((s, i) => {
         const b = bars[i]
         return (
-          <div key={i} className={cn('flex h-6 items-center pr-2', i === active && 'bg-focus/8')}>
-            <button type="button" onClick={() => onSelect(i)} className={cn('w-16 shrink-0 truncate pl-2 text-left text-[10px]', i === active ? 'font-medium text-ink' : 'text-muted hover:text-text')}>
+          <div key={i} className={cn('flex h-7 items-center pr-2', i === active && 'bg-focus-soft')}>
+            <button type="button" onClick={() => onSelect(i)} className={cn('w-16 shrink-0 truncate pl-2 text-left text-2xs', i === active ? 'font-medium text-ink' : 'text-muted hover:text-text')}>
               {targetLabel(s.target)}
             </button>
             <div data-track className="relative h-full flex-1">
@@ -287,8 +286,8 @@ function Timeline({ steps, active, onSelect, onChange, onAdd }: { steps: MotionS
           </div>
         )
       })}
-      <button type="button" onClick={onAdd} className="ml-16 mt-0.5 flex h-5 items-center gap-1 rounded-xs px-1 text-[10px] text-muted hover:bg-hover hover:text-text">
-        <Icon name="b-plus" size={10} /> {t('Add Step')}
+      <button type="button" onClick={onAdd} className="ml-16 mt-0.5 flex h-6 items-center gap-1 rounded-sm px-1.5 text-xs text-muted hover:bg-hover hover:text-ink">
+        <Icon name="b-plus" size={12} /> {t('Add Step')}
       </button>
     </div>
   )
@@ -309,21 +308,20 @@ function StepEditor({ node, step, index, count, onChange, onRemove }: { node: Bl
     const add = (key: string, v: string) => onChange({ [side]: { ...values, [key]: /^-?[\d.]+$/.test(v) ? Number(v) : v } })
     return (
       <div className="space-y-1">
-        <div className="flex h-5 items-center justify-between">
-          <span className="text-2xs font-medium text-muted">{side === 'from' ? t('From') : t('To')}</span>
+        <div className="flex h-7 items-center justify-between">
+          <span className="text-xs font-medium text-muted">{side === 'from' ? t('From') : t('To')}</span>
           <Menu
             align="end"
             trigger={
-              <button type="button" className="grid size-5 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" aria-label={side === 'from' ? t('Add a Start Property') : t('Add an End Property')}>
-                <Icon name="b-plus" size={11} />
+              <button type="button" className="grid size-6 shrink-0 place-items-center rounded-sm text-muted hover:bg-hover hover:text-ink" aria-label={side === 'from' ? t('Add a Start Property') : t('Add an End Property')}>
+                <Icon name="b-plus" size={14} />
               </button>
             }
             items={props.filter((p) => !(p in values)).map((p) => ({ label: labels[p] ?? p, onSelect: () => add(p, catalog.motion.properties[p] === 'css' ? (p === 'clipPath' ? 'inset(0% 0% 0% 0%)' : 'token:color.primary') : p === 'opacity' || p.startsWith('scale') ? '1' : '0') }))}
           />
         </div>
-        {Object.keys(values).length === 0 && <p className="m-0 text-[10px] text-faint">{side === 'from' ? t('As it looks now') : t('As Designed')}</p>}
-        <Fields
-          layout="inline"
+        {Object.keys(values).length === 0 && <p className="m-0 text-2xs text-faint">{side === 'from' ? t('As it looks now') : t('As Designed')}</p>}
+        <PanelFields
           bare
           fields={[
             {
@@ -349,32 +347,30 @@ function StepEditor({ node, step, index, count, onChange, onRemove }: { node: Bl
 
   return (
     <div className="space-y-2">
-      <div className="flex h-5 items-center gap-1">
-        <span className="text-2xs font-semibold text-text">{count > 1 ? t('Step {n}', { n: index + 1 }) : t('Animate')}</span>
+      <div className="flex h-7 items-center gap-1">
+        <span className="text-xs font-semibold text-text">{count > 1 ? t('Step {n}', { n: index + 1 }) : t('Animate')}</span>
         <span className="flex-1" />
         {count > 1 && <RemoveButton onClick={onRemove} label={t('Remove Step')} />}
       </div>
-      <Fields
-        layout="inline"
+      <PanelFields
         fields={[
           {
             handle: 'target',
             type: 'select',
-            size: 'xs',
+            size: 'sm',
             label: t('Target'),
             required: true,
             options: [{ value: 'self', label: t('This Element') }, { value: 'children', label: t('Each Child in Turn') }, ...(text ? [{ value: 'words', label: t('Each Word') }] : []), { value: 'other', label: t('Another Element') }],
           },
           ...when(target.startsWith('#'), { handle: 'element', type: 'select', component: 'blocks-node', label: t('Element') }),
-          ...when(target === 'words', { handle: 'mask', type: 'toggle', size: 'xs', label: t('Rise from Behind a Line') }),
+          ...when(target === 'words', { handle: 'mask', type: 'toggle', size: 'sm', label: t('Rise from Behind a Line') }),
         ]}
         values={{ target: target.startsWith('#') ? 'other' : target, element: target.slice(1), mask: !!step.mask }}
         onChange={(h, v) => (h === 'mask' ? onChange({ mask: v || undefined }) : onChange({ target: h === 'target' ? (v === 'other' ? `#${node.id}` : v ?? 'self') : v ? `#${v}` : 'self' }))}
       />
       {sideEditor('from')}
       {sideEditor('to')}
-      <Fields
-        layout="inline"
+      <PanelFields
         fields={[
           {
             handle: 'timing',

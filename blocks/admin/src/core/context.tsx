@@ -1,7 +1,7 @@
 import { useAbility } from '@letterncms/sdk'
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
 import type { EditorStore } from './store'
-import type { BlockTypeDef, Catalog } from './types'
+import type { BlockNode, BlockTypeDef, Catalog } from './types'
 
 /** What the editor is editing: an entry's blocks field, a template or a component. */
 export interface DocRef {
@@ -47,6 +47,17 @@ export function useCatalog() {
   const q = useAbility<Catalog>('blocks/types', {}, { staleTime: 300_000 })
   const types = useMemo(() => new Map((q.data?.blocks ?? []).map((b) => [b.name, b])), [q.data])
   return { catalog: q.data, types, isLoading: q.isLoading, error: q.error, retry: () => void q.refetch() }
+}
+
+/** Components' titles by handle: an instance is named after its component (Header, Footer). */
+export function useComponentTitles(): Map<string, string> {
+  const q = useAbility<{ handle: string; title: string }[]>('patterns/list', {}, { staleTime: 60_000 })
+  return useMemo(() => new Map((q.data ?? []).map((p) => [p.handle, p.title])), [q.data])
+}
+
+/** What a block is called: its layer name, its component's title, or its type's. */
+export function blockName(node: BlockNode, types: Map<string, BlockTypeDef>, components: Map<string, string>): string {
+  return node.label || (node.type === 'pattern' ? components.get(String(node.props?.ref ?? '')) : undefined) || types.get(node.type)?.title || node.type
 }
 
 export interface ThemeToken {

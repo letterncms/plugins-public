@@ -1,9 +1,10 @@
 import { locale, plural, t, useLocation } from '@letterncms/sdk'
-import { Page } from '@letterncms/ui'
+import { Page, ScreenTabs, useScreenTabs } from '@letterncms/ui'
 import { Library } from './Library'
 
 export default function MediaScreen() {
   const { query } = useLocation()
+  const [tab, setTab] = useScreenTabs(['library'])
   return (
     <Library
       mode="manage"
@@ -12,10 +13,10 @@ export default function MediaScreen() {
       frame={({ upload, total, body }) => (
         <Page
           width="wide"
-          crumbs={[{ label: <>{t('Media')}{total !== null && <span className="ml-0.5 font-normal tabular-nums text-faint" title={plural(total, '{count} file', '{count} files')}>{total.toLocaleString(locale())}</span>}</>, icon: 'media' }]}
-          actions={upload}
+          crumbs={[{ label: <>{t('Media')}{!!total && <span className="ml-2 font-normal tabular-nums text-faint" title={plural(total, '{count} file', '{count} files')}>{total.toLocaleString(locale())}</span>}</>, icon: 'media' }]}
+          actions={tab === 'library' && upload}
         >
-          {body}
+          <ScreenTabs value={tab} onChange={setTab} tabs={[{ value: 'library', label: t('Library') }]}>{body}</ScreenTabs>
         </Page>
       )}
     />

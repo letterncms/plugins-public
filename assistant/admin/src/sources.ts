@@ -20,7 +20,7 @@ registry.composer.set('assistant-skills', {
 registry.composer.set('assistant-actions', {
   id: 'assistant-actions', trigger: '/', label: t('Chat'), order: 90,
   search: (query) => [
-    { id: 'new', label: t('New Chat'), icon: 'plus', perform: () => panel.select(null) },
+    { id: 'new', label: t('New Chat'), icon: 'plus', perform: () => panel.newChat() },
     { id: 'chats', label: t('All Chats'), icon: 'history', perform: () => panel.set({ history: true }) },
   ].filter((action) => matches(query, action.label)),
 })

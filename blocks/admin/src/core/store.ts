@@ -2,7 +2,7 @@ import { useRef, useSyncExternalStore } from 'react'
 import * as tree from './tree'
 import type { BlockNode, FocusRequest } from './types'
 
-interface State {
+export interface State {
   nodes: BlockNode[]
   /** Selected block (inspector + document outline). */
   selected: string | null

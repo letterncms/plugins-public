@@ -55,7 +55,7 @@ export default function WidgetSite() {
   const publishButton = (wide: boolean) =>
     mayPublish && (
       <div className={wide ? 'hidden shrink-0 @md:block' : '@md:hidden'}>
-        {/* The signal colour only while there is something to put live. */}
+        {/* The signal color only while there is something to put live. */}
         <Button variant={tone === 'success' && !busy ? 'secondary' : 'publish'} icon="rocket" loading={busy} onClick={publish} className={wide ? undefined : 'w-full'}>
           {t('Publish Site')}
         </Button>

@@ -27,21 +27,21 @@ final class AssistantPlugin extends Plugin
 
     public function boot(): void
     {
-        $this->cms()->permissions()->register('assistant.use', __('Use the AI assistant'), __('Assistant'));
+        $this->cms()->permissions()->register('assistant.use', __('Use the AI Assistant'), __('Assistant'));
         // Whether there's an API key, for the admin: without one, only those who can add one see the chat (it opens the setup).
         $this->cms()->hooks()->addFilter('admin.manifest', fn (array $manifest) => [
             ...$manifest,
             'config' => [...($manifest['config'] ?? []), 'assistant' => ['configured' => $this->app->make(Claude::class)->configured()]],
         ]);
-        $this->cms()->admin()->widget('assistant-ask', ['label' => 'Ask {brand}', 'description' => __('Ask the assistant from the home screen.'), 'icon' => 'sparkle', 'column' => 'side', 'order' => 15, 'permission' => 'assistant.use', 'assistant' => false]);
+        $this->cms()->admin()->widget('assistant-ask', ['label' => 'Ask {brand}', 'description' => __('Ask the assistant from the Dashboard.'), 'icon' => 'sparkle', 'column' => 'side', 'order' => 15, 'permission' => 'assistant.use', 'assistant' => false]);
 
-        $this->cms()->settingsRegistry()->register('assistant', __('Assistant'), [
-            ['handle' => 'api_key', 'type' => 'text', 'label' => 'Anthropic API Key', 'secret' => true, 'instructions' => 'From console.anthropic.com → API keys. Stored encrypted; ANTHROPIC_API_KEY in .env works too. For an API gateway or proxy, set ANTHROPIC_BASE_URL in .env.'],
+        $this->cms()->settingsRegistry()->register('assistant', fields: [
+            ['handle' => 'api_key', 'type' => 'text', 'label' => 'Anthropic API Key', 'secret' => true, 'instructions' => 'From console.anthropic.com.'],
             ['handle' => 'model', 'type' => 'select', 'label' => 'Default Model', 'options' => array_map(static fn (array $model) => $model['name'], Claude::models()), 'default' => Claude::DEFAULT_MODEL, 'required' => true, 'display' => 'dropdown', 'width' => 'half'],
             ['handle' => 'effort', 'type' => 'select', 'label' => 'Effort', 'options' => Claude::efforts(), 'default' => 'medium', 'display' => 'dropdown', 'width' => 'half'],
-            ['handle' => 'small_model', 'type' => 'select', 'label' => 'Model for Small Tasks', 'instructions' => 'Names each chat after its first reply. A fast, inexpensive model is the right one.', 'options' => array_map(static fn (array $model) => $model['name'], Claude::models()), 'default' => Claude::DEFAULT_SMALL_MODEL, 'required' => true, 'display' => 'dropdown', 'width' => 'half'],
-            ['handle' => 'approval', 'type' => 'select', 'label' => 'Ask Before', 'options' => ['destructive' => __('Anything live or hard to undo'), 'writes' => __('Every change')], 'default' => 'destructive', 'display' => 'radio'],
-        ], icon: 'sparkle', description: __('The AI assistant in the admin: API key, model and when it asks for approval.'), package: $this->manifest->name, order: 60);
+            ['handle' => 'small_model', 'type' => 'select', 'label' => 'Model for Small Tasks', 'instructions' => 'Names chats. A fast model is enough.', 'options' => array_map(static fn (array $model) => $model['name'], Claude::models()), 'default' => Claude::DEFAULT_SMALL_MODEL, 'required' => true, 'display' => 'dropdown', 'width' => 'half'],
+            ['handle' => 'approval', 'type' => 'select', 'label' => 'Ask Before', 'options' => ['destructive' => __('Deletes and Admin Changes'), 'writes' => __('Every Change')], 'default' => 'destructive', 'display' => 'radio'],
+        ], icon: 'sparkle', description: __('API key, models and approvals.'), package: $this->manifest->name);
 
         Route::middleware(['web', 'cms.installed', 'auth:web', 'cms.admin', 'cms.locale', 'throttle:20,1'])
             ->post('/api/admin/assistant/chat', ChatController::class);

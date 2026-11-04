@@ -121,7 +121,7 @@ final class TreeNavigationTest extends TestCase
     {
         $design = $this->page('Design');
         $this->page('Styles', $design, 'Foundations', 1);
-        $this->page('Motion', $design, 'Behaviour', 2);
+        $this->page('Motion', $design, 'Behavior', 2);
         $this->page('Tokens', $design, 'Foundations', 3);
         $this->page('Loose', $design, null, 4);
 
@@ -135,6 +135,6 @@ final class TreeNavigationTest extends TestCase
         $text = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) preg_replace('#</p>#', ' ', substr($html, (int) strpos($html, '<main'))))));
         $text = $text === '' ? trim((string) preg_replace('/\s+/', ' ', strip_tags((string) preg_replace('#</p>#', ' ', $html)))) : $text;
 
-        $this->assertMatchesRegularExpression('/\[Foundations\] Styles Tokens \[Behaviour\] Motion \[\] Loose/', $text);
+        $this->assertMatchesRegularExpression('/\[Foundations\] Styles Tokens \[Behavior\] Motion \[\] Loose/', $text);
     }
 }

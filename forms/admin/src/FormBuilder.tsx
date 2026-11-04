@@ -109,7 +109,7 @@ function FormLanguages({ fields, settings, locales, disabled, onChange }: { fiel
 
 const nameField = (): FieldDef => ({ handle: 'title', type: 'text', label: t('Form Name') })
 const filterFields = (): FieldDef[] => [
-  { handle: 'search', type: 'text', label: t('Search Submissions'), icon: 'search', size: 'sm', placeholder: t('Search…'), className: 'w-56' },
+  { handle: 'search', type: 'text', label: t('Search Submissions'), icon: 'search', size: 'sm', placeholder: t('Search…'), className: 'w-full sm:w-56' },
   { handle: 'status', type: 'select', label: t('Show'), display: 'segmented', required: true, options: { all: t('Inbox'), new: t('Unread'), archived: t('Archived'), spam: t('Spam') } },
 ]
 const statusLabel = (status: Submission['status']) => ({ new: t('New'), read: t('Read'), spam: t('Spam'), archived: t('Archived') })[status]
@@ -241,7 +241,7 @@ function Submissions({ form }: { form: Form }) {
         loading={list.isLoading} error={list.isError} onRetry={() => void list.refetch()}
         selection={{ ids: selected, onSelect: (ids, on) => setSelected((current) => { const next = new Set(current); ids.forEach((id) => on ? next.add(id) : next.delete(id)); return next }) }}
         toolbar={<>
-          <Fields layout="inline" bare className="flex flex-wrap items-center gap-2" fields={filterFields()} values={{ search, status }} onChange={(h, v) => { setPage(1); setSelected(new Set()); h === 'search' ? setSearch(v) : setStatus(v) }} />
+          <Fields layout="inline" bare className="flex flex-wrap items-center gap-2 max-sm:w-full" fields={filterFields()} values={{ search, status }} onChange={(h, v) => { setPage(1); setSelected(new Set()); h === 'search' ? setSearch(v) : setStatus(v) }} />
           <Button size="sm" icon="download" onClick={exportCsv}>{t('Export CSV')}</Button>
         </>}
         columns={[

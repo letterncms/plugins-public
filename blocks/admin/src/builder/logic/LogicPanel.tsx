@@ -1,11 +1,11 @@
 import { t, type FieldDef } from '@letterncms/sdk'
-import { Fields, Icon, Menu, cn } from '@letterncms/ui'
+import { Icon, Menu, cn } from '@letterncms/ui'
 import { useEditorContext } from '../../core/context'
 import { useEditor } from '../../core/store'
 import * as tree from '../../core/tree'
 import type { BlockNode, LogicAction, LogicMap } from '../../core/types'
-import { useAnchors, SubHeading } from '../content/ContentPanel'
-import { AddButton, RemoveButton, Section, inputClass } from '../controls'
+import { useAnchors } from '../content/ContentPanel'
+import { AddButton, PanelFields, RemoveButton, Section, SubHeading, inputClass } from '../controls'
 
 const EVENTS = () => [
   { value: 'click', label: t('Click') },
@@ -80,7 +80,7 @@ const literal = (v: unknown) => (typeof v === 'string' ? `'${v}'` : JSON.stringi
 const expr = (handle: string, label: string, extra: Partial<FieldDef> = {}): FieldDef => ({
   handle,
   type: 'text',
-  size: 'xs',
+  size: 'sm',
   commit: 'blur',
   label,
   mono: true,
@@ -118,27 +118,23 @@ export function LogicPanel({ node }: { node: BlockNode }) {
     <>
       <datalist id={VARIABLES}>{[...variables, ...variables.map((v) => `!${v}`)].map((v) => <option key={v} value={v} />)}</datalist>
       <Section title={t('State')} empty={!logic.data} open={!!logic.data} actions={<AddButton label={t('Add Variable')} onClick={() => { let n = 'open'; let i = 1; while (n in data) n = `value${i++}`; save({ data: { ...data, [n]: n === 'open' ? false : '' } }) }} />}>
-        {!logic.data && !logic.component && <p className="m-0 text-2xs text-faint">{t('Variables this element and its children share, like open or count.')}</p>}
-        <Fields
-          layout="inline"
+        <PanelFields
           bare
-          fields={[{ handle: 'data', type: 'json', component: 'blocks-pairs', className: 'items-start', label: t('Variables'), key: { strip: '[^a-zA-Z0-9_]' }, join: '=', item: { handle: 'value', type: 'text', size: 'xs', commit: 'blur', label: t('Value'), mono: true } }]}
+          fields={[{ handle: 'data', type: 'json', component: 'blocks-pairs', className: 'items-start', label: t('Variables'), key: { strip: '[^a-zA-Z0-9_]' }, join: '=', item: { handle: 'value', type: 'text', size: 'sm', commit: 'blur', label: t('Value'), mono: true } }]}
           values={{ data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, literal(v)])) }}
           onChange={(_, next: Record<string, string | null>) => save({ data: Object.fromEntries(Object.entries(next).map(([k, text]) => [k, k in data && literal(data[k]) === text ? data[k] : parseLiteral(text ?? '')])) })}
         />
       </Section>
 
       <Section title={t('Code Component')} open={!!logic.component} empty={!logic.component}>
-        <Fields
-          layout="inline"
-          fields={[{ handle: 'component', type: 'text', size: 'xs', commit: 'blur', label: t('Alpine Name'), placeholder: 'pricingCalculator', mono: true, status: logic.component ? 'own' : undefined, reset: () => save({ component: undefined }), instructions: t('An Alpine component from the site’s custom JavaScript. Replaces State.') }]}
+        <PanelFields
+          fields={[{ handle: 'component', type: 'text', size: 'sm', commit: 'blur', label: t('Alpine Name'), placeholder: 'pricingCalculator', mono: true, status: logic.component ? 'own' : undefined, reset: () => save({ component: undefined }), instructions: t('An Alpine component from the site’s custom JavaScript. Replaces State.') }]}
           values={{ component: logic.component }}
           onChange={(_, v) => save({ component: String(v ?? '').replace(/[^a-zA-Z0-9_$]/g, '') || undefined })}
         />
       </Section>
 
       <Section title={t('Events')} empty={!logic.on?.length && !logic.init?.length} open={!!logic.on?.length || !!logic.init?.length} actions={<AddButton label={t('Add Event')} onClick={() => save({ on: [...(logic.on ?? []), { event: 'click', actions: [] }] })} />}>
-        {!logic.on?.length && !logic.init?.length && <p className="m-0 text-2xs text-faint">{t('Run actions on a click, a key or scrolling into view.')}</p>}
         {logic.init && (
           <Handler
             title={t('Page Loads')}
@@ -155,8 +151,7 @@ export function LogicPanel({ node }: { node: BlockNode }) {
             <Handler
               key={i}
               title={
-                <Fields
-                  layout="inline"
+                <PanelFields
                   bare
                   className="min-w-0 flex-1"
                   fields={[
@@ -166,8 +161,8 @@ export function LogicPanel({ node }: { node: BlockNode }) {
                       component: 'blocks-group',
                       label: t('Event'),
                       fields: [
-                        { handle: 'event', type: 'select', size: 'xs', label: t('Event'), required: true, options: EVENTS().filter((e) => e.value !== 'init') },
-                        { handle: 'key', type: 'text', size: 'xs', commit: 'blur', label: t('Key'), placeholder: 'escape', mono: true, className: '!w-20 !flex-none', if: { event: ['keydown', 'keyup'] } },
+                        { handle: 'event', type: 'select', size: 'sm', label: t('Event'), required: true, options: EVENTS().filter((e) => e.value !== 'init') },
+                        { handle: 'key', type: 'text', size: 'sm', commit: 'blur', label: t('Key'), placeholder: 'escape', mono: true, className: '!w-20 !flex-none', if: { event: ['keydown', 'keyup'] } },
                       ],
                     },
                   ]}
@@ -186,48 +181,43 @@ export function LogicPanel({ node }: { node: BlockNode }) {
           )
         })}
         {!logic.init && (logic.on?.length ?? 0) > 0 && (
-          <button type="button" onClick={() => save({ init: [] })} className="flex h-6 w-full items-center gap-1 rounded-xs px-1 text-2xs text-muted hover:bg-hover hover:text-text">
-            <Icon name="b-plus" size={11} /> {t('When the Page Loads')}
+          <button type="button" onClick={() => save({ init: [] })} className="flex h-7 w-full items-center gap-1.5 rounded-sm px-1.5 text-xs text-muted hover:bg-hover hover:text-ink">
+            <Icon name="b-plus" size={14} /> {t('When the Page Loads')}
           </button>
         )}
       </Section>
 
-      <Section title={t('Show and States')} empty={!logic.show && !logic.states && !logic.text && !logic.attrs} open={!!(logic.show || logic.states || logic.text || logic.attrs)}>
-        <Fields
-          layout="inline"
+      <Section title={t('Bindings')} empty={!logic.show && !logic.states && !logic.text && !logic.attrs} open={!!(logic.show || logic.states || logic.text || logic.attrs)}>
+        <PanelFields
           fields={[
             expr('show', t('Show When'), { placeholder: t('Always'), status: logic.show ? 'own' : undefined, reset: () => save({ show: undefined, transition: undefined }) }),
-            ...when(logic.show, { handle: 'transition', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Transition'), options: [{ value: 'none', label: t('None') }, { value: 'fade', label: t('Fade') }, { value: 'scale', label: t('Scale') }, { value: 'collapse', label: t('Collapse') }] }),
+            ...when(logic.show, { handle: 'transition', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Transition'), options: [{ value: 'none', label: t('None') }, { value: 'fade', label: t('Fade') }, { value: 'scale', label: t('Scale') }, { value: 'collapse', label: t('Collapse') }] }),
           ]}
           values={{ show: logic.show, transition: logic.transition ?? 'none' }}
           onChange={(h, v) => save(h === 'show' ? { show: v || undefined } : { transition: v && v !== 'none' ? v : undefined })}
         />
         <SubHeading title={t('States')} action={<AddButton label={t('Add State')} onClick={() => save({ states: { ...(logic.states ?? {}), [Object.keys(logic.states ?? {}).length ? `state${Object.keys(logic.states ?? {}).length + 1}` : 'open']: variables[0] ?? 'open' } })} />} />
-        <Fields
-          layout="inline"
+        <PanelFields
           bare
           fields={[{ handle: 'states', type: 'json', component: 'blocks-pairs', className: 'items-start', label: t('States'), key: { prefix: 'is-', lower: true, strip: '[^a-z0-9-]', className: '!w-[34%] !flex-none' }, join: t('when'), item: expr('expr', t('When')) }]}
           values={{ states: logic.states }}
           onChange={(_, states) => save({ states })}
         />
-        <Fields
-          layout="inline"
+        <PanelFields
           fields={[expr('text', t('Text'), { placeholder: t('As Designed'), status: logic.text ? 'own' : undefined, reset: () => save({ text: undefined }), instructions: t('Replace the text with a value, e.g. count') })]}
           values={{ text: logic.text }}
           onChange={(_, v) => save({ text: v || undefined })}
         />
         <SubHeading title={t('Attributes')} action={<AddButton label={t('Bind Attribute')} onClick={() => save({ attrs: { ...(logic.attrs ?? {}), 'aria-expanded': variables[0] ?? 'open' } })} />} />
-        <Fields
-          layout="inline"
+        <PanelFields
           bare
           fields={[{ handle: 'attrs', type: 'json', component: 'blocks-pairs', className: 'items-start', label: t('Attributes'), key: { options: ATTRS, className: '' }, item: expr('expr', t('Value')) }]}
           values={{ attrs: logic.attrs }}
           onChange={(_, attrs) => save({ attrs })}
         />
         {node.type === 'input' && (
-          <Fields
-            layout="inline"
-            fields={[{ handle: 'model', type: 'select', size: 'xs', label: t('Input Value'), placeholder: t('Not kept'), options: variables, status: logic.model ? 'own' : undefined, reset: () => save({ model: undefined }), instructions: t('Keep a variable in sync with what is typed') }]}
+          <PanelFields
+            fields={[{ handle: 'model', type: 'select', size: 'sm', label: t('Input Value'), placeholder: t('Not kept'), options: variables, status: logic.model ? 'own' : undefined, reset: () => save({ model: undefined }), instructions: t('Keep a variable in sync with what is typed') }]}
             values={{ model: logic.model }}
             onChange={(_, v) => save({ model: v || undefined })}
           />
@@ -242,7 +232,7 @@ export function LogicPanel({ node }: { node: BlockNode }) {
           onToggle={(on) => save({ behaviors: { ...behaviors, scroll: on ? { threshold: 20 } : undefined } })}
           fields={[
             { handle: 'threshold', type: 'text', component: 'blocks-value', label: t('After'), unit: '', prefix: 'px' },
-            { handle: 'hide', type: 'toggle', size: 'xs', label: t('Add is-hidden While Scrolling Down') },
+            { handle: 'hide', type: 'toggle', size: 'sm', label: t('Add is-hidden While Scrolling Down') },
           ]}
           values={{ threshold: String(behaviors.scroll?.threshold ?? 20), hide: !!behaviors.scroll?.hide }}
           onChange={(h, v) => save({ behaviors: { ...behaviors, scroll: { ...behaviors.scroll, [h]: h === 'threshold' ? Number(v ?? 20) : v } } })}
@@ -258,8 +248,8 @@ export function LogicPanel({ node }: { node: BlockNode }) {
           onToggle={(on) => save({ behaviors: { ...behaviors, marquee: on ? { speed: 60 } : undefined } })}
           fields={[
             { handle: 'speed', type: 'text', component: 'blocks-value', label: t('Speed'), unit: '', prefix: 'px/s', title: t('Pixels per Second') },
-            { handle: 'reverse', type: 'toggle', size: 'xs', label: t('Reverse') },
-            { handle: 'pause', type: 'toggle', size: 'xs', label: t('Pause on Hover') },
+            { handle: 'reverse', type: 'toggle', size: 'sm', label: t('Reverse') },
+            { handle: 'pause', type: 'toggle', size: 'sm', label: t('Pause on Hover') },
           ]}
           values={{ speed: String(behaviors.marquee?.speed ?? 60), reverse: !!behaviors.marquee?.reverse, pause: !!behaviors.marquee?.pause }}
           onChange={(h, v) => save({ behaviors: { ...behaviors, marquee: { ...behaviors.marquee, [h]: h === 'speed' ? Number(v ?? 60) : v } } })}
@@ -268,12 +258,11 @@ export function LogicPanel({ node }: { node: BlockNode }) {
 
       {linkish && (
         <Section title={t('Load Into')} open={!!logic.target} empty={!logic.target && !logic.merge}>
-          <Fields
-            layout="inline"
+          <PanelFields
             fields={[
               { handle: 'target', type: 'json', component: 'blocks-nodes', label: t('Update'), exclude: node.id, add: t('Element to Update'), addValue: node.id, instructions: t('Load the link in the background and swap only these elements') },
-              ...when(logic.target, { handle: 'push', type: 'toggle', size: 'xs', label: t('Update the Address Bar') }),
-              { handle: 'merge', type: 'select', size: 'xs', label: t('When Loaded'), placeholder: t('Replace It'), instructions: t('How this element takes new content loaded into it'), options: [{ value: 'replace', label: t('Replace It') }, { value: 'update', label: t('Replace What Is Inside') }, { value: 'append', label: t('Add to the End') }, { value: 'prepend', label: t('Add to the Start') }, { value: 'morph', label: t('Morph (Keep State)') }] },
+              ...when(logic.target, { handle: 'push', type: 'toggle', size: 'sm', label: t('Update the Address Bar') }),
+              { handle: 'merge', type: 'select', size: 'sm', label: t('When Loaded'), placeholder: t('Replace It'), instructions: t('How this element takes new content loaded into it'), options: [{ value: 'replace', label: t('Replace It') }, { value: 'update', label: t('Replace What Is Inside') }, { value: 'append', label: t('Add to the End') }, { value: 'prepend', label: t('Add to the Start') }, { value: 'morph', label: t('Morph (Keep State)') }] },
             ]}
             values={{ target: logic.target, push: !!logic.push, merge: logic.merge }}
             onChange={(h, v) => save({ [h]: h === 'push' ? v || undefined : v ?? undefined })}
@@ -288,8 +277,8 @@ export function LogicPanel({ node }: { node: BlockNode }) {
 function Behavior({ on, label, help, onToggle, fields, values, onChange }: { on: boolean; label: string; help: string; onToggle: (on: boolean) => void; fields?: FieldDef[]; values?: Record<string, any>; onChange?: (handle: string, v: any) => void }) {
   return (
     <div className={cn('-mx-1.5 rounded-sm px-1.5 py-1', on && 'bg-sunken/60')}>
-      <Fields layout="inline" fields={[{ handle: 'on', type: 'toggle', size: 'xs', label, instructions: help }]} values={{ on }} onChange={(_, v) => onToggle(!!v)} />
-      {on && fields && <Fields layout="inline" className="mt-1 space-y-1 pl-10" fields={fields} values={values ?? {}} onChange={onChange ?? (() => {})} />}
+      <PanelFields fields={[{ handle: 'on', type: 'toggle', size: 'sm', label, instructions: help }]} values={{ on }} onChange={(_, v) => onToggle(!!v)} />
+      {on && fields && <PanelFields className="mt-1 space-y-1 pl-10" fields={fields} values={values ?? {}} onChange={onChange ?? (() => {})} />}
     </div>
   )
 }
@@ -298,18 +287,18 @@ function Handler({ title, mods, onMods, actions, onActions, onRemove, variables,
   return (
     <div className="space-y-1.5 rounded-sm border border-border p-1.5">
       <div className="flex items-center gap-1">
-        <Icon name="b-lightning" size={12} className="shrink-0 text-muted" />
+        <Icon name="b-lightning" size={14} className="shrink-0 text-muted" />
         {typeof title === 'string' ? <span className="min-w-0 flex-1 text-xs font-medium [overflow-wrap:anywhere]">{title}</span> : title}
         {onMods && (
           <Menu
             align="end"
-            trigger={<button type="button" className={cn('grid size-5 shrink-0 place-items-center rounded-xs hover:bg-hover', mods?.length ? 'text-focus' : 'text-muted')} aria-label={t('Event Options')}><Icon name="b-faders" size={12} /></button>}
+            trigger={<button type="button" className={cn('grid size-6 shrink-0 place-items-center rounded-sm hover:bg-hover hover:text-ink', mods?.length ? 'text-ink' : 'text-muted')} aria-label={t('Event Options')}><Icon name="b-faders" size={14} /></button>}
             items={MODS().map((m) => ({ label: m.label, checked: mods?.includes(m.value), onSelect: () => onMods(mods?.includes(m.value) ? mods.filter((x) => x !== m.value) : [...(mods ?? []), m.value]) }))}
           />
         )}
         <RemoveButton onClick={onRemove} label={t('Remove Event')} />
       </div>
-      {mods && mods.length > 0 && <p className="m-0 pl-5 text-[10px] text-faint [overflow-wrap:anywhere]">{mods.map((m) => MODS().find((x) => x.value === m)?.label).join(' · ')}</p>}
+      {mods && mods.length > 0 && <p className="m-0 pl-5 text-2xs text-faint [overflow-wrap:anywhere]">{mods.map((m) => MODS().find((x) => x.value === m)?.label).join(' · ')}</p>}
       <Actions actions={actions} onChange={onActions} variables={variables} node={node} />
     </div>
   )
@@ -341,10 +330,10 @@ function Actions({ actions, onChange, variables, node, depth = 0 }: { actions: L
   return (
     <div className={cn('space-y-1', depth > 0 && 'border-l border-border pl-2')}>
       {actions.map((a, i) => (
-        <div key={i} className="space-y-1 rounded-xs bg-sunken/60 p-1.5">
+        <div key={i} className="space-y-1 rounded-md bg-active/60 p-1.5">
           <div className="flex items-center gap-1">
-            <Icon name={ACTIONS().find((x) => x.value === a.do)?.icon ?? 'b-dot-outline'} size={11} className="shrink-0 text-muted" />
-            <span className="min-w-0 flex-1 text-2xs font-medium text-text [overflow-wrap:anywhere]">{ACTIONS().find((x) => x.value === a.do)?.label ?? a.do}</span>
+            <Icon name={ACTIONS().find((x) => x.value === a.do)?.icon ?? 'b-dot-outline'} size={14} className="shrink-0 text-muted" />
+            <span className="min-w-0 flex-1 text-xs font-medium text-text [overflow-wrap:anywhere]">{ACTIONS().find((x) => x.value === a.do)?.label ?? a.do}</span>
             <RemoveButton onClick={() => onChange(actions.filter((_, j) => j !== i))} label={t('Remove Action')} />
           </div>
           <ActionFields action={a} onChange={(patch) => set(i, patch)} variables={variables} node={node} depth={depth} />
@@ -352,7 +341,7 @@ function Actions({ actions, onChange, variables, node, depth = 0 }: { actions: L
       ))}
       <Menu
         align="start"
-        trigger={<button type="button" className="flex h-6 w-full items-center gap-1 rounded-xs px-1 text-2xs text-muted hover:bg-hover hover:text-text"><Icon name="b-plus" size={11} /> {t('Add Action')}</button>}
+        trigger={<button type="button" className="flex h-7 w-full items-center gap-1.5 rounded-sm px-1.5 text-xs text-muted hover:bg-hover hover:text-ink"><Icon name="b-plus" size={14} /> {t('Add Action')}</button>}
         items={ACTIONS().map((x) => ({ label: x.label, icon: x.icon, onSelect: () => add(x.value) }))}
       />
     </div>
@@ -366,9 +355,9 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
   const { store } = useEditorContext()
   const anchors = useAnchors()
   const target = useEditor(store, (s) => (a.do === 'play' && a.node ? tree.find(s.nodes, a.node) : null))
-  const variable: FieldDef = { handle: 'var', type: 'select', size: 'xs', label: t('Variable'), options: variables, placeholder: t('Variable') }
+  const variable: FieldDef = { handle: 'var', type: 'select', size: 'sm', label: t('Variable'), options: variables, placeholder: t('Variable') }
   const element = (handle: string, label: string, extra: Partial<FieldDef> = {}): FieldDef => ({ handle, type: 'select', component: 'blocks-node', label, ...extra })
-  const seg = (handle: string, label: string, options: { value: string; label: string }[]): FieldDef => ({ handle, type: 'select', display: 'segmented', block: true, size: 'xs', label, options, required: true })
+  const seg = (handle: string, label: string, options: { value: string; label: string }[]): FieldDef => ({ handle, type: 'select', display: 'segmented', block: true, size: 'sm', label, options, required: true })
 
   let fields: FieldDef[] = []
   let values: Record<string, any> = a
@@ -388,7 +377,7 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
     case 'play':
       fields = [
         element('node', t('Element')),
-        { handle: 'motion', type: 'select', size: 'xs', label: t('Animation'), options: (target?.motion ?? []).map((m) => ({ value: m.id, label: m.name || m.id })), placeholder: target?.motion?.length ? t('First Animation') : t('No animations on it') },
+        { handle: 'motion', type: 'select', size: 'sm', label: t('Animation'), options: (target?.motion ?? []).map((m) => ({ value: m.id, label: m.name || m.id })), placeholder: target?.motion?.length ? t('First Animation') : t('No animations on it') },
         seg('mode', t('Play'), [{ value: 'play', label: t('Play') }, { value: 'reverse', label: t('Reverse') }, { value: 'toggle', label: t('Toggle') }, { value: 'restart', label: t('Restart') }]),
       ]
       values = { ...a, mode: a.mode ?? 'play' }
@@ -396,8 +385,8 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
       break
     case 'scroll':
       fields = [
-        { handle: 'kind', type: 'select', size: 'xs', label: t('To'), required: true, options: [{ value: 'top', label: t('Top of Page') }, { value: 'bottom', label: t('Bottom of Page') }, { value: 'anchor', label: t('Section') }, { value: 'node', label: t('Element') }] },
-        { handle: 'anchor', type: 'select', size: 'xs', label: t('Section'), options: anchors.map((x) => ({ value: `#${x.id}`, label: x.label })), placeholder: t('Choose a Section'), if: { kind: 'anchor' } },
+        { handle: 'kind', type: 'select', size: 'sm', label: t('To'), required: true, options: [{ value: 'top', label: t('Top of Page') }, { value: 'bottom', label: t('Bottom of Page') }, { value: 'anchor', label: t('Section') }, { value: 'node', label: t('Element') }] },
+        { handle: 'anchor', type: 'select', size: 'sm', label: t('Section'), options: anchors.map((x) => ({ value: `#${x.id}`, label: x.label })), placeholder: t('Choose a Section'), if: { kind: 'anchor' } },
         element('node', t('Element'), { if: { kind: 'node' } }),
         { handle: 'offset', type: 'text', component: 'blocks-value', label: t('Offset'), unit: '', prefix: 'px', placeholder: '0', title: t('Offset in pixels, e.g. a sticky header’s height') },
       ]
@@ -406,7 +395,7 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
       break
     case 'fetch':
       fields = [
-        { handle: 'url', type: 'text', size: 'xs', commit: 'blur', label: t('Page'), placeholder: '/blog/page/2', mono: true },
+        { handle: 'url', type: 'text', size: 'sm', commit: 'blur', label: t('Page'), placeholder: '/blog/page/2', mono: true },
         { handle: 'target', type: 'json', component: 'blocks-nodes', label: t('Update'), instructions: t('Elements replaced with the same ones from that page'), addValue: node.id },
       ]
       break
@@ -414,7 +403,7 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
       fields = [expr('value', t('Text'), { placeholder: `'${t('Text to Copy')}'` })]
       break
     case 'go':
-      fields = [{ handle: 'url', type: 'url', component: 'link', reference: true, size: 'xs', label: t('Link'), anchors, newTab: !!a.newTab, onNewTab: (on: boolean) => onChange({ newTab: on || undefined }) }]
+      fields = [{ handle: 'url', type: 'url', component: 'link', reference: true, size: 'sm', label: t('Link'), anchors, newTab: !!a.newTab, onNewTab: (on: boolean) => onChange({ newTab: on || undefined }) }]
       apply = (_, v) => ({ url: v ?? '' })
       break
     case 'theme':
@@ -437,7 +426,7 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
       break
     case 'dispatch':
       fields = [
-        { handle: 'event', type: 'text', size: 'xs', commit: 'blur', label: t('Event'), placeholder: 'event-name', mono: true },
+        { handle: 'event', type: 'text', size: 'sm', commit: 'blur', label: t('Event'), placeholder: 'event-name', mono: true },
         expr('detail', t('Detail'), { placeholder: 'detail' }),
       ]
       apply = (h, v) => ({ [h]: h === 'detail' ? v || undefined : v ?? '' })
@@ -451,12 +440,12 @@ function ActionFields({ action: a, onChange, variables, node, depth }: { action:
 
   return (
     <div className="space-y-1">
-      <Fields layout="inline" fields={fields} values={values} onChange={(h, v) => onChange(apply(h, v))} />
+      <PanelFields fields={fields} values={values} onChange={(h, v) => onChange(apply(h, v))} />
       {a.do === 'if' && (
         <>
-          <p className="cms-caps m-0 pt-1">{t('Then')}</p>
+          <p className="cms-label m-0 pt-1">{t('Then')}</p>
           <Actions actions={a.then ?? []} onChange={(then) => onChange({ then })} variables={variables} node={node} depth={depth + 1} />
-          <p className="cms-caps m-0 pt-1">{t('Else')}</p>
+          <p className="cms-label m-0 pt-1">{t('Else')}</p>
           <Actions actions={a.else ?? []} onChange={(otherwise) => onChange({ else: otherwise })} variables={variables} node={node} depth={depth + 1} />
         </>
       )}

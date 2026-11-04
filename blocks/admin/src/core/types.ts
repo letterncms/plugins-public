@@ -95,6 +95,8 @@ export interface DataSourceDef {
 
 export interface Catalog {
   blocks: BlockTypeDef[]
+  /** The inserter's groups, in order and in the user's language. */
+  categories?: { name: string; label: string }[]
   styles: Record<string, { property: string; group: string }>
   aliases: Record<string, string>
   states: string[]

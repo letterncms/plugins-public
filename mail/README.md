@@ -1,4 +1,4 @@
-# Mail
+# Email
 
 Email delivery for the CMS and its plugins: SMTP, sendmail or log, provider plugins, branded templates and a delivery log.
 

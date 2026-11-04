@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.4 or later.
+- The MCP server URL and the Claude Code command are part of **API & Agents** on the Account screen, together with your tokens.
+
 ## 0.2.1 (2026-11-02)
 
 ### Security

@@ -15,7 +15,7 @@ export function Effects({ s }: { s: StyleApi }) {
       <StyleFields
         s={s}
         fields={[
-          { handle: 'opacity', type: 'text', component: 'blocks-value', label: t('Opacity'), unit: '', step: 0.05, min: 0, max: 1, placeholder: '1', slider: { min: 0, max: 1, step: 0.01, neutral: 1 } },
+          { handle: 'opacity', type: 'text', component: 'blocks-value', label: t('Opacity'), percent: true, step: 0.05, min: 0, max: 1, placeholder: '100', slider: { min: 0, max: 1, step: 0.01, neutral: 1 } },
         ]}
       />
       <StyleFields s={s} bare fields={[{ handle: 'boxShadow', type: 'text', component: 'blocks-shadows', label: t('Shadows'), group: 'shadow' }]} />
@@ -25,9 +25,9 @@ export function Effects({ s }: { s: StyleApi }) {
         s={s}
         fields={[
           { handle: 'clipPath', type: 'text', component: 'blocks-clip', label: t('Clip Path'), className: 'items-start py-0.5 [&>label]:leading-6' },
-          { handle: 'mixBlendMode', type: 'select', size: 'xs', label: t('Blending'), placeholder: t('Normal'), options: BLEND },
-          { handle: 'cursor', type: 'select', size: 'xs', label: t('Cursor'), placeholder: t('Auto'), options: CURSORS },
-          { handle: 'pointerEvents', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Clicks'), placeholder: 'auto', options: [{ value: 'auto', label: t('On') }, { value: 'none', label: t('Pass Through') }] },
+          { handle: 'mixBlendMode', type: 'select', size: 'sm', label: t('Blending'), placeholder: t('Normal'), options: BLEND },
+          { handle: 'cursor', type: 'select', size: 'sm', label: t('Cursor'), placeholder: t('Auto'), options: CURSORS },
+          { handle: 'pointerEvents', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Clicks'), placeholder: 'auto', options: [{ value: 'auto', label: t('On') }, { value: 'none', label: t('Pass Through') }] },
         ]}
       />
     </Section>

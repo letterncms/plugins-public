@@ -37,15 +37,15 @@ export function Transition({ s }: { s: StyleApi }) {
   return (
     <Section title={t('Transition')} open={!!tr} empty={!tr}>
       {!tr ? (
-        <button type="button" onClick={() => set({})} className="flex h-7 w-full items-center justify-center gap-1.5 rounded-sm border border-dashed border-border-strong text-2xs text-muted hover:bg-hover hover:text-text">
-          <Icon name="b-plus" size={11} />
+        <button type="button" onClick={() => set({})} className="flex h-7 w-full items-center justify-center gap-1.5 rounded-sm text-xs text-muted hover:bg-hover hover:text-ink">
+          <Icon name="b-plus" size={14} />
           {t('Animate State Changes')}
         </button>
       ) : (
         <StyleFields
           s={s}
           fields={[
-            { handle: 'property', type: 'select', size: 'xs', label: t('Animate'), placeholder: t('Everything'), options: PROPERTIES(), keys: ['transition'], get: () => PROPERTIES().find((p) => p.value.split(',')[0].trim() === tr.property.split(',')[0].trim())?.value, set: (v) => set({ property: v ?? 'all' }) },
+            { handle: 'property', type: 'select', size: 'sm', label: t('Animate'), placeholder: t('Everything'), options: PROPERTIES(), keys: ['transition'], get: () => PROPERTIES().find((p) => p.value.split(',')[0].trim() === tr.property.split(',')[0].trim())?.value, set: (v) => set({ property: v ?? 'all' }) },
             {
               handle: 'timing',
               type: 'group',

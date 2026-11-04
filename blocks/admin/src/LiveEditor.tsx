@@ -2,7 +2,7 @@ import { can, locale, plural, t, xsrfToken, type EntryContent } from '@letterncm
 import { QueryError, Spinner } from '@letterncms/ui'
 import { createPortal, flushSync } from 'react-dom'
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useEditorContext, useTokens } from './core/context'
+import { blockName, useComponentTitles, useEditorContext, useTokens } from './core/context'
 import { caretRect } from './core/caret'
 import { FormatToolbar } from './core/FormatToolbar'
 import { InlineEditable } from './core/InlineEditable'
@@ -54,16 +54,41 @@ img,a{-webkit-user-drag:none}
 .cms-js [data-cms-appear]{visibility:visible!important}
 `
 
+const MEDIA = new Set(['IMG', 'PICTURE', 'VIDEO', 'IFRAME', 'CANVAS', 'INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'])
+
+/** Whether a point of the page has content on it: text (where its lines are), an image or icon, or a control. Padding and backgrounds don't count. */
+function contentAt(d: Document, x: number, y: number): boolean {
+  const el = d.elementFromPoint(x, y)
+  if (!el || el === d.body || el === d.documentElement) return false
+  if (MEDIA.has(el.tagName) || el.closest('svg')) return true
+  const texts = [...el.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim())
+  if (!texts.length) return false
+  const range = d.createRange()
+  return texts.some((text) => {
+    range.selectNodeContents(text)
+    return [...range.getClientRects()].some((r) => x >= r.left - 2 && x <= r.right + 2 && y >= r.top - 2 && y <= r.bottom + 2)
+  })
+}
+
+/** A breakpoint's width in CSS pixels (rem and em at 16px). */
+function pixels(value: string | undefined): number {
+  const n = parseFloat(value ?? '')
+  return Number.isNaN(n) ? 0 : /r?em$/.test(value ?? '') ? n * 16 : n
+}
+
 /** The site's renderer is the editor. React owns only explicit inline text slots. */
 export function LiveEditor({ collection, entryId, content, onInspect, standalone, onTitleChange }: Props) {
   const { store, types, allowed, fieldHandle, readOnly = false } = useEditorContext()
-  const { breakpoints } = useTokens()
+  const components = useComponentTitles()
   const nodes = useEditor(store, (state) => state.nodes)
   const selected = useEditor(store, (state) => state.selected)
   const selectedIds = useEditor(store, selectionOf)
   const blockMode = useEditor(store, (state) => state.blockMode)
   const hovered = useEditor(store, (state) => state.hovered)
   const breakpoint = useEditor(store, (state) => state.breakpoint)
+  const { breakpoints } = useTokens()
+  // Desktop styles apply from the site's large breakpoint up (tablet styles below it).
+  const desktopWidth = pixels(breakpoints.lg) || 1024
   const viewport = useRef<HTMLDivElement>(null)
   const frame = useRef<HTMLIFrameElement>(null)
   const [doc, setDoc] = useState<Document | null>(null)
@@ -109,7 +134,20 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
   const abort = useRef<AbortController | null>(null)
   const latest = useRef({ content, onInspect, readOnly, layout, onTitleChange })
   latest.current = { content, onInspect, readOnly, layout, onTitleChange }
+  // A block inside a Repeat is drawn once per item, marked as a prototype: its first item stands for it.
   const source = (d: Document, id: string) => d.querySelector<HTMLElement>(`[data-cms-document="${token.current}"][data-cms-node="${CSS.escape(id)}"]`)
+    ?? d.querySelector<HTMLElement>(`[data-cms-proto-document="${token.current}"][data-cms-proto="${CSS.escape(id)}"]`)
+  /** The innermost block of this document under an element: a source block, or one a Repeat draws. */
+  const ownerOf = (target: EventTarget | null): string | null => {
+    const match = '[data-cms-document][data-cms-node],[data-cms-proto-document][data-cms-proto]'
+    let el = (target as Element | null)?.closest?.<HTMLElement>(match) ?? null
+    while (el) {
+      const id = el.dataset.cmsDocument === token.current ? el.dataset.cmsNode : el.dataset.cmsProtoDocument === token.current ? el.dataset.cmsProto : undefined
+      if (id && tree.find(store.get().nodes, id)) return id
+      el = el.parentElement?.closest<HTMLElement>(match) ?? null
+    }
+    return null
+  }
   const rectOf = (el: Element): DOMRect => {
     if (el.ownerDocument.defaultView?.getComputedStyle(el).display !== 'contents') return el.getBoundingClientRect()
     const range = el.ownerDocument.createRange(); range.selectNodeContents(el); return range.getBoundingClientRect()
@@ -271,16 +309,19 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
     if (!viewport.current) return
     const fit = () => {
       const el = viewport.current!
-      const configured = String(breakpoints.lg ?? '1024px')
-      const min = parseFloat(configured) * (configured.endsWith('rem') || configured.endsWith('em') ? 16 : 1)
-      const width = breakpoint === 'mobile' ? 390 : breakpoint === 'tablet' ? 820 : Math.max(min, el.clientWidth)
+      // Each screen draws at a width where the site shows that screen's styles. Desktop takes the room
+      // there is, but never less than the site's desktop width: with less room, it is scaled down rather
+      // than reflowed (a narrow canvas would show the tablet or phone layout while desktop is styled).
+      // A phone draws at the room there is, up to a phone's width.
+      const desktop = Math.max(el.clientWidth, desktopWidth)
+      const width = breakpoint === 'tablet' ? 820 : breakpoint === 'mobile' ? Math.min(390, el.clientWidth) : desktop
       const scale = Math.min(1, el.clientWidth / width)
       geometry.current = null
       setLayout({ width, scale, height: el.clientHeight / scale, left: Math.max(0, (el.clientWidth - width * scale) / 2) })
     }
     fit(); const observer = new ResizeObserver(fit); observer.observe(viewport.current)
     return () => observer.disconnect()
-  }, [breakpoint, breakpoints.lg])
+  }, [breakpoint, desktopWidth])
   useEffect(() => { requestAnimationFrame(measure) }, [selected, selectedIds, hovered, layout, doc])
   runRender.current = async () => {
       const state = rendering.current
@@ -375,7 +416,6 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
     d.documentElement.setAttribute('data-cms-bridge-ready', '')
     const style = d.createElement('style'); style.dataset.cmsBridge = ''; style.textContent = bridgeCss; d.head.appendChild(style)
     setDoc(d); collectSlots(d); setLoading(false)
-    const owner = (target: EventTarget | null) => (target as Element | null)?.closest?.<HTMLElement>('[data-cms-document][data-cms-node]')
     d.addEventListener('submit', (event) => event.preventDefault(), true)
     d.addEventListener('dragstart', (event) => event.preventDefault())
     d.addEventListener('focusout', (event) => { if ((event.target as HTMLElement).isContentEditable) setWriting(false); scheduleRender() })
@@ -390,8 +430,7 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
     d.addEventListener('pointermove', (event) => {
       if (latest.current.readOnly) return
       if (typingRef.current && (event.movementX || event.movementY)) { typingRef.current = false; setTyping(false) }
-      const block = owner(event.target)
-      store.hover(block?.dataset.cmsDocument === token.current ? block.dataset.cmsNode ?? null : null)
+      store.hover(ownerOf(event.target))
       if (typingRef.current || chooserRef.current) return
       const m = metrics()
       showGap(m && pickHoverTarget(m.blocks, { x: event.clientX, y: event.clientY }, { rootRect: m.rootRect, canInsert: choicesOnce() }))
@@ -402,11 +441,11 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
       const el = event.target as HTMLElement
       if (el.closest('[contenteditable="true"]')) { if (el.closest('a')) event.preventDefault(); return }
       event.preventDefault()
-      const block = owner(el)
+      const block = ownerOf(el)
       // Clicking never creates content: it selects the innermost source block, or clears the selection.
-      if (!block || block.dataset.cmsDocument !== token.current || !tree.find(store.get().nodes, block.dataset.cmsNode!)) { if (!event.shiftKey) store.select(null); return }
-      if (event.shiftKey && store.get().selected) store.extendTo(block.dataset.cmsNode!)
-      else latest.current.onInspect(block.dataset.cmsNode!)
+      if (!block) { if (!event.shiftKey) store.select(null); return }
+      if (event.shiftKey && store.get().selected) store.extendTo(block)
+      else latest.current.onInspect(block)
     }, true)
     d.addEventListener('keydown', (event) => {
       if (event.defaultPrevented) return
@@ -505,6 +544,16 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
     },
     commit: (ids, target) => store.moveTo(ids, target.parentId, target.index),
   })
+  /** Whether a place over the canvas (workspace coordinates) has the page's content under it: text, media, controls. */
+  const covers = (rect: Rect) => {
+    const d = frame.current?.contentDocument
+    if (!d) return false
+    for (const fy of [0.25, 0.75]) for (let i = 0; i < 6; i++) {
+      const x = (rect.left + (rect.width * (i + 0.5)) / 6 - layout.left) / layout.scale, y = (rect.top + rect.height * fy) / layout.scale
+      if (contentAt(d, x, y)) return true
+    }
+    return false
+  }
   const frameOffset = useCallback(() => { const rect = frame.current!.getBoundingClientRect(); return { x: rect.left, y: rect.top, scale: layout.scale } }, [layout.scale])
   const boxStyle = (rect: Rect) => ({ left: layout.left + rect.left * layout.scale, top: rect.top * layout.scale, width: rect.width * layout.scale, height: rect.height * layout.scale })
   return <WriteContext.Provider value={api}>
@@ -518,13 +567,14 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
         <iframe ref={frame} title={t('Live editor')} sandbox="allow-same-origin" onLoad={onLoad} className="absolute top-0 border-0 bg-white" style={{ width: layout.width, height: layout.height, left: layout.left, transformOrigin: 'top left', transform: `scale(${layout.scale})` }} />
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {!readOnly && !blockDrag.drag && !writing && !typing && !chooser && hovered && hoverBox && !selectedIds.includes(hovered) && <div data-cms-hover={hovered} className="absolute z-10 border border-focus/50" style={boxStyle(hoverBox)} />}
-          {blockMode && !blockDrag.drag && boxes.map((rect, index) => <div data-cms-selection key={index} className="absolute z-10 border border-focus" style={boxStyle(rect)} />)}
+          {/* The selection shows while writing too; its toolbar waits for block selection (Esc). */}
+          {!blockDrag.drag && boxes.map((rect, index) => <div data-cms-selection key={index} className="absolute z-10 border-solid border-focus" style={{ ...boxStyle(rect), borderWidth: 1.5 }} />)}
           {!readOnly && !blockDrag.drag && blockMode && selected && boxes[0] && (() => {
             const first = tree.locate(nodes, selectedIds[0]), last = tree.locate(nodes, selectedIds.at(-1)!)
             const node = tree.find(nodes, selected)
             if (!first || !last || !node) return null
             const siblings = tree.siblings(nodes, first.parentId)
-            const describe = (block: BlockNode) => ({ label: block.label || (types.get(block.type)?.title ?? t('Block')), icon: types.get(block.type)?.icon ?? 'square' })
+            const describe = (block: BlockNode) => ({ label: blockName(block, types, components), icon: block.type === 'pattern' ? 'b-diamonds-four' : types.get(block.type)?.icon ?? 'square' })
             const parent = first.parentId ? tree.find(nodes, first.parentId) : null
             const { label, icon } = describe(node)
             return <BlockToolbar id={selected} label={selectedIds.length > 1 ? plural(selectedIds.length, '{count} block', '{count} blocks') : label} icon={icon} parent={parent ? describe(parent) : null}
@@ -533,7 +583,8 @@ export function LiveEditor({ collection, entryId, content, onInspect, standalone
               onSelectParent={() => parent && onInspect(parent.id)} onDrag={(event) => { setChooser(null); blockDrag.start(event, selectionOf(store.get()), label) }}
               onMove={(direction) => store.nudgeSelection(direction)} onInsert={(side) => requestAnimationFrame(() => openInserter(side))}
               onDuplicate={() => store.duplicateSelection()} onDelete={() => store.removeSelection()}
-              onMakeComponent={node.type !== 'pattern' && can('entries.components.create') ? () => savePattern(store, patternFits(store, types, allowed)) : undefined} />
+              onMakeComponent={node.type !== 'pattern' && can('entries.components.create') ? () => savePattern(store, patternFits(store, types, allowed)) : undefined}
+              covers={covers} />
           })()}
           {!readOnly && !blockDrag.drag && gaps.filter((at) => at.inside).map((at) => {
             const picker = { open: !!chooser && targetKey(chooser) === targetKey(at), onOpenChange: (open: boolean) => setChooser(open ? at : null), returnFocus,

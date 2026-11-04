@@ -27,25 +27,25 @@ final class FormFields
         ]];
 
         $defs = [
-            'text' => [__('Short text'), 'text', [$placeholder, ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 200], ['handle' => 'autocomplete', 'type' => 'select', 'label' => 'Autofill', 'options' => ['off' => __('Off'), 'name' => __('Name'), 'given-name' => __('First name'), 'family-name' => __('Last name'), 'organization' => __('Company'), 'street-address' => __('Street address'), 'postal-code' => __('Postal code'), 'address-level2' => __('City'), 'country-name' => __('Country')]]]],
-            'email' => [__('Email'), 'mail', [$placeholder]],
-            'tel' => [__('Phone'), 'phone', [$placeholder]],
-            'url' => [__('Website'), 'link', [$placeholder]],
-            'number' => [__('Number'), 'number', [$placeholder, ['handle' => 'min', 'type' => 'number', 'label' => 'Minimum'], ['handle' => 'max', 'type' => 'number', 'label' => 'Maximum']]],
-            'date' => [__('Date'), 'calendar', []],
-            'textarea' => [__('Long text'), 'paragraph', [$placeholder, ['handle' => 'rows', 'type' => 'number', 'label' => 'Rows', 'default' => 5], ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 5000]]],
-            'select' => [__('Dropdown'), 'select', [$options, ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Empty Option', 'default' => 'Choose…']]],
-            'radio' => [__('Choice'), 'radio', [$options]],
-            'checkboxes' => [__('Checkboxes'), 'checkbox', [$options]],
-            'checkbox' => [__('Checkbox'), 'checkbox', []],
-            'consent' => [__('Consent'), 'shield', [['handle' => 'text', 'type' => 'richtext', 'label' => 'Statement', 'inline' => true, 'default' => 'I agree to the <a href="/privacy">privacy policy</a>.']]],
-            'file' => [__('File upload'), 'upload', [['handle' => 'accept', 'type' => 'select', 'label' => 'Allowed Files', 'options' => ['documents' => __('Documents (PDF, Word)'), 'images' => __('Images'), 'any' => __('Documents and images')], 'default' => 'documents'], ['handle' => 'max_mb', 'type' => 'number', 'label' => 'Max Size (MB)', 'default' => 10, 'min' => 1, 'max' => 50]]],
-            'hidden' => [__('Hidden value'), 'eye-off', [['handle' => 'value', 'type' => 'text', 'label' => 'Value']]],
+            'text' => [__('Short Text'), __('One line of text'), 'text', [$placeholder, ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 200], ['handle' => 'autocomplete', 'type' => 'select', 'label' => 'Autofill', 'options' => ['off' => __('Off'), 'name' => __('Name'), 'given-name' => __('First name'), 'family-name' => __('Last name'), 'organization' => __('Company'), 'street-address' => __('Street address'), 'postal-code' => __('Postal code'), 'address-level2' => __('City'), 'country-name' => __('Country')]]]],
+            'email' => [__('Email'), __('An email address'), 'mail', [$placeholder]],
+            'tel' => [__('Phone'), __('A phone number'), 'phone', [$placeholder]],
+            'url' => [__('Website'), __('A web address'), 'link', [$placeholder]],
+            'number' => [__('Number'), __('A number'), 'number', [$placeholder, ['handle' => 'min', 'type' => 'number', 'label' => 'Minimum'], ['handle' => 'max', 'type' => 'number', 'label' => 'Maximum']]],
+            'date' => [__('Date'), __('A date'), 'calendar', []],
+            'textarea' => [__('Long Text'), __('Several lines of text'), 'paragraph', [$placeholder, ['handle' => 'rows', 'type' => 'number', 'label' => 'Rows', 'default' => 5], ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 5000]]],
+            'select' => [__('Dropdown'), __('One option from a list'), 'select', [$options, ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Empty Option', 'default' => 'Choose…']]],
+            'radio' => [__('Choice'), __('One option, all in view'), 'radio', [$options]],
+            'checkboxes' => [__('Checkboxes'), __('Any number of options'), 'checkbox', [$options]],
+            'checkbox' => [__('Checkbox'), __('A single yes or no'), 'checkbox', []],
+            'consent' => [__('Consent'), __('Agreement to a statement'), 'shield', [['handle' => 'text', 'type' => 'richtext', 'label' => 'Statement', 'inline' => true, 'default' => 'I agree to the <a href="/privacy">privacy policy</a>.']]],
+            'file' => [__('File Upload'), __('A file the visitor sends'), 'upload', [['handle' => 'accept', 'type' => 'select', 'label' => 'Allowed Files', 'options' => ['documents' => __('Documents (PDF, Word)'), 'images' => __('Images'), 'any' => __('Documents and images')], 'default' => 'documents'], ['handle' => 'max_mb', 'type' => 'number', 'label' => 'Max Size (MB)', 'default' => 10, 'min' => 1, 'max' => 50]]],
+            'hidden' => [__('Hidden Value'), __('A value sent unseen'), 'eye-off', [['handle' => 'value', 'type' => 'text', 'label' => 'Value']]],
         ];
 
         $out = [];
 
-        foreach ($defs as $type => [$title, $icon, $extra]) {
+        foreach ($defs as $type => [$title, $description, $icon, $extra]) {
             $fields = match ($type) {
                 'consent' => [['handle' => 'name', 'type' => 'text', 'label' => 'Field Name', 'default' => 'consent'], ...$extra, $condition],
                 'hidden' => [['handle' => 'name', 'type' => 'text', 'label' => 'Field Name', 'required' => true], ...$extra],
@@ -58,12 +58,13 @@ final class FormFields
                 'title' => $title,
                 'icon' => $icon,
                 'category' => 'form',
-                'description' => __(':type field', ['type' => $title]),
+                'description' => $description,
                 'keywords' => ['form', 'field', 'input', $type],
                 'fields' => $fields,
                 'inline' => $type === 'consent' ? ['text'] : [],
                 'styles' => ['spacing', 'size'],
-                'defaults' => $type === 'consent' ? ['required' => true, 'name' => 'consent'] : ['label' => $title],
+                // The label visitors see starts as the type in sentence case: “Short text”, not “Short Text”.
+                'defaults' => $type === 'consent' ? ['required' => true, 'name' => 'consent'] : ['label' => mb_strtoupper(mb_substr($title, 0, 1)).mb_strtolower(mb_substr($title, 1))],
                 'render' => FieldView::field(...),
                 'package' => $package,
             ];

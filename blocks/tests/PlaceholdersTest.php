@@ -96,10 +96,28 @@ final class PlaceholdersTest extends TestCase
         $section = collect($catalog['blocks'])->firstWhere('name', 'section');
 
         $this->assertSame($nl['Heading'], $heading['title']);
-        $this->assertSame($nl['A title (h1–h6).'], $heading['description']);
+        $this->assertSame($nl['A title or subtitle.'], $heading['description']);
+        $this->assertSame(['name' => 'text', 'label' => $nl['Text']], $catalog['categories'][0], 'categories come in the inserter\'s order, translated');
         $this->assertSame($nl['Level'], collect($heading['fields'])->firstWhere('handle', 'level')['label']);
         $this->assertSame($nl['Wide'], collect($section['fields'])->firstWhere('handle', 'width')['options']['wide'] ?? null);
         $this->assertSame($nl['Numbers'], collect($catalog['sources'])->firstWhere('name', 'numbers')['label']);
+    }
+
+    public function test_a_plugins_own_category_comes_after_the_named_ones_in_title_case(): void
+    {
+        $registry = app(\Cms\Blocks\BlockRegistry::class);
+        $registry->register(['name' => 'shop/cart', 'title' => 'Cart', 'category' => 'shop-tools']);
+        $registry->register(['name' => 'shop/note', 'title' => 'Note', 'category' => 'aside']);
+
+        $categories = $registry->categories();
+        $names = array_column($categories, 'name');
+
+        $this->assertSame(['aside', 'shop-tools'], array_slice($names, -2), 'unnamed categories go last, A–Z');
+        $this->assertSame('Shop Tools', $categories[array_search('shop-tools', $names, true)]['label']);
+        $this->assertSame('Text', $categories[0]['label']);
+
+        $registry->category('shop-tools', 'Shop');
+        $this->assertContains(['name' => 'shop-tools', 'label' => 'Shop'], $registry->categories(), 'a plugin can name its category');
     }
 
     public function test_text_with_content_has_no_placeholder(): void
