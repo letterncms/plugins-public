@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.1 (2026-11-04)
+
 ### Fixed
 
 - Its words read the same as the rest of the admin in Dutch, French and German: where two packages translated a word differently, which one you saw could change from one page to the next.
