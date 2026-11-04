@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- **Breaking.** Needs the CMS 0.8, where Site comes with the CMS.
+
 ## 0.3.0 (2026-11-04)
 
 ### Changed
