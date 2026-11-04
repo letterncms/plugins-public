@@ -1,6 +1,6 @@
 import { t, type FieldProps } from '@letterncms/sdk'
 import { Avatar, Textarea, cn } from '@letterncms/ui'
-import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
+import { useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import type { Person } from './CommentsPanel'
 
 /**
@@ -77,19 +77,24 @@ export function ComposerField({ field, value, onChange, disabled }: FieldProps<s
           ))}
         </ul>
       )}
-      <Textarea
-        ref={input}
-        value={body}
-        autoFocus={field.autofocus === true}
-        disabled={disabled}
-        rows={2}
-        placeholder={field.placeholder}
-        aria-label={field.label}
-        onChange={(e) => { onChange(e.target.value); detect(e.target.value, e.target.selectionStart) }}
-        onKeyDown={onKey}
-        onBlur={() => setQuery(null)}
-        className="max-h-40 text-sm"
-      />
+      {/* One line that grows as you write, the send button inside it: the composer of the assistant, at the panel's size. */}
+      <div className="flex items-end gap-1 rounded-lg border border-border bg-bg py-1 pl-2.5 pr-1 transition-colors focus-within:border-border-strong">
+        <Textarea
+          ref={input}
+          value={body}
+          autoFocus={field.autofocus === true}
+          disabled={disabled}
+          rows={1}
+          appearance="plain"
+          placeholder={field.placeholder}
+          aria-label={field.label}
+          onChange={(e) => { onChange(e.target.value); detect(e.target.value, e.target.selectionStart) }}
+          onKeyDown={onKey}
+          onBlur={() => setQuery(null)}
+          className="max-h-40 flex-1 py-1 text-sm leading-5 placeholder:text-ghost"
+        />
+        {field.trailing as ReactNode}
+      </div>
     </div>
   )
 }

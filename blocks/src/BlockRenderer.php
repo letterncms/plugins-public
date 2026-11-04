@@ -78,6 +78,24 @@ final class BlockRenderer
         }
     }
 
+    /**
+     * The document whose Repeat is rendering its items. The blocks of an item are the Repeat's
+     * own children, drawn once per item and never edited in place: the canvas marks them
+     * (data-cms-proto) so they can be selected and outlined, without making their text editable.
+     */
+    private ?string $prototypeDocument = null;
+
+    private function withPrototypes(?string $document, callable $render): mixed
+    {
+        $previous = $this->prototypeDocument;
+        $this->prototypeDocument = $document;
+        try {
+            return $render();
+        } finally {
+            $this->prototypeDocument = $previous;
+        }
+    }
+
     /** An outlet is a separate source document from the surrounding template. */
     public function withOutletDocument(?string $document, callable $render): mixed
     {
@@ -430,7 +448,7 @@ final class BlockRenderer
                     'first' => $i === 0,
                     'last' => $i === $count - 1,
                 ]);
-                $item = $this->withInstanceProperties([], fn () => $this->withEditorDocument(null, fn () => $this->children($children, $inner)));
+                $item = $this->withInstanceProperties([], fn () => $this->withPrototypes($this->editorDocument ?? $this->prototypeDocument, fn () => $this->withEditorDocument(null, fn () => $this->children($children, $inner))));
                 $html[] = ! $this->editor && (! empty($props['filter_by']) || ! empty($props['search_in']) || ! empty($props['sort_by'])) ? $this->filterable($item, $props, $inner) : $item;
             } finally {
                 $this->ghost = $ghost;
@@ -730,7 +748,7 @@ final class BlockRenderer
             $attrs['id'] = 'cms-'.$id;
         }
 
-        foreach (['data-cms-node', 'data-cms-document', 'data-cms-editor-root', 'data-cms-type', 'data-cms-prop', 'data-cms-index', 'data-cms-entry-field', 'data-cms-instance-document', 'data-cms-instance-node', 'data-cms-instance-prop', 'data-cms-instance-type', 'data-cms-instance-format', 'data-cms-instance-value'] as $managed) {
+        foreach (['data-cms-node', 'data-cms-document', 'data-cms-editor-root', 'data-cms-type', 'data-cms-prop', 'data-cms-index', 'data-cms-entry-field', 'data-cms-instance-document', 'data-cms-instance-node', 'data-cms-instance-prop', 'data-cms-instance-type', 'data-cms-instance-format', 'data-cms-instance-value', 'data-cms-proto', 'data-cms-proto-document'] as $managed) {
             unset($attrs[$managed]);
         }
         if ($this->editor && $this->editorDocument !== null && $id !== '') {
@@ -739,6 +757,9 @@ final class BlockRenderer
             $attrs['data-cms-type'] = $type->name;
             // A container with nothing inside is a drop area ("Drop elements here").
             $type->acceptsChildren() && empty($node['children']) && $attrs['data-cms-empty'] = '';
+        } elseif ($this->editor && $this->prototypeDocument !== null && $id !== '') {
+            $attrs['data-cms-proto-document'] = $this->prototypeDocument;
+            $attrs['data-cms-proto'] = $id;
         }
 
         // Also in a header or footer around the page being edited, which nobody can select there.
@@ -803,7 +824,7 @@ final class BlockRenderer
         try {
             $values = $this->patterns->values($pattern, (array) ($node['props']['values'] ?? []), $this->currentScope(), (array) ($node['bind'] ?? []), $this->editor);
             $properties = $this->instanceEditingProperties($node, $pattern, $values);
-            $html = $this->withInstanceProperties($properties, fn () => $this->withEditorDocument(null, fn () => $this->render($pattern['blocks'], $this->currentScope()->with(['props' => $values]))));
+            $html = $this->withInstanceProperties($properties, fn () => $this->withPrototypes(null, fn () => $this->withEditorDocument(null, fn () => $this->render($pattern['blocks'], $this->currentScope()->with(['props' => $values])))));
         } finally {
             unset($this->rendering[$ref]);
             array_pop($this->propLabels);
@@ -844,7 +865,11 @@ final class BlockRenderer
 
     private function editorAttributes(array $node, string $type): string
     {
-        if (! $this->editor || $this->editorDocument === null || empty($node['id'])) return '';
+        if (! $this->editor || empty($node['id'])) return '';
+
+        if ($this->editorDocument === null) {
+            return $this->prototypeDocument === null ? '' : 'data-cms-proto-document="'.e($this->prototypeDocument).'" data-cms-proto="'.e((string) $node['id']).'"';
+        }
 
         return 'data-cms-document="'.e($this->editorDocument).'" data-cms-node="'.e((string) $node['id']).'" data-cms-type="'.e($type).'"';
     }

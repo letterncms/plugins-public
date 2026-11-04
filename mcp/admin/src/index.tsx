@@ -1,9 +1,9 @@
 import './styles.css'
 import { registry, t } from '@letterncms/sdk'
-import { Button, Section, toast } from '@letterncms/ui'
+import { Button, toast } from '@letterncms/ui'
 import { lazy } from 'react'
 
-/** How to connect Claude, Cursor & co. over MCP. */
+/** How to connect Claude, Cursor & co. over MCP: part of API & Agents on the Account screen. */
 function Agents() {
   const endpoint = `${window.location.origin}/mcp`
   const command = `claude mcp add --transport http cms ${endpoint}`
@@ -18,18 +18,12 @@ function Agents() {
     </div>
   )
   return (
-    <div id="mcp">
-      <Section title={t('Connect an AI Agent')} description={t('Agents can do what you can, over MCP. Every change is in the audit log.')}>
-        <div className="space-y-3 text-sm">
-          {row(t('Server URL for Claude, Cursor or any MCP client'), endpoint)}
-          {row('Claude Code', command)}
-          <p className="m-0 text-xs text-faint">{t('Or send an API token as Authorization: Bearer.')}</p>
-        </div>
-      </Section>
+    <div id="mcp" className="scroll-mt-16 space-y-3 pt-2">
+      {row(t('MCP Server URL'), endpoint)}
+      {row('Claude Code', command)}
     </div>
   )
 }
 
-// A section of the Account screen, like core's own.
-registry.panels.set('mcp-connect', { id: 'mcp-connect', slot: 'account.sections', component: Agents, order: 50 })
+registry.panels.set('mcp-connect', { id: 'mcp-connect', slot: 'account.api', component: Agents, order: 10 })
 registry.widgets.set('mcp-agents', lazy(() => import('./WidgetAgents')))

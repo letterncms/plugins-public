@@ -1,4 +1,4 @@
-# SEO & GEO
+# SEO
 
 Search and generative engine optimization: meta tags, social cards, JSON-LD, sitemap, robots and AI crawlers, llms.txt, Markdown twins, redirects and on-page checks.
 

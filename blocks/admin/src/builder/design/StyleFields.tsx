@@ -1,6 +1,6 @@
 import type { FieldDef } from '@letterncms/sdk'
-import { Fields } from '@letterncms/ui'
 import type { StyleApi, ValueStatus } from '../useStyle'
+import { PanelFields } from '../controls'
 
 /**
  * A row of the Design tab. Its handle is the CSS property it edits (a group's sub-field
@@ -9,7 +9,7 @@ import type { StyleApi, ValueStatus } from '../useStyle'
  */
 export type StyleField = FieldDef & { get?: () => unknown; set?: (v: any) => void; keys?: string[] }
 
-/** Style rows drawn by `<Fields layout="inline">`, read and written at the variant being edited. */
+/** Style rows drawn by `<PanelFields >`, read and written at the variant being edited. */
 export function StyleFields({ s, fields, bare }: { s: StyleApi; fields: (StyleField | false | null | undefined)[]; bare?: boolean }) {
   const list = fields.filter(Boolean) as StyleField[]
   const values: Record<string, any> = {}
@@ -31,7 +31,7 @@ export function StyleFields({ s, fields, bare }: { s: StyleApi; fields: (StyleFi
     if (Object.keys(patch).length) s.write(patch as Record<string, string | null>)
   }
 
-  return <Fields layout="inline" bare={bare} fields={defs} values={values} onChange={onChange} />
+  return <PanelFields bare={bare} fields={defs} values={values} onChange={onChange} />
 }
 
 /** A row's status as the inline label shows it. */

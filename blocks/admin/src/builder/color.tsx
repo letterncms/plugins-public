@@ -3,7 +3,7 @@ import { fieldControlId, Icon, Popover, Segmented, cn } from '@letterncms/ui'
 import { useEffect, useRef, useState } from 'react'
 import { useTokens } from '../core/context'
 import { Swatch, inputClass } from './controls'
-import { Control } from './fields/controls'
+import { Control, useInvalid } from './fields/controls'
 import { TokenChip, useTokenOf } from './fields/tokens'
 
 /* Color values: a token (token:color.primary, optionally /alpha), hex, rgb() or any CSS color. */
@@ -53,6 +53,12 @@ function fromHsv(h: number, s: number, v: number, a: number): Rgba {
     return (v - v * s * Math.max(0, Math.min(k, 4 - k, 1))) * 255
   }
   return { r: f(5), g: f(3), b: f(1), a }
+}
+
+/** Whether the browser can draw this color (tokens count: the design system defines them). */
+export function validColor(value: string): boolean {
+  if (/^token:[a-z]+\.[a-z0-9-]+(\/\d{1,3})?$/.test(value)) return true
+  return typeof CSS !== 'undefined' && CSS.supports('color', value)
 }
 
 /** What a color value looks like (tokens resolved to their light value). */
@@ -115,6 +121,7 @@ function ColorPicker({ label, value, onChange }: { label: string; value?: string
   const parsed = parseColor(value?.startsWith('token:') ? preview(value.split('/')[0]) : value) ?? { r: 0, g: 0, b: 0, a: 1 }
   const [hsv, setHsv] = useState(() => ({ ...toHsv(parsed), a: value?.includes('/') && value.startsWith('token:') ? Number(value.split('/')[1]) / 100 : parsed.a }))
   const [text, setText] = useState(value ?? '')
+  const invalid = useInvalid(text, (v) => !v.trim() || validColor(v.trim()))
   const [tab, setTab] = useState<'tokens' | 'custom'>(() => (tokens.length > 0 && (!value || value.startsWith('token:')) ? 'tokens' : 'custom'))
   const area = useRef<HTMLDivElement>(null)
 
@@ -156,7 +163,7 @@ function ColorPicker({ label, value, onChange }: { label: string; value?: string
       <span className="pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgb(0_0_0/0.3)]" style={{ left: `${alpha * 100}%` }} />
     </div>
   )
-  const clear = <button type="button" onClick={() => onChange(null)} className="h-6 shrink-0 rounded-xs px-1.5 text-2xs text-muted hover:bg-hover hover:text-text">{t('Clear')}</button>
+  const clear = <button type="button" onClick={() => onChange(null)} className="h-7 shrink-0 rounded-sm px-2 text-xs text-muted hover:bg-hover hover:text-ink">{t('Clear')}</button>
 
   return (
     <div>
@@ -187,7 +194,7 @@ function ColorPicker({ label, value, onChange }: { label: string; value?: string
           <div className="flex items-center gap-2 border-t border-border px-2.5 py-2">
             {current ? (
               <>
-                <span className="shrink-0 text-2xs text-muted">{t('Opacity')}</span>
+                <span className="shrink-0 text-xs text-muted">{t('Opacity')}</span>
                 <div className="min-w-0 flex-1">{alphaBar}</div>
                 <span className="w-8 shrink-0 text-right text-2xs tabular-nums text-muted">{Math.round(alpha * 100)}%</span>
               </>
@@ -211,9 +218,20 @@ function ColorPicker({ label, value, onChange }: { label: string; value?: string
               value={text}
               spellCheck={false}
               aria-label={t('Color Value')}
+              aria-invalid={invalid.shown || undefined}
               onChange={(e) => setText(e.target.value)}
-              onBlur={() => text !== (value ?? '') && onChange(text.trim() || null)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+              // Only a color the browser can draw is kept; anything else goes back to the last one.
+              onBlur={() => {
+                const next = text.trim()
+                if (next && !validColor(next)) return setText(value ?? '')
+                if (next !== (value ?? '')) onChange(next || null)
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setText(value ?? '')
+                if (e.key !== 'Enter') return
+                if (text.trim() && !validColor(text.trim())) invalid.show()
+                else (e.target as HTMLInputElement).blur()
+              }}
               className={cn(inputClass, 'font-mono')}
               placeholder="#000000"
             />

@@ -1,7 +1,7 @@
 import { t, type FieldProps } from '@letterncms/sdk'
-import { Fields, Icon, cn } from '@letterncms/ui'
+import { Icon, cn } from '@letterncms/ui'
 import { useColorPreview } from '../color'
-import { RemoveButton } from '../controls'
+import { RemoveButton, PanelFields } from '../controls'
 import { splitList, splitValue } from '../css'
 import { Control, SubField } from './controls'
 
@@ -40,10 +40,9 @@ export function GradientField({ value, onChange, context }: FieldProps<string | 
   const set = (g: Gradient) => onChange(formatGradient(g))
 
   return (
-    <div className="min-w-0 flex-1 space-y-1.5 rounded-xs bg-sunken/60 p-1.5">
-      <div className="h-5 rounded-xs shadow-[inset_0_0_0_1px_rgb(0_0_0/0.1)]" style={{ background: preview(formatGradient({ ...gradient, kind: 'linear', angle: '90deg' })) }} />
-      <Fields
-        layout="inline"
+    <div className="min-w-0 flex-1 space-y-1 rounded-md bg-active/60 p-1.5">
+      <div className="h-6 rounded-sm shadow-[inset_0_0_0_1px_rgb(0_0_0/0.1)]" style={{ background: preview(formatGradient({ ...gradient, kind: 'linear', angle: '90deg' })) }} />
+      <PanelFields
         bare
         context={context}
         fields={[
@@ -53,7 +52,7 @@ export function GradientField({ value, onChange, context }: FieldProps<string | 
             component: 'blocks-group',
             label: t('Shape'),
             fields: [
-              { handle: 'kind', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Kind'), required: true, options: [{ value: 'linear', label: t('Linear') }, { value: 'radial', label: t('Radial') }] },
+              { handle: 'kind', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Kind'), required: true, options: [{ value: 'linear', label: t('Linear') }, { value: 'radial', label: t('Radial') }] },
               { handle: 'angle', type: 'text', component: 'blocks-value', label: t('Angle'), unit: 'deg', prefix: '∠', className: '!flex-none w-20', if: { kind: 'linear' } },
             ],
           },
@@ -63,8 +62,7 @@ export function GradientField({ value, onChange, context }: FieldProps<string | 
       />
       {gradient.stops.map((stop, i) => (
         <div key={i} className="flex items-center gap-1">
-          <Fields
-            layout="inline"
+          <PanelFields
             bare
             className="min-w-0 flex-1"
             context={context}
@@ -86,8 +84,8 @@ export function GradientField({ value, onChange, context }: FieldProps<string | 
           {gradient.stops.length > 2 && <RemoveButton onClick={() => set({ ...gradient, stops: gradient.stops.filter((_, j) => j !== i) })} />}
         </div>
       ))}
-      <button type="button" onClick={() => set({ ...gradient, stops: [...gradient.stops, { color: 'token:color.foreground', at: '' }] })} className="flex h-6 w-full items-center justify-center gap-1 rounded-xs text-2xs text-muted hover:bg-hover hover:text-text">
-        <Icon name="b-plus" size={11} /> {t('Add Stop')}
+      <button type="button" onClick={() => set({ ...gradient, stops: [...gradient.stops, { color: 'token:color.foreground', at: '' }] })} className="flex h-7 w-full items-center justify-center gap-1.5 rounded-sm text-xs text-muted hover:bg-hover hover:text-ink">
+        <Icon name="b-plus" size={14} /> {t('Add Stop')}
       </button>
     </div>
   )
@@ -114,7 +112,7 @@ export function AlignField({ field, value, onChange, context }: FieldProps<{ jus
   const align = value?.alignItems ?? undefined
   return (
     <Control>
-      <div className="grid h-[54px] w-[54px] shrink-0 grid-cols-3 gap-px rounded-xs bg-sunken p-1">
+      <div className="grid size-[60px] shrink-0 grid-cols-3 gap-px rounded-sm bg-bg p-1">
         {[0, 1, 2].flatMap((y) =>
           [0, 1, 2].map((x) => {
             const main = MAIN[row ? x : y]
@@ -122,25 +120,24 @@ export function AlignField({ field, value, onChange, context }: FieldProps<{ jus
             const on = (justify ?? 'flex-start') === main && (align ?? 'stretch').replace('stretch', 'flex-start') === cross
             return (
               <button key={`${x}${y}`} type="button" onClick={() => onChange({ justifyContent: main, alignItems: cross })} className="grid place-items-center rounded-[2px] hover:bg-hover" title={`${main.replace('flex-', '')} · ${cross.replace('flex-', '')}`}>
-                <span className={cn('rounded-full', on ? 'size-2 bg-focus' : 'size-1 bg-faint')} />
+                <span className={cn('rounded-full', on ? 'size-2 bg-ink' : 'size-1 bg-faint')} />
               </button>
             )
           }),
         )}
       </div>
-      <Fields
-        layout="inline"
+      <PanelFields
         bare
         className="min-w-0 flex-1"
         context={context}
         fields={[
-          { handle: 'justifyContent', type: 'select', size: 'xs', label: t('Distribute'), options: DISTRIBUTE(), placeholder: t('Distribute') },
+          { handle: 'justifyContent', type: 'select', size: 'sm', label: t('Distribute'), options: DISTRIBUTE(), placeholder: t('Distribute') },
           {
             handle: 'alignItems',
             type: 'select',
             display: 'segmented',
             block: true,
-            size: 'xs',
+            size: 'sm',
             label: t('Align'),
             options: [
               { value: 'flex-start', icon: row ? 'b-align-top' : 'b-align-left', title: t('Start') },
@@ -183,12 +180,12 @@ export function OriginField({ field, value, onChange, context, disabled }: Field
   const current = spotKey(value)
   return (
     <Control>
-      <div className="grid size-[50px] shrink-0 grid-cols-3 gap-px rounded-xs bg-sunken p-1" role="radiogroup" aria-label={field.label}>
+      <div className="grid size-[60px] shrink-0 grid-cols-3 gap-px rounded-sm bg-bg p-1" role="radiogroup" aria-label={field.label}>
         {SPOTS.flat().map((spot) => {
           const on = current === spotKey(spot)
           return (
             <button key={spot} type="button" role="radio" aria-checked={on} disabled={disabled} onClick={() => onChange(spot === 'center' && !field.required ? null : spot)} className="grid place-items-center rounded-[2px] hover:bg-hover" title={spot}>
-              <span className={cn('rounded-full', on ? 'size-2 bg-focus' : 'size-1 bg-faint')} />
+              <span className={cn('rounded-full', on ? 'size-2 bg-ink' : 'size-1 bg-faint')} />
             </button>
           )
         })}

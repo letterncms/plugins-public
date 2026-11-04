@@ -1,6 +1,7 @@
 import { Fields, Icon, cn } from '@letterncms/ui'
 import { t, useAbility } from '@letterncms/sdk'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCatalog } from './context'
 import { menuEnter, settleEnter } from './slashKeys'
 import type { BlockNode, BlockTypeDef } from './types'
 
@@ -15,31 +16,38 @@ export interface PatternDef {
 
 export type InsertChoice = { kind: 'block'; type: BlockTypeDef } | { kind: 'pattern'; pattern: PatternDef }
 
-const CATEGORY_ORDER = ['text', 'media', 'interactive', 'layout', 'design', 'data', 'form', 'embed']
-const categoryLabel = (category: string): string =>
-  ({ text: t('Text'), media: t('Media'), layout: t('Layout'), design: t('Design'), data: t('Data'), form: t('Forms'), embed: t('Embeds'), interactive: t('Interactive') })[category] ?? category
+/** A category no catalog names yet: its handle in title case. */
+const titled = (handle: string) => handle.replace(/[-_]+/g, ' ').replace(/(^|\s)\S/g, (c) => c.toUpperCase())
 
 export type InsertItem = { kind: 'block'; type: BlockTypeDef; group: string } | { kind: 'pattern'; pattern: PatternDef; group: string }
 
 /** Blocks, then components and sections, that match `query` and fit where they would go. */
 export function useInsertItems(types: BlockTypeDef[], query: string, allowed?: (t: BlockTypeDef) => boolean, withPatterns = true): { items: InsertItem[]; loading: boolean } {
   const patterns = useAbility<PatternDef[]>('patterns/list', {}, { staleTime: 60_000 })
+  const { catalog } = useCatalog()
   const items = useMemo(() => {
+    const categories = catalog?.categories ?? []
+    // Categories the catalog doesn't list go last, A–Z.
+    const rank = (category: string) => { const at = categories.findIndex((c) => c.name === category); return at < 0 ? categories.length : at }
+    const label = (category: string) => categories.find((c) => c.name === category)?.label ?? titled(category)
     const q = query.trim().toLowerCase()
     const match = (s: string) => s.toLowerCase().includes(q)
     const blocks = types
       .filter((type) => allowed ? allowed(type) : !type.parent)
       .filter((type) => !q || match(type.title) || match(type.name) || (type.keywords ?? []).some(match))
-      .sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category))
-      .map((type) => ({ kind: 'block' as const, type, group: categoryLabel(type.category) }))
+      .sort((a, b) => rank(a.category) - rank(b.category) || (rank(a.category) === categories.length ? label(a.category).localeCompare(label(b.category)) : 0))
+    // A search puts what it names first: "form" is the Form block, before every field a form can hold.
+    const named = (type: BlockTypeDef) => { const title = type.title.toLowerCase(); return title === q ? 0 : title.startsWith(q) ? 1 : match(type.title) ? 2 : 3 }
+    const found = (q ? [...blocks].sort((a, b) => named(a) - named(b)) : blocks)
+      .map((type) => ({ kind: 'block' as const, type, group: q ? t('Blocks') : label(type.category) }))
     const permits = (name: string) => { const type = types.find((item) => item.name === name); return !!type && (allowed ? allowed(type) : !type.parent) }
     const pats = (withPatterns ? (patterns.data ?? []) : [])
       .filter((pattern) => pattern.synced ? permits('pattern') : pattern.blocks.length > 0 && pattern.blocks.every((node) => permits(node.type)))
       .filter((p) => !q || match(p.title) || match(p.category) || match(p.description))
       .sort((a, b) => Number(b.synced) - Number(a.synced))
       .map((pattern) => ({ kind: 'pattern' as const, pattern, group: pattern.synced ? t('Components') : t('Sections') }))
-    return [...blocks, ...pats]
-  }, [types, query, patterns.data, allowed, withPatterns])
+    return [...found, ...pats]
+  }, [types, query, patterns.data, allowed, withPatterns, catalog])
   return { items, loading: withPatterns && patterns.isLoading }
 }
 
@@ -118,7 +126,7 @@ export function Inserter({ types, query, onQuery, onChoose, onClose, allowed, sh
           const icon = item.kind === 'block' ? item.type.icon : item.pattern.synced ? 'symbol' : 'pattern'
           return (
             <div key={item.kind === 'block' ? item.type.name : `p-${item.pattern.handle}`}>
-              {heading && <div className="cms-caps px-2 pb-1 pt-2">{heading}</div>}
+              {heading && <div className="cms-label px-2 pb-1 pt-2">{heading}</div>}
               <button
                 type="button"
                 data-index={i}

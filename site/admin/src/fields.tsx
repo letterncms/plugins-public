@@ -1,10 +1,18 @@
-import { t, type FieldProps } from '@letterncms/sdk'
-import { fieldControlId, Fields, Icon, IconButton, Input, Popover, Tooltip, cn } from '@letterncms/ui'
-import { useEffect, useRef, useState } from 'react'
+import { registry, t, type FieldDef, type FieldProps } from '@letterncms/sdk'
+import { fieldControlId, Fields, Icon, IconButton, Input, Popover, Select, Tooltip, cn } from '@letterncms/ui'
+import { forwardRef, useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 
 /* Field components of the design system editor — the controls core fields can't
    express: fluid sizes, font stacks, CSS declarations, easing curves, shadows and
-   font files. Compact (xs) like the canvas inspector. */
+   font files. Compact (xs) like the canvas inspector, whose value control (a number
+   with its unit, scrubbed or typed) they use when the blocks plugin has drawn it. */
+
+/** The canvas inspector's value control (`blocks-value`), or a plain input without it. */
+export function ValueInput({ field, value, onChange, disabled }: { field: FieldDef; value: string | number | null; onChange: (value: string | null) => void; disabled?: boolean }) {
+  const Value = registry.fields.get('blocks-value')
+  if (Value) return <Value field={{ ...field, component: 'blocks-value' }} value={value} onChange={(v: string | number | null) => onChange(v === null || v === undefined ? null : String(v))} disabled={disabled} context={{}} />
+  return <Input id={fieldControlId(field)} size="sm" className="min-w-0 flex-1 font-mono" aria-label={field.label} placeholder={field.placeholder as string | undefined} value={String(value ?? '')} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
+}
 
 type Declarations = Record<string, string | number>
 type Size = string | { min: string; max: string }
@@ -12,33 +20,55 @@ type Size = string | { min: string; max: string }
 /** A size token: one value, or fluid `{min, max}` between phone and desktop. */
 export function SizeField({ field, value, onChange, disabled }: FieldProps<Size | null>) {
   const fluid = !!value && typeof value === 'object' && 'min' in value
+  const unitOf = (v: string) => v.match(/[a-z%]+$/i)?.[0] ?? ''
+  // Phone and desktop in one unit name it once, after the second: the numbers get the room.
+  const shared = fluid && unitOf(String(value.min)) === unitOf(String(value.max))
+  const sub = (handle: string, label: string): FieldDef => ({ ...field, handle: `${field.handle}-${handle}`, label, unit: 'rem', units: handle === 'min' && shared ? [] : ['rem', 'px', 'em', '%', 'vw'], step: 0.125 })
   return (
-    <div className="flex min-w-0 items-center gap-1">
+    <div className="flex min-w-0 flex-1 items-center gap-1">
       {fluid ? (
         <>
-          <Input id={fieldControlId(field)} size="xs" className="min-w-0 flex-1 font-mono" aria-label={t('Phone')} title={t('Phone')} value={value.min} disabled={disabled} onChange={(e) => onChange({ ...value, min: e.target.value })} />
+          <div className="min-w-0 flex-1" title={t('Phone')}><ValueInput field={sub('min', t('Phone'))} value={value.min} disabled={disabled} onChange={(v) => onChange({ ...value, min: v ?? '0' })} /></div>
           <Icon name="arrow-right" size={10} className="shrink-0 text-faint" />
-          <Input size="xs" className="min-w-0 flex-1 font-mono" aria-label={t('Desktop')} title={t('Desktop')} value={value.max} disabled={disabled} onChange={(e) => onChange({ ...value, max: e.target.value })} />
+          <div className="min-w-0 flex-1" title={t('Desktop')}><ValueInput field={sub('max', t('Desktop'))} value={value.max} disabled={disabled} onChange={(v) => onChange({ ...value, max: v ?? '0' })} /></div>
         </>
       ) : (
-        <Input id={fieldControlId(field)} size="xs" className="min-w-0 flex-1 font-mono" aria-label={field.label} placeholder={field.placeholder as string | undefined} value={String(value ?? '')} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
+        <div className="min-w-0 flex-1"><ValueInput field={{ ...field, unit: 'rem', units: ['rem', 'px', 'em', '%', 'vw'], step: 0.125 }} value={value ?? null} disabled={disabled} onChange={(v) => onChange(v ?? '0')} /></div>
       )}
-      <Tooltip content={fluid ? t('Use One Size') : t('Scale from phone to desktop')}>
-        <IconButton icon="width" label={t('Fluid')} size="xs" active={fluid} disabled={disabled} onClick={() => onChange(fluid ? value.max : { min: String(value ?? ''), max: String(value ?? '') })} />
+      <Tooltip content={fluid ? t('Use One Size') : t('Scale from Phone to Desktop')}>
+        <IconButton icon="width" label={t('Fluid')} size="sm" active={fluid} disabled={disabled} onClick={() => onChange(fluid ? value.max : { min: String(value ?? ''), max: String(value ?? '') })} />
       </Tooltip>
     </div>
   )
 }
 
-const families = (text: string) => text.split(',').map((s) => s.trim()).filter(Boolean)
+/** What a font family falls back to: the system's own fonts of its kind. */
+const FALLBACKS = { sans: ['ui-sans-serif', 'system-ui', 'sans-serif'], serif: ['ui-serif', 'Georgia', 'serif'], mono: ['ui-monospace', 'SF Mono', 'Menlo', 'monospace'] } as const
+type Fallback = keyof typeof FALLBACKS
+const SYSTEM_FONTS = new Set<string>([...Object.values(FALLBACKS).flat(), '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Helvetica', 'Arial', 'Times New Roman', 'Times', 'Courier New', 'Consolas', 'Monaco', 'cursive', 'fantasy'])
 
-/** A font stack (`["Inter", "system-ui"]`), typed comma-separated. */
+function fallbackOf(stack: string[]): Fallback {
+  if (stack.includes('monospace')) return 'mono'
+  return stack.includes('serif') ? 'serif' : 'sans'
+}
+
+/**
+ * A font family token (`["Inter", "ui-sans-serif", "system-ui", "sans-serif"]`): the
+ * site's font, or the system's, and what it falls back to. `families` are the fonts the
+ * site serves.
+ */
 export function FontStackField({ field, value, onChange, disabled }: FieldProps<string[] | string | null>) {
-  const stack = Array.isArray(value) ? value.join(', ') : String(value ?? '')
-  const [text, setText] = useState(stack)
-  // Keep what is being typed ("Inter, ") unless the value changed elsewhere (discard, save).
-  useEffect(() => setText((current) => (families(current).join(', ') === stack ? current : stack)), [stack])
-  return <Input id={fieldControlId(field)} size="xs" className="font-mono" aria-label={field.label} spellCheck={false} value={text} disabled={disabled} onChange={(e) => { setText(e.target.value); onChange(families(e.target.value)) }} />
+  const stack = Array.isArray(value) ? value : String(value ?? '').split(',').map((s) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
+  const first = stack[0] && !SYSTEM_FONTS.has(stack[0]) ? stack[0] : ''
+  const fallback = fallbackOf(stack)
+  const families = [...new Set([...((field.families as string[] | undefined) ?? []), ...(first ? [first] : [])])]
+  const set = (family: string, kind: Fallback) => onChange([...(family ? [family] : []), ...FALLBACKS[kind]])
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-1">
+      <Select id={fieldControlId(field)} size="sm" className="min-w-0 flex-[3]" aria-label={t('Font')} disabled={disabled} value={first || 'system'} onChange={(v) => set(v === 'system' || !v ? '' : v, fallback)} options={[{ value: 'system', label: t('System') }, ...families.map((family) => ({ value: family, label: family }))]} />
+      <Select size="sm" className="min-w-0 flex-[2]" aria-label={t('Fallback')} disabled={disabled} value={fallback} onChange={(v) => set(first, (v as Fallback) ?? 'sans')} options={[{ value: 'sans', label: t('Sans') }, { value: 'serif', label: t('Serif') }, { value: 'mono', label: t('Mono') }]} />
+    </div>
+  )
 }
 
 /** Common properties offered while typing one (any camelCase CSS property works). */
@@ -84,7 +114,6 @@ export function DeclarationsField({ field, value, onChange, disabled }: FieldPro
             <PropertyInput value="" autoFocus list={`${list}-props`} disabled={disabled} onCommit={(next) => { setAdding(false); if (next && !(next in decl)) onChange({ ...decl, [next]: '' }) }} />
           </div>
         )}
-        {!adding && Object.keys(decl).length === 0 && <p className="m-0 text-2xs text-faint">{t('No properties')}</p>}
       </div>
     </div>
   )
@@ -140,10 +169,10 @@ type Bezier = [number, number, number, number]
 const KEYWORDS: Record<string, Bezier> = { linear: [0, 0, 1, 1], ease: [0.25, 0.1, 0.25, 1], 'ease-in': [0.42, 0, 1, 1], 'ease-out': [0, 0, 0.58, 1], 'ease-in-out': [0.42, 0, 0.58, 1] }
 
 const presets = (): { label: string; value: string }[] => [
-  { label: t('Out'), value: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
-  { label: t('In-out'), value: 'cubic-bezier(0.65, 0, 0.35, 1)' },
-  { label: t('In'), value: 'cubic-bezier(0.55, 0, 1, 0.45)' },
-  { label: t('Back'), value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
+  { label: t('Ease Out'), value: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+  { label: t('Ease In-Out'), value: 'cubic-bezier(0.65, 0, 0.35, 1)' },
+  { label: t('Ease In'), value: 'cubic-bezier(0.55, 0, 1, 0.45)' },
+  { label: t('Overshoot'), value: 'cubic-bezier(0.34, 1.56, 0.64, 1)' },
   { label: t('Linear'), value: 'linear' },
 ]
 
@@ -170,23 +199,32 @@ export function EaseCurve({ value, size = 24, className }: { value: string | nul
   )
 }
 
-/** An easing curve: the CSS value, and a curve editor with two handles and presets. */
-export function EaseField({ field, value, onChange, disabled }: FieldProps<string | null>) {
+/** A trigger that looks like the inspector's inputs: a preview, what is chosen, a chevron. (A popover's trigger: it takes the props and ref it is given.) */
+const PickerButton = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButtonElement> & { label: string; preview?: ReactNode }>(function PickerButton({ label, preview, children, className, ...props }, ref) {
   return (
-    <div className="flex min-w-0 items-center gap-1">
-      <Popover
-        align="start"
-        className="w-56 !p-0"
-        trigger={
-          <button type="button" disabled={disabled} aria-label={t('Edit Curve')} className="cms-focus-ring grid size-6 shrink-0 place-items-center rounded-sm border border-border-strong bg-bg text-focus hover:bg-hover">
-            <EaseCurve value={value} size={16} />
-          </button>
-        }
-      >
-        <CurveEditor value={value} onChange={onChange} />
-      </Popover>
-      <Input id={fieldControlId(field)} size="xs" className="min-w-0 flex-1 font-mono" spellCheck={false} aria-label={field.label} placeholder={field.placeholder as string | undefined} value={value ?? ''} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
-    </div>
+    <button ref={ref} type="button" aria-label={label} {...props} className={cn('cms-input flex h-7 w-full min-w-0 items-center gap-1.5 rounded-sm pl-2 pr-1.5 text-left text-sm text-text transition-[border-color,box-shadow] duration-120 hover:bg-hover data-[popup-open]:border-focus disabled:opacity-50', className)}>
+      {preview}
+      <span className="min-w-0 flex-1 truncate">{children}</span>
+      <Icon name="chevrons-up-down" size={11} className="shrink-0 text-faint" />
+    </button>
+  )
+})
+
+/** An easing curve: a named preset, or a custom curve drawn with two handles. */
+export function EaseField({ field, value, onChange, disabled }: FieldProps<string | null>) {
+  const preset = presets().find((p) => p.value === value?.replace(/\s+/g, ' ').trim())
+  return (
+    <Popover
+      align="start"
+      className="w-56 !p-0"
+      trigger={
+        <PickerButton id={fieldControlId(field)} disabled={disabled} label={field.label} preview={<EaseCurve value={value} size={14} className="text-muted" />}>
+          {preset?.label ?? t('Custom')}
+        </PickerButton>
+      }
+    >
+      <CurveEditor value={value} onChange={onChange} />
+    </Popover>
   )
 }
 
@@ -230,7 +268,7 @@ function CurveEditor({ value, onChange }: { value: string | null; onChange: (v: 
         <line x1={e0} y1={e1} x2={b0} y2={b1} stroke="var(--cms-faint)" />
         <path d={`M${s0},${s1} C${a0},${a1} ${b0},${b1} ${e0},${e1}`} fill="none" stroke="var(--cms-ink)" strokeWidth={2} strokeLinecap="round" />
         {[[a0, a1], [b0, b1]].map(([x, y], i) => (
-          <circle key={i} cx={x} cy={y} r={6} fill="var(--cms-bg)" stroke="var(--cms-focus)" strokeWidth={2} className="cursor-grab active:cursor-grabbing" onPointerDown={drag(i as 0 | 1)} />
+          <circle key={i} cx={x} cy={y} r={6} fill="var(--cms-bg)" stroke="var(--cms-ink)" strokeWidth={1.5} className="cursor-grab active:cursor-grabbing" onPointerDown={drag(i as 0 | 1)} />
         ))}
       </svg>
       <div className="flex flex-wrap gap-1 p-2">
@@ -247,26 +285,45 @@ function CurveEditor({ value, onChange }: { value: string | null; onChange: (v: 
 
 const SHADOW: FieldProps['field'] = { handle: 'shadow', type: 'text', component: 'blocks-shadows', label: 'Shadow' }
 
-/** A box-shadow: the CSS value, and the canvas's shadow editor (offsets, blur, spread, color) in a popover. */
+const shadows = (): { label: string; value: string }[] => [
+  { label: t('None'), value: 'none' },
+  { label: t('Small'), value: '0 1px 2px rgb(0 0 0 / 0.06)' },
+  { label: t('Medium'), value: '0 4px 16px -4px rgb(0 0 0 / 0.12)' },
+  { label: t('Large'), value: '0 24px 48px -16px rgb(0 0 0 / 0.2)' },
+]
+
+const ShadowSample = ({ value }: { value: string | null }) => <span className="size-3.5 shrink-0 rounded-[3px] border border-border bg-bg" style={{ boxShadow: value ?? undefined }} />
+
+/** A box-shadow: a named preset, or a custom one made in the canvas's shadow editor (offsets, blur, spread, color). */
 export function ShadowField({ field, value, onChange, disabled }: FieldProps<string | null>) {
+  const preset = shadows().find((p) => p.value === value?.replace(/\s+/g, ' ').trim())
   return (
-    <div className="flex min-w-0 items-center gap-1">
-      <Popover
-        align="start"
-        className="w-72 p-2"
-        trigger={
-          <button type="button" disabled={disabled} aria-label={t('Edit Shadow')} className="cms-focus-ring grid size-6 shrink-0 place-items-center rounded-sm border border-border-strong bg-bg text-muted hover:bg-hover hover:text-text">
-            <Icon name="shadow" size={12} />
+    <Popover
+      align="start"
+      className="w-72 p-1"
+      trigger={
+        <PickerButton id={fieldControlId(field)} disabled={disabled} label={field.label}>
+          {preset?.label ?? t('Custom')}
+        </PickerButton>
+      }
+    >
+      <div className="space-y-px">
+        {shadows().map((option) => (
+          <button key={option.value} type="button" onClick={() => onChange(option.value)} className={cn('flex h-7 w-full items-center gap-2 rounded-xs px-2 text-left text-xs transition-colors', option.value === preset?.value ? 'bg-active text-ink' : 'text-text hover:bg-hover')}>
+            <ShadowSample value={option.value} />
+            <span className="flex-1">{option.label}</span>
+            {option.value === preset?.value && <Icon name="check" size={12} className="text-muted" />}
           </button>
-        }
-      >
-        <Fields bare fields={[SHADOW]} values={{ shadow: value || '0 4px 16px 0 rgb(0 0 0 / 12%)' }} onChange={(_, v) => onChange(v ?? 'none')} />
+        ))}
+      </div>
+      <div className="mt-1 border-t border-border px-1 pb-1 pt-2">
+        <p className="m-0 mb-1 text-2xs font-medium text-muted">{t('Custom')}</p>
+        <Fields bare fields={[SHADOW]} values={{ shadow: value && value !== 'none' ? value : '0 4px 16px 0 rgb(0 0 0 / 12%)' }} onChange={(_, v) => onChange(v ?? 'none')} />
         <button type="button" onClick={() => onChange(`${value && value !== 'none' ? `${value}, ` : ''}0 2px 8px 0 rgb(0 0 0 / 10%)`)} className="mt-1.5 flex h-6 w-full items-center justify-center gap-1 rounded-xs text-2xs text-muted hover:bg-hover hover:text-text">
           <Icon name="plus" size={11} />
           {t('Add Layer')}
         </button>
-      </Popover>
-      <Input id={fieldControlId(field)} size="xs" className="min-w-0 flex-1 font-mono" spellCheck={false} aria-label={field.label} placeholder={field.placeholder as string | undefined} value={value ?? ''} disabled={disabled} onChange={(e) => onChange(e.target.value)} />
-    </div>
+      </div>
+    </Popover>
   )
 }

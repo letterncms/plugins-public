@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.4 or later.
+- SEO is listed under Plugins in Settings, and **Redirects** are saved from the save bar like the settings beside them.
+- SEO has one place in Settings: Redirects are a tab of the SEO settings page, saved from the same save bar, instead of a separate item. Links to the old Redirects screen open the tab. The plugin and its settings page are both called SEO.
+- **Page Type** shows what it falls back to while empty, **Article** for posts and **Web Page** otherwise, and its choices are in title case.
+- The SEO tab starts with its fields, each with its label above it and as wide as the panel (a switch on its own row), then the search preview and a one-line score that opens to the checks still to improve. What a field falls back to shows as its placeholder (the page title, the first paragraph) instead of a note under it. Checks are named in title case.
+- The notes under the SEO settings are a few words each.
+- **New Redirect** is the Redirects tab's one button, in the top bar.
+- SEO settings read plainly: **Type** (Organization, Local Business or Person) under **Who You Are**, **AI Crawlers**, **Publish Markdown Versions of Pages** and **Discourage All Indexing**, with a short note where one helps. **Profiles** asks for addresses, and **SEO Title** defaults to the page title.
+
+### Fixed
+
+- The SEO settings' section headings, **Who You Are**, **AI Crawlers** and **Indexing and Security**, are in Dutch and French too.
+
 ## 0.2.0 (2026-11-02)
 
 ### Changed

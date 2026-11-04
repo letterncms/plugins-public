@@ -21,9 +21,9 @@ final class CollabPlugin extends Plugin
     public function boot(): void
     {
         $p = $this->cms()->permissions();
-        $p->register('comments.view', __('Read comments'), __('Comments'));
-        $p->register('comments.create', __('Write and resolve comments'), __('Comments'));
-        $p->register('comments.moderate', __('Edit and delete anyone’s comments'), __('Comments'));
+        $p->register('comments.view', __('View Comments'), __('Comments'));
+        $p->register('comments.create', __('Write and Resolve Comments'), __('Comments'));
+        $p->register('comments.moderate', __('Edit and Delete Anyone’s Comments'), __('Comments'));
 
         $this->abilities();
 

@@ -2,14 +2,15 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { t } from '@letterncms/sdk'
-import { Fields, Icon, Tooltip, cn } from '@letterncms/ui'
-import { useEffect, useState } from 'react'
-import { useEditorContext } from '../core/context'
+import { Icon, Tooltip, cn } from '@letterncms/ui'
+import { useEffect, useMemo, useState } from 'react'
+import { blockName, useComponentTitles, useEditorContext } from '../core/context'
 import { selectionOf, useEditor } from '../core/store'
 import * as tree from '../core/tree'
 import type { BlockNode } from '../core/types'
 import { accepts } from '../core/insert'
 import { bus } from './bus'
+import { PanelFields } from './controls'
 
 /** Layer tree: select, hover, collapse, hide, rename (double-click) and drag to reorder or re-parent. */
 export function Layers() {
@@ -29,6 +30,7 @@ export function Layers() {
     document.querySelector(`[data-layer="${selected}"]`)?.scrollIntoView({ block: 'nearest' })
   }, [selected])
 
+  const held = useMemo(() => hints(nodes, (node) => !!types.get(node.type)?.children || !!node.children?.length), [nodes, types])
   const visible = tree.flatten(nodes).filter(({ node }) => !tree.ancestors(nodes, node.id).some((a) => collapsed[a.id]))
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -54,9 +56,8 @@ export function Layers() {
 
   if (nodes.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-1.5 px-6 py-10 text-center">
-        <Icon name="b-stack-simple" size={18} className="text-faint" />
-        <p className="m-0 text-xs text-muted">{t('No elements yet')}</p>
+      <div className="px-4 py-3">
+        <p className="m-0 text-sm text-muted">{t('No elements yet')}</p>
       </div>
     )
   }
@@ -64,7 +65,7 @@ export function Layers() {
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={visible.map((v) => v.node.id)} strategy={verticalListSortingStrategy}>
-        <div className="py-1" onMouseLeave={() => store.hover(null)}>
+        <div className="space-y-px px-2 pb-3 pt-1" onMouseLeave={() => store.hover(null)}>
           {visible.map(({ node, depth }) => (
             <LayerRow
               key={node.id}
@@ -73,6 +74,7 @@ export function Layers() {
               selected={range.includes(node.id)}
               hovered={hovered === node.id}
               collapsed={!!collapsed[node.id]}
+              hint={held.get(node.id)}
               onToggle={() => setCollapsed((c) => ({ ...c, [node.id]: !c[node.id] }))}
             />
           ))}
@@ -82,12 +84,58 @@ export function Layers() {
   )
 }
 
-function LayerRow({ node, depth, selected, hovered, collapsed, onToggle }: { node: BlockNode; depth: number; selected: boolean; hovered: boolean; collapsed: boolean; onToggle: () => void }) {
+/** What a box is, by its element or its layout: a section, a row, a grid. */
+function kindOf(node: BlockNode, title: string): string {
+  if (node.type !== 'box') return title
+  const tags: Record<string, string> = { section: t('Section'), header: t('Header'), footer: t('Footer'), nav: t('Navigation'), main: t('Main'), aside: t('Aside'), article: t('Article'), ul: t('List'), ol: t('List'), li: t('List Item'), a: t('Link'), button: t('Button'), form: t('Form'), figure: t('Figure') }
+  const tag = String(node.props?.tag ?? '')
+  if (tags[tag]) return tags[tag]
+  const base = (node.style?.base ?? {}) as Record<string, unknown>
+  if (base.display === 'grid') return t('Grid')
+  if (base.display === 'flex' || base.display === 'inline-flex') return /column/.test(String(base.flexDirection ?? '')) ? t('Stack') : t('Row')
+  return title
+}
+
+/** What a block says: its text, or for text that comes from data, the field it shows (Title, Date…). */
+function says(node: BlockNode, max: number): string {
+  const text = tree.summary(node, max)
+  if (text) return text
+  const path = String(node.bind?.text ?? '').replace(/[{}]/g, '').split('|')[0].trim()
+  const field = path.split('.').pop() ?? ''
+  return field ? field.replace(/[_-]+/g, ' ').replace(/^\w/, (c) => c.toUpperCase()) : ''
+}
+
+/**
+ * What each container holds, to tell it from its siblings — one rule for every container: the
+ * first heading among its own children, else the first things its own children say. A wrapper
+ * says nothing: what is inside the container it wraps names that one.
+ */
+function hints(nodes: BlockNode[], containers: (node: BlockNode) => boolean): Map<string, string> {
+  const out = new Map<string, string>()
+  for (const { node } of tree.flatten(nodes)) {
+    if (!containers(node) || node.label || node.type === 'pattern') continue
+    const children = node.children ?? []
+    const heading = children.find((child) => child.type === 'heading' && says(child, 48))
+    if (heading) {
+      out.set(node.id, says(heading, 48))
+      continue
+    }
+    const said = children.filter((child) => !containers(child)).map((child) => says(child, 32)).filter(Boolean).slice(0, 2)
+    if (said.length) out.set(node.id, said.join(' · '))
+  }
+  return out
+}
+
+function LayerRow({ node, depth, selected, hovered, collapsed, hint, onToggle }: { node: BlockNode; depth: number; selected: boolean; hovered: boolean; collapsed: boolean; hint?: string; onToggle: () => void }) {
   const { store, types, readOnly } = useEditorContext()
   const type = types.get(node.type)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: node.id, disabled: readOnly })
   const hasChildren = (node.children?.length ?? 0) > 0
-  const label = node.label || tree.summary(node, 36) || type?.title || node.type
+  const components = useComponentTitles()
+  const container = !!type?.children || hasChildren
+  // A layer is named by what it is or says: its own name, the component, its text, or for a container, its kind and what it holds.
+  const label = node.type === 'pattern' ? blockName(node, types, components) : node.label || (container ? kindOf(node, type?.title ?? node.type) : says(node, 48) || type?.title || node.type)
+  const plain = !node.label && node.type !== 'pattern' && !container && !says(node, 48)
   const [renaming, setRenaming] = useState(false)
   const component = node.type === 'pattern'
   const badges = [
@@ -101,7 +149,7 @@ function LayerRow({ node, depth, selected, hovered, collapsed, onToggle }: { nod
     <div
       ref={setNodeRef}
       data-layer={node.id}
-      style={{ transform: CSS.Translate.toString(transform), transition, paddingLeft: 8 + depth * 14 }}
+      style={{ transform: CSS.Translate.toString(transform), transition, paddingLeft: 4 + depth * 12 }}
       {...attributes}
       {...listeners}
       onClick={(e) => {
@@ -122,8 +170,8 @@ function LayerRow({ node, depth, selected, hovered, collapsed, onToggle }: { nod
         }
       }}
       className={cn(
-        'group relative flex h-7 cursor-default select-none items-center gap-1 pr-1.5 text-xs outline-none focus-visible:shadow-[inset_0_0_0_1px_var(--cms-focus)]',
-        selected ? 'bg-focus/12 text-ink' : hovered ? 'bg-hover text-text' : 'text-text',
+        'group relative flex h-7 cursor-default select-none items-center gap-1.5 rounded-md pr-1 text-sm outline-none focus-visible:shadow-[inset_0_0_0_1.5px_var(--cms-focus)]',
+        selected ? 'bg-focus-soft text-ink' : hovered ? 'bg-hover text-text' : 'text-text',
         isDragging && 'z-10 bg-bg opacity-80 shadow-pop',
       )}
     >
@@ -133,18 +181,17 @@ function LayerRow({ node, depth, selected, hovered, collapsed, onToggle }: { nod
           e.stopPropagation()
           onToggle()
         }}
-        className={cn('grid size-4 shrink-0 place-items-center rounded-xs text-faint hover:text-text', !hasChildren && 'invisible')}
+        className={cn('-mr-1 grid size-4 shrink-0 place-items-center rounded-xs text-faint hover:text-ink', !hasChildren && 'invisible')}
         aria-label={collapsed ? t('Expand') : t('Collapse')}
       >
-        <Icon name="b-caret-down" size={9} className={cn('transition-transform duration-120', collapsed && '-rotate-90')} />
+        <Icon name="b-caret-down" size={10} className={cn('transition-transform duration-120', collapsed && '-rotate-90')} />
       </button>
-      <Icon name={component ? 'b-diamonds-four' : type?.icon ?? 'square'} size={13} className={cn('shrink-0', node.hidden ? 'text-faint' : selected || component ? 'text-ink' : 'text-muted')} />
+      <Icon name={component ? 'b-diamonds-four' : type?.icon ?? 'square'} size={14} className={cn('shrink-0', node.hidden ? 'text-ghost' : selected ? 'text-ink' : component ? 'text-muted' : 'text-faint')} />
       {renaming ? (
         <div className="min-w-0 flex-1" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} onKeyUp={(e) => e.key === 'Escape' && (e.target as HTMLElement).blur()} onBlur={() => setRenaming(false)}>
-          <Fields
-            layout="inline"
+          <PanelFields
             bare
-            fields={[{ handle: 'label', type: 'text', size: 'xs', commit: 'blur', label: t('Layer Name'), autofocus: true, placeholder: type?.title }]}
+            fields={[{ handle: 'label', type: 'text', size: 'sm', commit: 'blur', label: t('Layer Name'), autofocus: true, placeholder: type?.title }]}
             values={{ label: node.label ?? '' }}
             onChange={(_, v: string) => store.updateNode(node.id, { label: v.trim() || undefined })}
           />
@@ -156,15 +203,16 @@ function LayerRow({ node, depth, selected, hovered, collapsed, onToggle }: { nod
             if (!readOnly) setRenaming(true)
           }}
           title={readOnly ? undefined : t('Double-Click to Rename')}
-          className={cn('min-w-0 flex-1 truncate', component && 'font-medium', node.hidden ? 'text-faint' : !node.label && !tree.summary(node) && !component && 'text-muted')}
+          className={cn('min-w-0 flex-1 truncate', node.hidden ? 'text-faint line-through decoration-faint/60' : plain && 'text-muted')}
         >
           {label}
+          {hint && <span className={cn('ml-1.5', selected ? 'text-muted' : 'text-faint')}>{hint}</span>}
         </span>
       )}
       {!renaming && badges.map((b) => (
         <Tooltip key={b.icon} content={b.title}>
-          <span className="grid size-4 shrink-0 place-items-center text-faint group-hover:hidden">
-            <Icon name={b.icon} size={10} />
+          <span className="grid size-5 shrink-0 place-items-center text-faint group-hover:hidden">
+            <Icon name={b.icon} size={12} />
           </span>
         </Tooltip>
       ))}
@@ -177,10 +225,10 @@ function LayerRow({ node, depth, selected, hovered, collapsed, onToggle }: { nod
             store.updateNode(node.id, { hidden: !node.hidden || undefined })
           }}
           onPointerDown={(e) => e.stopPropagation()}
-          className={cn('grid size-5 shrink-0 place-items-center rounded-xs text-faint hover:bg-hover hover:text-text', node.hidden ? 'grid' : 'hidden group-hover:grid')}
+          className={cn('grid size-6 shrink-0 place-items-center rounded-sm text-faint hover:bg-hover hover:text-ink', node.hidden ? 'grid' : 'hidden group-hover:grid group-focus-visible:grid')}
           aria-label={node.hidden ? t('Show') : t('Hide')}
         >
-          <Icon name={node.hidden ? 'eye-off' : 'eye'} size={12} />
+          <Icon name={node.hidden ? 'eye-off' : 'eye'} size={14} />
         </button>
       </Tooltip>
     </div>

@@ -5,7 +5,9 @@ import { GroupField, PairsField } from './composite'
 import { EaseField, ValueField } from './controls'
 import { NodeField, NodesField } from './nodes'
 import { ClipField } from './clip'
+import { ConditionsField } from './conditions'
 import { FiltersField } from './filters'
+import { InlineTextField } from './inlineText'
 import { ShadowsField } from './shadows'
 import { SpacingField } from './spacing'
 import { AlignField, GradientField, OriginField } from './style'
@@ -28,6 +30,8 @@ export function registerFields() {
     'blocks-spacing': SpacingField,
     'blocks-filters': FiltersField,
     'blocks-clip': ClipField,
+    'blocks-conditions': ConditionsField,
+    'blocks-inline-text': InlineTextField,
   }
   for (const [key, component] of Object.entries(fields)) registry.fields.set(key, component as any)
 }

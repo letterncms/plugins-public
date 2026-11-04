@@ -11,6 +11,8 @@ interface State {
   /** In the dock, the list of chats takes the thread's place. */
   history: boolean
   conversation: string | null
+  /** Bumped for a fresh chat, so a new one starts over even when the last was never saved (its first message failed). */
+  thread: number
   title: string
   prompt: string | null
   focus: number
@@ -46,7 +48,7 @@ function restored(): Pick<State, 'mode' | 'conversation' | 'detached'> {
 }
 
 const listeners = new Set<() => void>()
-let state: State = { ...restored(), history: false, title: '', prompt: null, focus: 0, contextPath: '/', dismissed: [], selectedText: '', attached: {}, skills: {}, drafts: {}, models: {}, working: null, awaiting: false }
+let state: State = { ...restored(), thread: 0, history: false, title: '', prompt: null, focus: 0, contextPath: '/', dismissed: [], selectedText: '', attached: {}, skills: {}, drafts: {}, models: {}, working: null, awaiting: false }
 /** Where maximizing started, to return to. */
 let returnTo: string | null = null
 /** What had the focus before the dock took it. */
@@ -140,13 +142,15 @@ export const panel = {
     if (state.mode === 'closed') returnFocus = document.activeElement
     panel.set({ conversation: id, mode: state.mode === 'closed' ? 'docked' : state.mode, history: false, prompt: null, focus: state.focus + 1 })
   },
+  /** A fresh chat. One whose first message is still on its way goes on, and is that new chat. */
   newChat() {
-    // An unsent message waits where it was written; a saved, finished chat starts fresh.
-    const id = state.drafts[state.conversation ?? 'new']?.trim() ? state.conversation : null
-    panel.select(id)
+    if (state.working?.conversation !== null) panel.set({ thread: state.thread + 1 })
+    panel.select(null)
   },
   ask(prompt?: string) {
-    panel.newChat()
+    // An unsent message waits where it was written; a saved, finished chat starts fresh.
+    if (state.drafts[state.conversation ?? 'new']?.trim()) panel.select(state.conversation)
+    else panel.newChat()
     if (prompt?.trim()) panel.set({ prompt: prompt.trim() })
   },
   draft(value: string) {

@@ -12,7 +12,7 @@ export function NodeField({ field, ...props }: FieldProps<string | null>) {
   const options = tree.flatten(nodes)
     .filter(({ node }) => node.id !== field.exclude)
     .map(({ node, depth }) => ({ value: node.id, label: `${'  '.repeat(depth)}${node.label || tree.summary(node, 28) || types.get(node.type)?.title || node.type}` }))
-  return <SubField {...props} field={{ ...field, type: 'select', component: undefined, size: 'xs', options, placeholder: field.placeholder ?? t('Choose an Element') }} />
+  return <SubField {...props} field={{ ...field, type: 'select', component: undefined, size: 'sm', options, placeholder: field.placeholder ?? t('Choose an Element') }} />
 }
 
 /** `blocks-nodes` — a list of elements: change or remove each, `add` (a label) appends `addValue`. */
@@ -27,7 +27,7 @@ export function NodesField({ field, value, onChange, disabled, context }: FieldP
           <RemoveButton onClick={() => onChange(list.filter((_, j) => j !== i))} />
         </div>
       ))}
-      <button type="button" onClick={() => onChange([...list, field.addValue as string])} className="text-2xs text-muted hover:text-text">
+      <button type="button" onClick={() => onChange([...list, field.addValue as string])} className="text-xs text-muted hover:text-text">
         + {(field.add as string) ?? t('Element')}
       </button>
     </div>

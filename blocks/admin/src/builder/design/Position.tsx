@@ -15,7 +15,7 @@ export function Position({ s }: { s: StyleApi }) {
           {
             handle: 'position',
             type: 'select',
-            size: 'xs',
+            size: 'sm',
             label: t('Type'),
             placeholder: t('Static'),
             options: [
@@ -36,7 +36,7 @@ export function Position({ s }: { s: StyleApi }) {
             fields: (['top', 'right', 'bottom', 'left'] as const).map((side) => ({ handle: side, type: 'text', component: 'blocks-value', label: { top: t('Top'), right: t('Right'), bottom: t('Bottom'), left: t('Left') }[side], title: { top: t('Top'), right: t('Right'), bottom: t('Bottom'), left: t('Left') }[side], prefix: side[0].toUpperCase(), placeholder: 'auto', group: 'space', keywords: ['auto'] })),
           },
           placed && { handle: 'zIndex', type: 'text', component: 'blocks-value', label: t('Z-index'), unit: '', placeholder: 'auto', prefixIcon: 'b-stack' },
-          { handle: 'isolation', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Isolation'), placeholder: 'auto', options: [{ value: 'auto', label: t('Auto') }, { value: 'isolate', label: t('Isolate') }], instructions: t('A new stacking context: keeps blend modes and z-index inside') },
+          { handle: 'isolation', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Isolation'), placeholder: 'auto', options: [{ value: 'auto', label: t('Auto') }, { value: 'isolate', label: t('Isolate') }], instructions: t('A new stacking context: keeps blend modes and z-index inside') },
         ]}
       />
     </Section>

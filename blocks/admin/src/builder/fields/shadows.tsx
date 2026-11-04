@@ -1,8 +1,8 @@
 import { t, type FieldProps } from '@letterncms/sdk'
-import { Fields, Popover, cn } from '@letterncms/ui'
+import { Popover, cn } from '@letterncms/ui'
 import { useState } from 'react'
 import { useColorPreview } from '../color'
-import { AddButton, RemoveButton } from '../controls'
+import { AddButton, RemoveButton, PanelFields } from '../controls'
 import { splitList, splitValue } from '../css'
 import { RowLabel } from './controls'
 import { TokenButton, TokenChip, useTokenOf } from './tokens'
@@ -61,16 +61,17 @@ export function ShadowsField({ field, value, onChange, context }: FieldProps<str
 
   return (
     <div className="min-w-0 flex-1">
-      <div className="flex h-7 items-center gap-2">
+      {/* Like a value's: the token button shows while the row is pointed at, or when a token is chosen. */}
+      <div className="group/value flex h-7 items-center gap-2">
         <RowLabel field={field} />
-        <span className="min-w-0 flex-1 truncate text-2xs text-faint">{!chosen && !layers.length ? t('None') : ''}</span>
-        {group && <span className="group/value flex"><TokenButton group={group} value={value} onPick={onChange} active={!!chosen} className="!opacity-100" /></span>}
+        <span className="min-w-0 flex-1 truncate text-xs text-faint">{!chosen && !layers.length ? t('None') : ''}</span>
+        {group && <TokenButton group={group} value={value} onPick={onChange} active={!!chosen} className="size-6" />}
         {!chosen && <AddButton label={text ? t('Add Text Shadow') : t('Add Shadow')} onClick={add} />}
       </div>
       {chosen && (
         <div className="flex h-7 items-center gap-2 pl-[88px]">
           <span className="size-4 shrink-0 rounded-[3px] border border-border bg-bg" style={{ boxShadow: preview(String(chosen.token.value)) }} />
-          <TokenChip token={chosen.token} className="text-2xs" />
+          <TokenChip token={chosen.token} className="text-xs" />
           <span className="flex-1" />
           <RemoveButton label={t('Remove Shadow')} onClick={() => onChange(null)} />
         </div>
@@ -83,7 +84,7 @@ export function ShadowsField({ field, value, onChange, context }: FieldProps<str
             align="end"
             className="w-64 !p-2"
             trigger={
-              <button type="button" className={cn('flex h-6 min-w-0 flex-1 items-center gap-1.5 rounded-xs px-1 text-left text-2xs hover:bg-hover', editing === i && 'bg-active')}>
+              <button type="button" className={cn('flex h-7 min-w-0 flex-1 items-center gap-1.5 rounded-sm px-1.5 text-left text-xs hover:bg-hover', editing === i && 'bg-active')}>
                 {text ? (
                   <span className="grid size-4 shrink-0 place-items-center text-[11px] font-semibold text-text" style={{ textShadow: preview(formatShadows([layer], true) ?? '') }}>A</span>
                 ) : (
@@ -92,16 +93,15 @@ export function ShadowsField({ field, value, onChange, context }: FieldProps<str
                 <span className="min-w-0 flex-1 truncate font-mono tabular-nums text-muted">
                   {[layer.x, layer.y, layer.blur, ...(text ? [] : [layer.spread])].map(short).join(' ')}
                 </span>
-                {layer.inset && <span className="rounded-[3px] bg-sunken px-1 text-[10px] text-muted">{t('Inside')}</span>}
+                {layer.inset && <span className="rounded-[3px] bg-sunken px-1 text-2xs text-muted">{t('Inside')}</span>}
               </button>
             }
           >
             <p className="m-0 mb-2 text-xs font-semibold text-ink">{text ? t('Text Shadow') : t('Shadow')}</p>
-            <Fields
-              layout="inline"
+            <PanelFields
               context={context}
               fields={[
-                !text && { handle: 'inset', type: 'select', display: 'segmented', block: true, size: 'xs', required: true, label: t('Type'), options: [{ value: 'outside', label: t('Outside') }, { value: 'inside', label: t('Inside') }] },
+                !text && { handle: 'inset', type: 'select', display: 'segmented', block: true, size: 'sm', required: true, label: t('Type'), options: [{ value: 'outside', label: t('Outside') }, { value: 'inside', label: t('Inside') }] },
                 { handle: 'x', type: 'text', component: 'blocks-value', label: t('X Offset'), prefix: 'X', placeholder: '0' },
                 { handle: 'y', type: 'text', component: 'blocks-value', label: t('Y Offset'), prefix: 'Y', placeholder: '0' },
                 { handle: 'blur', type: 'text', component: 'blocks-value', label: t('Blur'), min: 0, prefixIcon: 'b-drop', placeholder: '0' },

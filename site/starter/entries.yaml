@@ -25,7 +25,7 @@ entries:
           ::::: column
           ### Shape the design
 
-          Open Design System in the admin’s Settings to change colors, fonts and spacing. Every page follows.
+          Open Design System in the admin’s sidebar to change colors, fonts and spacing. Every page follows.
           :::::
           ::::: column
           ### Model your content
@@ -139,6 +139,13 @@ entries:
           ```
 menus:
   main:
+    -
+      page: about
+    -
+      page: blog
+  footer:
+    -
+      page: home
     -
       page: about
     -

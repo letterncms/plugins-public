@@ -2,6 +2,45 @@
 
 ## Unreleased
 
+### Added
+
+- A plugin can name its own block category (`BlockRegistry::category()`). Categories without a name show their handle in title case, after the built-in ones.
+
+### Changed
+
+- Needs the CMS 0.4 or later.
+- Templates and Components are in the sidebar's Design section, after the Design System.
+- **Desktop**, **Tablet** and **Phone** are in the editor's top bar, with or without a selected block, instead of the block inspector's header. Desktop always shows the desktop layout: when the window has less room, the page is scaled down rather than squeezed into its tablet or phone layout. On a phone, the editor shows the phone layout.
+- A block's inspector has one header: the way back, the block's name and its actions share a row, and the Content tab no longer repeats "Content" as a heading. A component's copy is named after its component (Header, Footer) in the Outline, the toolbar and the inspector.
+- Every control in the inspector ends at the same edge. Connecting a field to data shows beside its label when you point at the row, and switches don't offer it.
+- Every section title in the inspector works the same way: click it to fold or unfold the section, with + at the right where you can add to it. An empty one says **None** when opened. The Interact tab's "Show and States" is now "Bindings".
+- A component's **Synced**, **Category**, **Description** and **Properties** are one group of rows above **Info**, labeled like the rows around them.
+- Block descriptions in the inserter are a few plain words, and searching puts the block whose name matches first: "form" finds the Form block before the form's fields.
+- Menu items and buttons use title case ("Insert Before", "Move Up", "Add Block", "Browse All"), Delete shows the same ⌫ in its menu and its tooltip, and "Filter Empty" is "No Results".
+- The state bar only appears for tablet and phone styles, and states are named as in the menu ("Pressed", not "active").
+- A selected block shows its outline while you write in it too, 1.5px in light and dark mode; its toolbar appears with Esc. The toolbar sits above the block, or below it or at its right where it would cover a logo, a heading or other content.
+- Blocks inside a Repeat (a post card, its title) can be selected on the canvas and show their outline, the first item standing for them. Their text still comes from the data.
+- The editor keeps the inspector's place while it loads, so the canvas doesn't change width, and the insert button leaves the top bar on phones, where the canvas has its own.
+- The inspector reads as one panel: every tab has the same rows, an 88px label column, 28px controls and one section header. A value set on the block reads darker (click its label to reset it) and one that comes from a larger screen or another state carries a small dot, instead of blue and orange labels. Choices never wrap onto a second line, and states sit on one track like a segmented control.
+- The Outline names layers by what they are and hold: a box is a Section, Header, Row, Stack or Grid followed by its heading or first words, an image by its alt text. Icons are quieter, nesting is tighter and the selected layer stands out.
+- Duplicate, Make a Component and Delete are in the block's ⋯ menu, beside Rename.
+- The Dashboard widget that lists components and templates is called **Components and Templates**, no longer **Design System**. The warning on **Add Custom HTML Blocks** reads like the others.
+
+- Content tab fields follow the Design tab's rule: long choices and long labels (often in translation) sit above their control instead of being cut off.
+- Technical settings move under **Advanced** in the Content tab (formerly **Element**): the HTML tag, a button's type, a heading's anchor, and how an image loads (**Load First**, **Shown Width**, formerly **Sizes**). Their explanations are gone.
+- A button's look is called **Style** in the Content tab, as when writing. Screens have one name everywhere: Columns **Stack On** offers **Phone** and **Tablet and Phone**, and the Design tab says **Tablet and Phone** and **Back to Desktop**.
+- A label, caption or attribution is a one-line field in the Content tab instead of a rich text box with its own link button.
+- In the Design tab, **Style** (upright or italic) and **Decoration** have a row each, **Opacity** is a percentage, and the token button of **Shadows** shows on hover like every other one.
+- Units after a value (rem, px) get the room they need, so they never cover the number.
+- The Outline describes every container the same way, by a heading among its own blocks or else their first words, and shows text that comes from data by its field (a post's **Header** reads *Header Title*, apart from the site's Header).
+
+### Fixed
+
+- A color, size, duration or CSS value that CSS can't use is no longer saved: the field shows it as invalid and goes back to the last value when you leave it. Typing a second hex code into a color used to save both and break the button using it.
+- Excerpts keep words of separate paragraphs, headings and list items apart ("details that vary. Choose what…"), and end with an ellipsis character.
+- Blocks from plugins no longer come first in the inserter under their raw category handle.
+- An image without a caption is named by its alt text wherever blocks are listed.
+
 ## 0.4.0 (2026-11-02)
 
 ### Added

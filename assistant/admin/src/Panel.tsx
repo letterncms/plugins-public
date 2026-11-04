@@ -69,7 +69,7 @@ export function AssistantPanel() {
 }
 
 function Chat({ open, full }: { open: boolean; full: boolean }) {
-  const { conversation, prompt, drafts, models, focus: requestedFocus, history } = usePanel()
+  const { conversation, thread, prompt, drafts, models, focus: requestedFocus, history } = usePanel()
   const float = useFloating()
   const wide = useWide()
   const canMaximize = useSyncExternalStore((change) => {
@@ -84,6 +84,7 @@ function Chat({ open, full }: { open: boolean; full: boolean }) {
     picked: models[conversation ?? 'new'] ?? (conversation || !status.data ? undefined : preferredModel(status.data)),
     fallback: status.data?.model,
     offered: status.data?.models.map((m) => m.id),
+    thread,
   })
   useEffect(() => panel.set({ awaiting: chat.awaiting.length > 0 }), [chat.awaiting.length])
   const remove = useAction<{ deleted: boolean }, { id: string }>('assistant/conversation-delete', {
@@ -328,9 +329,9 @@ function Setup() {
       ) : (
         <p className="m-0 mt-4 text-sm text-faint">{t('Ask an administrator to add one.')}</p>
       )}
-      {/* AI is optional: everything in the CMS works without it. One click puts it out of the way; ⌘J and the command palette keep it close. */}
+      {/* One click puts it out of the top bar; ⌘J and the command palette keep it close. */}
       <p className="m-0 pt-8 text-xs text-faint">
-        {chatHidden() ? t('Chat is out of the top bar.') : t('Not using AI? {brand} works fully without it.')}{' '}
+        {chatHidden() && <>{t('Chat is out of the top bar.')}{' '}</>}
         <button type="button" className="text-muted underline decoration-border-strong underline-offset-2 hover:text-text" onClick={() => { const hide = !chatHidden(); hideChat(hide); if (hide) panel.close() }}>
           {chatHidden() ? t('Show Chat') : t('Hide Chat')}
         </button>
@@ -500,7 +501,7 @@ function ToolRow({ part }: { part: Extract<Part, { type: 'tool' }> }) {
 function Code({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="cms-caps mb-1">{label}</div>
+      <div className="cms-label mb-1">{label}</div>
       <pre className="m-0 max-h-56 overflow-auto whitespace-pre-wrap break-all font-mono text-2xs leading-relaxed text-muted">{value}</pre>
     </div>
   )

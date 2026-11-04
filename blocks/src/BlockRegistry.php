@@ -17,6 +17,9 @@ final class BlockRegistry
     /** @var array<string, BlockType> */
     private array $types = [];
 
+    /** @var array<string, string> category => English label, in the inserter's order */
+    private array $categories = [];
+
     private bool $sourcesLoaded = false;
 
     public function __construct(private readonly Cms $cms, private readonly Hooks $hooks) {}
@@ -26,6 +29,31 @@ final class BlockRegistry
         $type = $type instanceof BlockType ? $type : BlockType::make($type);
 
         return $this->types[$type->name] = $type;
+    }
+
+    /** Name a category of blocks for the inserter, in English (the admin translates it). Named ones come first, in this order. */
+    public function category(string $name, string $label): void
+    {
+        $this->categories[$name] = $label;
+    }
+
+    /**
+     * Every category a block uses, in the inserter's order: named ones first, then the
+     * rest A–Z, labelled with their handle in title case.
+     *
+     * @return list<array{name: string, label: string}>
+     */
+    public function categories(): array
+    {
+        $used = array_unique(array_map(static fn (BlockType $t) => $t->category, $this->all()));
+        $named = array_values(array_intersect(array_keys($this->categories), $used));
+        $rest = array_values(array_diff($used, $named));
+        sort($rest);
+
+        return [
+            ...array_map(fn (string $name) => ['name' => $name, 'label' => $this->categories[$name]], $named),
+            ...array_map(static fn (string $name) => ['name' => $name, 'label' => ucwords(str_replace(['-', '_'], ' ', $name))], $rest),
+        ];
     }
 
     public function get(string $name): ?BlockType

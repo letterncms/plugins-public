@@ -111,11 +111,19 @@ final class Scope
             $value === true => '1',
             $value instanceof DateTimeInterface => $value->format('F j, Y'),
             is_array($value) => implode(', ', array_map(self::text(...), array_filter($value, static fn ($v) => ! is_array($v)))),
-            $value instanceof Htmlable => trim(html_entity_decode(strip_tags($value->toHtml()), ENT_QUOTES | ENT_HTML5)),
+            $value instanceof Htmlable => self::plain($value->toHtml()),
             is_scalar($value), $value instanceof Stringable => (string) $value,
             is_object($value) && isset($value->title) => (string) $value->title,
             default => '',
         };
+    }
+
+    /** HTML as one line of text: blocks (paragraphs, headings, list items…) end in a space, so their words never run together. */
+    private static function plain(string $html): string
+    {
+        $spaced = (string) preg_replace('~(</(p|h[1-6]|li|dt|dd|div|blockquote|figcaption|pre|td|th|tr|section|article|header|footer|aside)>|<br\s*/?>|<hr\s*/?>)~i', '$1 ', $html);
+
+        return trim((string) preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($spaced), ENT_QUOTES | ENT_HTML5)));
     }
 
     /** Is a bound value "set" (for visibility and states)? */
@@ -177,7 +185,7 @@ final class Scope
     {
         return match (strtolower($name)) {
             'date' => self::date($value, $arg),
-            'excerpt' => Str::limit(self::text($value), max(10, (int) ($arg ?: 160))),
+            'excerpt' => Str::limit(self::text($value), max(10, (int) ($arg ?: 160)), '…'),
             'upper' => mb_strtoupper(self::text($value)),
             'lower' => mb_strtolower(self::text($value)),
             'default' => self::truthy($value) ? $value : (string) $arg,

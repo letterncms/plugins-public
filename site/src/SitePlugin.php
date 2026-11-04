@@ -125,9 +125,9 @@ final class SitePlugin extends Plugin
                     ['handle' => 'offset', 'type' => 'number', 'label' => 'Skip', 'min' => 0, 'max' => 200],
                     ['handle' => 'parent', 'type' => 'select', 'label' => 'Level', 'options' => ['any' => __('All'), 'top' => __('Top Level Only'), 'current' => __('Children of This Page'), 'item' => __('Children of the Outer Item')], 'default' => 'any'],
                     ['handle' => 'hasTag', 'type' => 'text', 'label' => 'Only with Tag'],
-                    ['handle' => 'where', 'type' => 'json', 'label' => 'Only Where', 'instructions' => 'A list of {field, op, value}. The value may use data: {entry.category}.'],
+                    ['handle' => 'where', 'type' => 'json', 'component' => 'blocks-conditions', 'stack' => true, 'label' => 'Only Entries Where'],
                     ['handle' => 'skipCurrent', 'type' => 'toggle', 'label' => 'Leave Out This Page'],
-                    ['handle' => 'paginate', 'type' => 'toggle', 'label' => 'Paginate', 'instructions' => 'Builds /page/2, /page/3…; bind links to pagination.prev and pagination.next.'],
+                    ['handle' => 'paginate', 'type' => 'toggle', 'label' => 'Split into Pages'],
                 ],
                 'item' => ['title' => __('Title'), 'url' => __('Link'), 'date' => __('Published'), 'updated' => __('Updated'), 'excerpt' => __('A field (any field handle)'), 'children' => __('Child Entries'), 'current' => __('Is this page'), 'active' => __('Is this page or above it')],
                 'resolve' => function (array $props, Scope $scope) use ($entry) {
@@ -276,15 +276,21 @@ final class SitePlugin extends Plugin
         return is_string($path) && parse_url($referer, PHP_URL_HOST) === $request->getHost() && str_starts_with($path, '/') && ! str_starts_with($path, '//') ? $path : '/';
     }
 
+    /** Publishing is part of what the site is: its fields are on the General settings page, after the core's. */
     private function settingsSchema(): void
     {
-        $this->cms()->settingsRegistry()->register('site', __('Site & Publishing'), [
-            ['handle' => 'static', 'type' => 'toggle', 'label' => 'Build a Static Site', 'default' => true, 'instructions' => 'Pre-renders pages to public/ so they are served without PHP. Off: pages render on request.'],
-            ['handle' => 'auto_build', 'type' => 'toggle', 'label' => 'Rebuild Automatically on Publish', 'default' => true],
-            ['handle' => 'description', 'type' => 'textarea', 'label' => 'Site Description', 'instructions' => 'Used as the default meta description.'],
-            ['handle' => 'favicon', 'type' => 'media', 'fallback' => 'url', 'label' => 'Favicon', 'max' => 1, 'instructions' => 'The icon in the browser tab. SVG or PNG, square.'],
-            ['handle' => 'search_index', 'type' => 'toggle', 'label' => 'Publish a Search Index', 'default' => true, 'instructions' => 'Writes /search.json for the Search block on a static site.'],
-        ], icon: 'rocket', description: __('Static builds, publishing and site defaults.'), package: $this->manifest->name, order: 10);
+        $this->cms()->hooks()->addFilter('settings.fields', static function (array $fields, string $namespace) {
+            if ($namespace !== 'site') {
+                return $fields;
+            }
+
+            return [...$fields,
+                ['handle' => 'favicon', 'type' => 'media', 'fallback' => 'url', 'label' => 'Favicon', 'max' => 1, 'instructions' => 'SVG or PNG, square.'],
+                ['handle' => 'static', 'section' => 'Publishing', 'type' => 'toggle', 'label' => 'Build a Static Site', 'default' => true],
+                ['handle' => 'auto_build', 'section' => 'Publishing', 'type' => 'toggle', 'label' => 'Rebuild Automatically on Publish', 'default' => true],
+                ['handle' => 'search_index', 'section' => 'Publishing', 'type' => 'toggle', 'label' => 'Publish a Search Index', 'default' => true, 'instructions' => 'For the Search block.'],
+            ];
+        });
     }
 
     private function abilities(): void
@@ -463,8 +469,8 @@ final class SitePlugin extends Plugin
             'handler' => fn (array $in) => ['url' => url('/__preview/'.strtolower($in['id']))],
         ]);
 
-        $this->cms()->permissions()->register('site.build', __('Publish the site (static build)'), __('Site'));
-        $this->cms()->permissions()->register('site.code', __('Edit Custom CSS and JavaScript'), __('Design'), __('Custom JavaScript runs on every page. Give this only to trusted people.'));
+        $this->cms()->permissions()->register('site.build', __('Publish the Site'), __('Site'));
+        $this->cms()->permissions()->register('site.code', __('Edit Custom CSS and JavaScript'), __('Design'), trusted: true);
 
         // Collections and entries choose from the site's templates.
         $this->cms()->hooks()->addFilter('fields.options.templates', fn (array $options, ?string $collection = null) => array_replace($options, $this->app->make(Templates::class)->options($collection)));
@@ -560,10 +566,9 @@ final class SitePlugin extends Plugin
     private function adminUi(): void
     {
         $admin = $this->cms()->admin();
-        $admin->section('design', __('Design'), 14, settings: true);
-        $admin->nav('design', ['label' => 'Design System', 'path' => '/design', 'icon' => 'palette', 'section' => 'design', 'order' => 90, 'permission' => 'settings.manage']);
+        $admin->nav('design', ['label' => 'Design System', 'path' => '/design', 'icon' => 'palette', 'section' => 'design', 'order' => 5, 'permission' => 'settings.manage']);
         $admin->widget('site-status', ['label' => 'Site', 'description' => __('Whether the live site is up to date, with a button to publish it.'), 'icon' => 'rocket', 'column' => 'side', 'enabled' => true, 'order' => 10]);
-        $admin->command('publish-site', ['label' => 'Publish the Whole Site', 'icon' => 'rocket', 'ability' => 'site/build', 'permission' => 'site.build', 'keywords' => ['build', 'deploy', 'static']]);
+        $admin->command('publish-site', ['label' => 'Publish Site', 'icon' => 'rocket', 'ability' => 'site/build', 'permission' => 'site.build', 'keywords' => ['build', 'deploy', 'static']]);
 
         $this->adminModule();
     }

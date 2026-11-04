@@ -1,6 +1,6 @@
-import { can, invalidate, navigate, run, t, useAbility, type RecordTimestamps } from '@letterncms/sdk'
-import { Badge, Button, DataView, Dialog, EmptyState, Fields, Icon, IconButton, Menu, Page, toast } from '@letterncms/ui'
-import { useState } from 'react'
+import { can, invalidate, navigate, run, setQuery, t, useAbility, useLocation, type RecordTimestamps } from '@letterncms/sdk'
+import { Badge, Button, DataView, Dialog, EmptyState, Fields, Icon, IconButton, Menu, Page, ScreenTabs, StatusDot, toast, useScreenTabs } from '@letterncms/ui'
+import { useEffect, useState } from 'react'
 
 interface FormRow extends RecordTimestamps {
   handle: string
@@ -13,19 +13,24 @@ interface FormRow extends RecordTimestamps {
 
 export default function FormsScreen() {
   const list = useAbility<FormRow[]>('forms/list')
-  const [open, setOpen] = useState(false)
+  // `?new=1` opens the new-form dialog: the way in from a Form block with no forms to show.
+  const { query } = useLocation()
+  const [open, setOpen] = useState(() => query.new === '1' && can('forms.manage'))
+  useEffect(() => { if (query.new) setQuery({ new: null }) }, [query.new])
+  const [tab, setTab] = useScreenTabs(['forms'])
 
   return (
     <Page
       width="wide"
       crumbs={[{ label: t('Forms'), icon: 'form' }]}
-      actions={can('forms.manage') && <Button variant="primary" icon="plus" onClick={() => setOpen(true)}>{t('New Form')}</Button>}
+      actions={tab === 'forms' && can('forms.manage') && <Button variant="primary" icon="plus" onClick={() => setOpen(true)}>{t('New Form')}</Button>}
     >
+      <ScreenTabs value={tab} onChange={setTab} tabs={[{ value: 'forms', label: t('Forms') }]}>
       <DataView id="forms" label={t('Forms')} items={list.data ?? []} rowKey={(f) => f.handle} rowHref={(f) => `/forms/${f.handle}`}
         loading={list.isLoading} error={list.isError} onRetry={() => void list.refetch()} searchText={(f) => `${f.title} ${f.handle}`}
         columns={[
           { id: 'title', label: t('Name'), value: (f) => f.title, render: (f) => <span className="flex items-center gap-2"><Icon name="form" size={16} className="shrink-0 text-muted" /><span className="truncate">{f.title}</span></span> },
-          { id: 'status', label: t('Status'), width: '120px', value: (f) => Number(f.enabled), render: (f) => <Badge tone={f.enabled ? 'success' : 'neutral'}>{f.enabled ? t('On') : t('Off')}</Badge> },
+          { id: 'status', label: t('Status'), width: '120px', value: (f) => Number(f.enabled), render: (f) => <StatusDot status={f.enabled ? 'success' : 'neutral'} label={f.enabled ? t('On') : t('Off')} /> },
           { id: 'fields', label: t('Fields'), width: '90px', align: 'end', value: (f) => f.fields, render: (f) => f.fields },
           { id: 'total', label: t('Submissions'), width: '120px', align: 'end', value: (f) => f.total, render: (f) => f.total },
           { id: 'new', label: t('Unread'), width: '90px', align: 'end', value: (f) => f.new, render: (f) => f.new > 0 ? <Badge tone="info">{f.new}</Badge> : '—' },
@@ -35,8 +40,9 @@ export default function FormsScreen() {
           { label: t('Submissions'), icon: 'inbox', onSelect: () => navigate(`/forms/${f.handle}?tab=submissions`) },
           can('forms.manage') && { label: t('Settings'), icon: 'settings', onSelect: () => navigate(`/forms/${f.handle}?tab=settings`) },
         ]} />}
-        empty={<EmptyState icon="form" title={t('No forms yet')} description={t('Build one with the same editor you write pages with.')} action={can('forms.manage') && <Button variant="primary" icon="plus" onClick={() => setOpen(true)}>{t('New Form')}</Button>} />}
+        empty={<EmptyState icon="form" title={t('No forms yet')} description={t('Build one with the same editor you write pages with.')} />}
       />
+      </ScreenTabs>
       {open && <NewForm onClose={() => setOpen(false)} />}
     </Page>
   )

@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.4 or later.
+- The Assistant's settings are under Plugins in Settings, and the **Chat** button lines up with the other buttons in the bar.
+- The assistant's settings say less.
+- The Ask widget says it asks from the Dashboard, and the permission is **Use the AI Assistant**.
+- **Chat** stays in its place in the top bar while the chat is docked, shown pressed, and closes it again.
+- The chat's setup says less: **Hide Chat** is there on its own.
+
+### Fixed
+
+- **New Chat** after a first message that failed starts a fresh chat instead of keeping the failed one.
+- A chat opened by its address that is older than the chats loaded so far is listed at the top of the chats, as the one on view.
+
 ## 0.4.0 (2026-11-02)
 
 ### Changed

@@ -25,8 +25,8 @@ export function GroupField({ field, value, onChange, disabled, context }: FieldP
         ))}
       </div>
       {link && (
-        <button type="button" onClick={() => setSplit(!split)} className="grid size-6 shrink-0 place-items-center rounded-xs text-muted hover:bg-hover hover:text-text" title={split ? (field.joinLabel as string) ?? t('The same for all') : (field.splitLabel as string) ?? t('Each One')}>
-          <Icon name={split ? 'b-square' : 'b-corners-out'} size={13} />
+        <button type="button" onClick={() => setSplit(!split)} className="grid size-7 shrink-0 place-items-center rounded-sm text-muted hover:bg-hover hover:text-ink" title={split ? (field.joinLabel as string) ?? t('The same for all') : (field.splitLabel as string) ?? t('Each One')}>
+          <Icon name={split ? 'b-square' : 'b-corners-out'} size={14} />
         </button>
       )}
     </Control>
@@ -53,7 +53,8 @@ interface PairKey {
 /**
  * `blocks-pairs` — name → value pairs (CSS properties, variables, attributes, states), each
  * renamed, edited or removed in place; the value is the record, in order. `key` configures
- * the name, `join` the word between, `item` the value's field (`items` per name), and
+ * the name, `join` the word between, `item` the value's field (`items` per name; `property:
+ * true` checks a value against the CSS property its name is), and
  * `labels` shows fixed names instead of editing them.
  */
 export function PairsField({ field, value, onChange, disabled, context }: FieldProps<Record<string, unknown> | null>) {
@@ -74,20 +75,20 @@ export function PairsField({ field, value, onChange, disabled, context }: FieldP
     <div className="min-w-0 flex-1 space-y-1">
       {Object.entries(record).map(([name, v]) => (
         <div key={name} className="flex items-center gap-1">
-          {key.prefix && <span className="text-2xs text-faint">{key.prefix}</span>}
+          {key.prefix && <span className="text-xs text-faint">{key.prefix}</span>}
           {labels ? (
-            <span className="mr-1 w-20 shrink-0 truncate text-2xs text-text">{labels[name] ?? name}</span>
+            <span className="mr-1 w-[88px] shrink-0 truncate text-xs text-text">{labels[name] ?? name}</span>
           ) : (
             <SubField
-              field={{ handle: `${field.handle}-${name}`, type: key.options ? 'select' : 'text', size: 'xs', commit: 'blur', label: t('Name'), options: key.options, list: key.list, placeholder: key.placeholder, mono: true, className: key.className ?? '!w-[42%] !flex-none' }}
+              field={{ handle: `${field.handle}-${name}`, type: key.options ? 'select' : 'text', size: 'sm', commit: 'blur', label: t('Name'), options: key.options, list: key.list, placeholder: key.placeholder, mono: true, className: key.className ?? '!w-[42%] !flex-none' }}
               value={name}
               onChange={(next) => rename(name, next)}
               disabled={disabled}
               context={context}
             />
           )}
-          {typeof field.join === 'string' && <span className="text-2xs text-faint">{field.join}</span>}
-          <SubField field={{ ...(items?.[name] ?? (field.item as FieldDef)), handle: `${field.handle}-${name}-value` }} value={v ?? null} onChange={(next) => onChange({ ...record, [name]: next })} disabled={disabled} context={context} />
+          {typeof field.join === 'string' && <span className="text-xs text-faint">{field.join}</span>}
+          <SubField field={{ ...(items?.[name] ?? (field.item as FieldDef)), handle: `${field.handle}-${name}-value`, ...((items?.[name] ?? (field.item as FieldDef)).property === true ? { property: name } : {}) }} value={v ?? null} onChange={(next) => onChange({ ...record, [name]: next })} disabled={disabled} context={context} />
           <RemoveButton onClick={() => onChange(Object.fromEntries(Object.entries(record).filter(([k]) => k !== name)))} />
         </div>
       ))}

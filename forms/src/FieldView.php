@@ -12,7 +12,7 @@ final class FieldView
         $handle = (string) ($d['block']['form'] ?? '');
 
         if ($handle === '') {
-            return $d['editor'] ? '<div '.$d['attrs'].'><div class="cms-placeholder">'.e(__('Choose a form')).'</div></div>' : '';
+            return $d['editor'] ? '<div '.$d['attrs'].'><div class="cms-placeholder">'.e(__('Choose a form to show here.')).'</div></div>' : '';
         }
 
         return '<div '.$d['attrs'].'>'.app(FormRenderer::class)->render($handle).'</div>';
@@ -34,7 +34,7 @@ final class FieldView
         if ($kind === 'hidden') {
             // Invisible to visitors; the canvas shows where it sits.
             return $d['editor']
-                ? '<div '.$d['attrs'].'><div class="cms-placeholder">'.e(__('Hidden value')).' · '.$e($name).'</div></div>'
+                ? '<div '.$d['attrs'].'><div class="cms-placeholder">'.e(__('Hidden Value')).' · '.$e($name).'</div></div>'
                 : '<input type="hidden" name="'.$e($name).'" value="'.$e($b['value'] ?? '').'" '.$d['attrs'].'>';
         }
 

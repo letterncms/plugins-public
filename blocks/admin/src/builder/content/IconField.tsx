@@ -42,10 +42,10 @@ export function IconField({ field, value, onChange, disabled }: FieldProps<strin
             id={fieldControlId(field)}
             disabled={disabled}
             aria-label={field.label}
-            className={cn('cms-focus-ring flex h-6 w-full min-w-0 items-center gap-1.5 rounded-sm border border-border-strong bg-bg px-1.5 text-left text-2xs text-text transition-[border-color] duration-120 hover:border-faint disabled:opacity-50', name && 'pr-6')}
+            className={cn('cms-input flex h-7 w-full min-w-0 items-center gap-2 rounded-sm px-2 text-left text-sm disabled:opacity-50', name && 'pr-6')}
           >
-            {name && current ? <span className="grid size-3.5 shrink-0 place-items-center text-text [&_svg]:size-3.5" dangerouslySetInnerHTML={{ __html: current.svg }} /> : <Icon name="star" size={12} className="shrink-0 text-faint" />}
-            <span className={cn('min-w-0 flex-1 truncate', !name && 'text-faint')}>{name ? base : (field.placeholder as string) || t('Choose an Icon')}</span>
+            {name && current ? <span className="grid size-3.5 shrink-0 place-items-center text-text [&_svg]:size-3.5" dangerouslySetInnerHTML={{ __html: current.svg }} /> : <Icon name="star" size={14} className="shrink-0 text-faint" />}
+            <span className={cn('min-w-0 flex-1 truncate', !name && 'text-ghost')}>{name ? base : (field.placeholder as string) || t('Choose an Icon')}</span>
             {name && weight !== 'regular' && <span className="shrink-0 text-faint">{weightLabel(weight)}</span>}
           </button>
         }
@@ -84,7 +84,7 @@ export function IconField({ field, value, onChange, disabled }: FieldProps<strin
                 pick(icon.name)
                 setOpen(false)
               }}
-              className={cn('grid aspect-square place-items-center rounded-xs text-text hover:bg-hover [&_svg]:size-4', icon.name === base && 'bg-focus/12 text-focus')}
+              className={cn('grid aspect-square place-items-center rounded-xs text-text hover:bg-hover [&_svg]:size-4', icon.name === base && 'bg-focus-soft text-focus')}
               dangerouslySetInnerHTML={{ __html: icon.svg }}
             />
           ))}
@@ -92,8 +92,8 @@ export function IconField({ field, value, onChange, disabled }: FieldProps<strin
         </div>
       </Popover>
       {name && !disabled && (
-        <button type="button" onClick={() => onChange(null)} aria-label={t('Remove Icon')} className="absolute right-0.5 top-1/2 grid size-5 -translate-y-1/2 place-items-center rounded-xs text-faint opacity-0 hover:bg-hover hover:text-text focus-visible:opacity-100 group-hover/icon:opacity-100">
-          <Icon name="close" size={10} />
+        <button type="button" onClick={() => onChange(null)} aria-label={t('Remove Icon')} className="absolute right-1 top-1/2 grid size-5 -translate-y-1/2 place-items-center rounded-xs text-faint opacity-0 hover:bg-hover hover:text-text focus-visible:opacity-100 group-hover/icon:opacity-100">
+          <Icon name="close" size={12} />
         </button>
       )}
     </div>

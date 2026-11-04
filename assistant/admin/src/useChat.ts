@@ -38,10 +38,12 @@ interface Models {
   fallback?: string
   /** The models on offer; a chat saved with another one falls back. */
   offered?: string[]
+  /** Changes for a fresh chat: the thread starts over, even with no conversation saved before or after. */
+  thread?: number
 }
 
 /** One conversation with the assistant: history, streaming state and actions. Turns run on `model`. */
-export function useChat(conversation: string | null, { picked, fallback, offered }: Models = {}) {
+export function useChat(conversation: string | null, { picked, fallback, offered, thread = 0 }: Models = {}) {
   const [items, setItems] = useState<Item[]>([])
   const [saved, setSaved] = useState<string | null>(null)
   const model = picked ?? (saved && (!offered || offered.includes(saved)) ? saved : fallback)
@@ -52,12 +54,14 @@ export function useChat(conversation: string | null, { picked, fallback, offered
   const [error, setError] = useState<string | null>(null)
   const abort = useRef<AbortController | null>(null)
   const current = useRef(conversation)
+  const currentThread = useRef(thread)
   const turnModel = useRef(model)
   turnModel.current = model
 
   // Load a saved chat (unless it is the one we are streaming into).
   useEffect(() => {
-    if (conversation === current.current && (items.length || busy)) return
+    if (conversation === current.current && thread === currentThread.current && (items.length || busy)) return
+    currentThread.current = thread
     abort.current?.abort()
     abort.current = null
     setBusy(false)
@@ -92,7 +96,7 @@ export function useChat(conversation: string | null, { picked, fallback, offered
       canceled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversation])
+  }, [conversation, thread])
 
   useEffect(() => () => abort.current?.abort(), [])
 

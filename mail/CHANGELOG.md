@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Changed
+
+- Needs the CMS 0.4 or later.
+- The plugin is called Email, like its settings page.
+- The Email settings page is described in one line.
+- **Send Test Email** is a button on the Email settings page, as well as in the command palette.
+
 ## 0.1.1 (2026-11-02)
 
 ### Fixed

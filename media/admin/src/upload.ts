@@ -49,5 +49,6 @@ export function upload(file: File, folder = '', onProgress?: (fraction: number) 
 /** A file size in the admin's language (“12 kB”, “1,4 Mo”). */
 export function formatBytes(bytes: number): string {
   const [unit, value, digits] = bytes < 1024 ? ['byte', bytes, 0] : bytes < 1024 ** 2 ? ['kilobyte', bytes / 1024, 0] : ['megabyte', bytes / 1024 ** 2, 1]
-  return new Intl.NumberFormat(locale(), { style: 'unit', unit: unit as string, unitDisplay: 'short', maximumFractionDigits: digits as number }).format(value as number)
+  // Bytes in short form read “109 byte”; narrow is “109B”, like kB and MB.
+  return new Intl.NumberFormat(locale(), { style: 'unit', unit: unit as string, unitDisplay: unit === 'byte' ? 'narrow' : 'short', maximumFractionDigits: digits as number }).format(value as number)
 }

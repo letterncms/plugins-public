@@ -30,11 +30,11 @@ export function EaseField({ field, value, onChange, disabled }: FieldProps<strin
           id={fieldControlId(field)}
           disabled={disabled}
           aria-label={field.label}
-          className="cms-focus-ring flex h-6 w-full min-w-0 items-center gap-1.5 rounded-sm border border-border-strong bg-bg pl-0.5 pr-1.5 text-left text-2xs text-text transition-[border-color] duration-120 hover:border-faint disabled:opacity-50"
+          className="cms-input flex h-7 w-full min-w-0 items-center gap-1.5 rounded-sm pl-0.5 pr-2 text-left text-xs disabled:opacity-50"
         >
           <EaseCurve value={current} size={20} className="shrink-0 rounded-[3px] bg-sunken text-focus" />
           <span className={cn('min-w-0 flex-1 truncate', !value && 'text-muted')}>{label}</span>
-          <Icon name="b-caret-down" size={10} className="shrink-0 text-faint" />
+          <Icon name="b-caret-down" size={12} className="shrink-0 text-faint" />
         </button>
       }
     >
@@ -47,7 +47,7 @@ export function EaseField({ field, value, onChange, disabled }: FieldProps<strin
               onChange(e.value)
               setOpen(false)
             }}
-            className={cn('flex flex-col items-center gap-1 rounded-xs px-1 pb-1 pt-1.5 text-[10px] leading-tight hover:bg-hover', current === e.value ? 'bg-focus/12 text-focus' : 'text-muted')}
+            className={cn('flex flex-col items-center gap-1 rounded-xs px-1 pb-1 pt-1.5 text-2xs leading-tight hover:bg-hover', current === e.value ? 'bg-focus/12 text-focus' : 'text-muted')}
           >
             <EaseCurve value={e.value} size={36} className={cn('rounded-[3px]', current === e.value ? 'text-focus' : 'text-text')} />
             <span className="w-full truncate text-center">{e.label}</span>
@@ -56,8 +56,8 @@ export function EaseField({ field, value, onChange, disabled }: FieldProps<strin
       </div>
       <div className="border-t border-border p-2">
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-2xs font-medium text-muted">{t('Custom Curve')}</span>
-          <span className="font-mono text-[10px] text-faint">{format(bezierOf(current)).replace('cubic-bezier', '')}</span>
+          <span className="text-xs font-medium text-muted">{t('Custom Curve')}</span>
+          <span className="font-mono text-2xs text-faint">{format(bezierOf(current)).replace('cubic-bezier', '')}</span>
         </div>
         <CurveEditor value={current} onChange={onChange} />
       </div>

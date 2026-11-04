@@ -1,5 +1,5 @@
 import { events, plural, t, useScreenContext, type EntryEditorProps } from '@letterncms/sdk'
-import { Button, IconButton, InspectorPanel, Popover, QueryError, ScreenSidebar, Spinner, fieldControlId, useScreenSidebar, useWideInspector } from '@letterncms/ui'
+import { Button, IconButton, InspectorPanel, Menu, Popover, QueryError, ScreenSidebar, Spinner, fieldControlId, useScreenSidebar, useWideInspector } from '@letterncms/ui'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { EditorProvider, useCatalog, useEditorContext, type DocRef } from './core/context'
@@ -28,7 +28,11 @@ export function BlocksWorkspace(props: EntryEditorProps) {
     collections: props.values.collections,
     props: props.values.props,
   }
-  if (isLoading) return <div className="grid h-full place-items-center"><Spinner /></div>
+  // The inspector holds its place while the catalog loads: the canvas never changes width when it arrives.
+  if (isLoading) return <div className="flex h-full min-h-0">
+    <div className="grid min-w-0 flex-1 place-items-center"><Spinner /></div>
+    <InspectorPanel open={props.sidebarOpen} onOpenChange={props.setSidebarOpen} title={props.collection.singular}>{props.sidebar}</InspectorPanel>
+  </div>
   if (!catalog) return <QueryError message={error?.message} onRetry={retry} />
   return <EditorProvider value={{ store, catalog, types, entryId: props.entry?.id ?? null, fieldHandle: field, allowed: props.bodyField.allowed as string[] ?? [], getValues: () => values.current, title: props.title, doc, readOnly: !props.editable }}>
     {error && <QueryError message={error.message} onRetry={retry} compact />}
@@ -36,6 +40,27 @@ export function BlocksWorkspace(props: EntryEditorProps) {
   </EditorProvider>
 }
 
+
+/** The screens a page is previewed and styled for: one vocabulary everywhere (Desktop, Tablet, Phone). */
+export const screens = () => [
+  { value: 'base', label: t('Desktop'), icon: 'b-monitor' },
+  { value: 'tablet', label: t('Tablet'), icon: 'b-device-tablet' },
+  { value: 'mobile', label: t('Phone'), icon: 'b-device-mobile' },
+] as const
+
+/**
+ * Which screen the canvas shows and the Design tab styles, in the top bar: there with or
+ * without a selected block. One button that shows the screen, its menu the others — the
+ * bar's middle belongs to the title. A phone-sized window has no room for it: it edits the
+ * phone layout, and the Design tab offers the way back to desktop.
+ */
+function Devices() {
+  const { store } = useEditorContext()
+  const breakpoint = useEditor(store, (state) => state.breakpoint)
+  const all = screens()
+  const current = all.find((item) => item.value === breakpoint) ?? all[0]
+  return <Menu align="start" trigger={<IconButton icon={current.icon} label={`${t('Screen')}: ${current.label}`} active={breakpoint !== 'base'} className="max-sm:hidden" />} items={all.map((item) => ({ label: item.label, icon: item.icon, checked: item.value === breakpoint, onSelect: () => store.setBreakpoint(item.value) }))} />
+}
 
 function Workspace({ props }: { props: EntryEditorProps }) {
   const { store, types, allowed, readOnly } = useEditorContext()
@@ -50,6 +75,8 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   const [query, setQuery] = useState('')
   const wide = useWideInspector()
   const selection = useEditor(store, selectionOf)
+  // A phone-sized window edits the page as phones show it: a desktop page would be too small to write in.
+  useEffect(() => { if (window.matchMedia('(max-width: 639px)').matches) store.setBreakpoint('mobile') }, [store])
   useScreenContext({
     items: selection.flatMap((id) => {
       const node = tree.find(store.get().nodes, id)
@@ -84,13 +111,14 @@ function Workspace({ props }: { props: EntryEditorProps }) {
   }
   return <div className="flex h-full min-h-0 flex-col" data-block-workspace>
     {props.toolbar && createPortal(<>
-      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" label={t('Insert block')} />} className="!p-0">
+      {!readOnly && <Popover open={insert} onOpenChange={setInsert} align="start" trigger={<IconButton icon="plus" label={t('Insert block')} className="max-sm:hidden" />} className="!p-0">
         <Inserter types={[...types.values()]} query={query} onQuery={setQuery} onChoose={choose} onClose={() => setInsert(false)} allowed={(type) => !!destination(type.name)} />
       </Popover>}
       <IconButton icon="undo" label={t('Undo')} disabled={!undo} onClick={store.undo} className="max-sm:hidden" />
       <IconButton icon="redo" label={t('Redo')} disabled={!redo} onClick={store.redo} className="max-sm:hidden" />
+      <Devices />
     </>, props.toolbar)}
-    <ScreenSidebar title={t('Outline')} backTo={props.listPath} backLabel={props.collection.title}><Layers /></ScreenSidebar>
+    <ScreenSidebar title={t('Outline')} backTo={props.listPath} backLabel={props.listLabel ?? props.collection.title}><Layers /></ScreenSidebar>
     <div className="flex min-h-0 flex-1">
       <main id={fieldControlId(props.bodyField)} tabIndex={-1} aria-label={props.bodyField.label} aria-describedby={props.errors[props.bodyField.handle] ? `${fieldControlId(props.bodyField)}-error` : undefined} className="flex min-w-0 flex-1 flex-col outline-none" data-editor-document>
         <LiveEditor collection={props.collection.handle} entryId={props.entry?.id} content={props.content} onTitleChange={!['templates', 'components'].includes(props.collection.handle) ? props.setTitle : undefined} onInspect={inspect} />
@@ -98,10 +126,14 @@ function Workspace({ props }: { props: EntryEditorProps }) {
         <div className="max-h-[30vh] shrink-0 overflow-y-auto">{props.footer}</div>
       </main>
       <InspectorPanel open={props.sidebarOpen} onOpenChange={props.setSidebarOpen} title={inspecting && selected ? types.get(selected.type)?.title ?? t('Block') : props.collection.singular}>
-        {inspecting && selected ? <>
-          <div className="flex h-10 shrink-0 items-center gap-2 border-b border-border px-2"><Button variant="ghost" size="xs" icon="arrow-left" onClick={entryDetails}>{props.collection.singular}</Button><span className="min-w-0 flex-1" /><IconButton icon="close" label={t('Close Panel')} size="xs" onClick={() => props.setSidebarOpen(false)} /></div>
-          {count > 1 ? <div className="space-y-3 p-4"><p className="m-0 text-sm">{plural(count, '{count} block selected', '{count} blocks selected')}</p>{!readOnly && <Button variant="ghost" icon="trash" onClick={() => store.removeSelection()}>{t('Delete')}</Button>}</div> : <Inspector node={selected} />}
-        </> : props.sidebar}
+        {inspecting && selected ? count > 1 ? <>
+          <div className="flex h-12 shrink-0 items-center gap-1 border-b border-border pl-2 pr-3">
+            <IconButton icon="arrow-left" label={t('Back to {name}', { name: props.collection.singular })} size="sm" onClick={entryDetails} />
+            <span className="min-w-0 flex-1 truncate pl-1 text-sm font-semibold text-ink">{plural(count, '{count} block selected', '{count} blocks selected')}</span>
+            <IconButton icon="close" label={t('Close Panel')} size="sm" onClick={() => props.setSidebarOpen(false)} />
+          </div>
+          {!readOnly && <div className="px-2 py-3"><Button variant="ghost" size="sm" icon="trash" className="text-danger" onClick={() => store.removeSelection()}>{t('Delete')}</Button></div>}
+        </> : <Inspector node={selected} onBack={entryDetails} backLabel={props.collection.singular} onClose={() => props.setSidebarOpen(false)} /> : props.sidebar}
       </InspectorPanel>
     </div>
   </div>

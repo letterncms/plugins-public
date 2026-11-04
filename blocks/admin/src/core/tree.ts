@@ -127,7 +127,8 @@ export function isEmptyHtml(html: unknown): boolean {
 /** Plain text of a node for labels. */
 export function summary(node: BlockNode, max = 60): string {
   const p = node.props ?? {}
-  const raw = p.text ?? p.label ?? p.title ?? p.question ?? (Array.isArray(p.items) ? p.items[0] : '') ?? p.alt ?? p.url ?? p.collection ?? p.ref ?? ''
-  const text = String(typeof raw === 'string' ? raw : '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+  // The first of these that says something: an image without a caption is named by its alt text.
+  const clean = (raw: unknown) => (typeof raw === 'string' ? raw : '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim()
+  const text = [p.text, p.label, p.title, p.question, Array.isArray(p.items) ? p.items[0] : '', p.alt, p.url, p.collection, p.ref].map(clean).find(Boolean) ?? ''
   return text.length > max ? text.slice(0, max - 1) + '…' : text
 }

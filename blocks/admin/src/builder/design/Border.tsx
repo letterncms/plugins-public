@@ -68,7 +68,7 @@ export function Border({ s }: { s: StyleApi }) {
             display: 'segmented',
             block: true,
             required: true,
-            size: 'xs',
+            size: 'sm',
             label: t('Sides'),
             keys: [],
             get: () => edge,
@@ -86,7 +86,7 @@ export function Border({ s }: { s: StyleApi }) {
             set: (v) => setLine(changed({ width: line.width, style: line.style }, v)),
             fields: [
               { handle: 'width', type: 'text', component: 'blocks-value', label: t('Width'), placeholder: '0', min: 0, prefixIcon: 'b-square' },
-              { handle: 'style', type: 'select', size: 'xs', label: t('Style'), options: styleOptions(), placeholder: t('Style') },
+              { handle: 'style', type: 'select', size: 'sm', label: t('Style'), options: styleOptions(), placeholder: t('Style') },
             ],
           },
           {
@@ -135,7 +135,7 @@ export function Border({ s }: { s: StyleApi }) {
               set: (v) => s.set('outline', formatLine({ ...outline, ...changed({ width: outline.width, style: outline.style }, v) })),
               fields: [
                 { handle: 'width', type: 'text', component: 'blocks-value', label: t('Width'), placeholder: '0', min: 0, prefixIcon: 'b-selection' },
-                { handle: 'style', type: 'select', size: 'xs', label: t('Style'), options: styleOptions(), placeholder: t('Style') },
+                { handle: 'style', type: 'select', size: 'sm', label: t('Style'), options: styleOptions(), placeholder: t('Style') },
               ],
             },
             outline.width || outline.style

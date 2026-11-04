@@ -69,7 +69,7 @@ export function QuickInserter({ types, allowed, onChoose, onClose }: { types: Bl
       {!items.length && <div className="col-span-3 px-3 py-5 text-center text-xs text-faint">{t('No matching blocks')}</div>}
     </div>
     <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => setBrowsing(true)} className="cms-focus-ring flex h-9 shrink-0 items-center justify-center gap-1.5 border-t border-border text-sm font-medium text-text hover:bg-hover">
-      {t('Browse all')}<Icon name="arrow-right" size={14} className="text-muted" />
+      {t('Browse All')}<Icon name="arrow-right" size={14} className="text-muted" />
     </button>
   </div>
 }

@@ -23,13 +23,13 @@ export function Layout({ s }: { s: StyleApi }) {
       <StyleFields
         s={s}
         fields={[
-          { handle: 'display', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Display'), options: DISPLAY() },
+          { handle: 'display', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Display'), options: DISPLAY() },
           flex && {
             handle: 'flexDirection',
             type: 'select',
             display: 'segmented',
             block: true,
-            size: 'xs',
+            size: 'sm',
             label: t('Direction'),
             get: () => s.value('flexDirection') ?? 'row',
             options: [
@@ -41,7 +41,7 @@ export function Layout({ s }: { s: StyleApi }) {
           },
           flex && { handle: 'align', type: 'json', component: 'blocks-align', label: t('Align'), row, keys: ['alignItems', 'justifyContent'], get: () => ({ justifyContent: s.value('justifyContent'), alignItems: s.value('alignItems') }) },
           flex && { handle: 'gap', type: 'text', component: 'blocks-value', label: t('Gap'), group: 'space', prefixIcon: row ? 'b-split-horizontal' : 'b-split-vertical', placeholder: '0', min: 0 },
-          flex && { handle: 'flexWrap', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Wrap'), options: [{ value: 'nowrap', label: t('One Line') }, { value: 'wrap', label: t('Wrap') }], get: () => s.value('flexWrap') ?? 'nowrap', set: (v) => s.set('flexWrap', v === 'wrap' ? 'wrap' : null) },
+          flex && { handle: 'flexWrap', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Wrap'), options: [{ value: 'nowrap', label: t('One Line') }, { value: 'wrap', label: t('Wrap') }], get: () => s.value('flexWrap') ?? 'nowrap', set: (v) => s.set('flexWrap', v === 'wrap' ? 'wrap' : null) },
           grid && { handle: 'gridTemplateColumns', type: 'text', component: 'blocks-value', label: t('Columns'), placeholder: t('3 or 1fr 2fr'), unit: '', min: 1, title: t('A number of equal columns, or any grid template (1fr 2fr, repeat(auto-fill, minmax(16rem, 1fr)))') },
           grid && { handle: 'gridTemplateRows', type: 'text', component: 'blocks-value', label: t('Rows'), placeholder: 'auto', unit: '' },
           grid && {
@@ -62,13 +62,13 @@ export function Layout({ s }: { s: StyleApi }) {
             type: 'select',
             display: 'segmented',
             block: true,
-            size: 'xs',
+            size: 'sm',
             label: t('Align'),
             keys: ['alignItems', 'justifyItems'],
             get: () => s.value('alignItems'),
             options: [{ value: 'start', icon: 'b-align-top', title: t('Top') }, { value: 'center', icon: 'b-align-center-vertical', title: t('Middle') }, { value: 'end', icon: 'b-align-bottom', title: t('Bottom') }, { value: 'stretch', icon: 'b-arrows-out-line-vertical', title: t('Stretch') }],
           },
-          grid && { handle: 'gridAutoFlow', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Flow'), options: [{ value: 'row', icon: 'b-arrow-right', title: t('Rows First') }, { value: 'column', icon: 'b-arrow-down', title: t('Columns First') }, { value: 'row dense', icon: 'b-squares-four', title: t('Fill Gaps (Dense)') }] },
+          grid && { handle: 'gridAutoFlow', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Flow'), options: [{ value: 'row', icon: 'b-arrow-right', title: t('Rows First') }, { value: 'column', icon: 'b-arrow-down', title: t('Columns First') }, { value: 'row dense', icon: 'b-squares-four', title: t('Fill Gaps (Dense)') }] },
         ]}
       />
     </Section>
@@ -86,8 +86,8 @@ export function InParent({ s, parentDisplay }: { s: StyleApi; parentDisplay?: st
         fields={[
           grid && { handle: 'gridColumn', type: 'text', component: 'blocks-value', label: t('Column'), placeholder: 'auto', unit: '', title: t('Span a number of columns (2), or a range (1 / -1 for full width)') },
           grid && { handle: 'gridRow', type: 'text', component: 'blocks-value', label: t('Row'), placeholder: 'auto', unit: '' },
-          !grid && { handle: 'flex', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Grow'), options: [{ value: '1 1 0%', label: t('Fill') }, { value: '0 0 auto', label: t('Fixed') }, { value: '0 1 auto', label: t('Shrink') }] },
-          { handle: 'alignSelf', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Align Self'), options: [{ value: 'flex-start', icon: 'b-align-top', title: t('Start') }, { value: 'center', icon: 'b-align-center-vertical', title: t('Center') }, { value: 'flex-end', icon: 'b-align-bottom', title: t('End') }, { value: 'stretch', icon: 'b-arrows-out-line-vertical', title: t('Stretch') }] },
+          !grid && { handle: 'flex', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Grow'), options: [{ value: '1 1 0%', label: t('Fill') }, { value: '0 0 auto', label: t('Fixed') }, { value: '0 1 auto', label: t('Shrink') }] },
+          { handle: 'alignSelf', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Align Self'), options: [{ value: 'flex-start', icon: 'b-align-top', title: t('Start') }, { value: 'center', icon: 'b-align-center-vertical', title: t('Center') }, { value: 'flex-end', icon: 'b-align-bottom', title: t('End') }, { value: 'stretch', icon: 'b-arrows-out-line-vertical', title: t('Stretch') }] },
           { handle: 'order', type: 'text', component: 'blocks-value', label: t('Order'), unit: '', placeholder: '0', prefixIcon: 'b-list-numbers' },
         ]}
       />

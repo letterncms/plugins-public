@@ -124,7 +124,7 @@ final class I18nPlugin extends Plugin
 
         $this->cms()->context()->register('cms://languages', 'Languages', 'The site’s languages (default first) with URL prefixes. Translate entries with translations/create.', fn () => $languages()->all());
 
-        $this->cms()->admin()->nav('languages', ['label' => 'Languages', 'path' => '/languages', 'icon' => 'translate', 'section' => 'system', 'order' => 30, 'permission' => 'settings.manage']);
+        $this->cms()->admin()->nav('languages', ['path' => '/languages', 'icon' => 'translate', 'section' => 'plugins', 'permission' => 'settings.manage']);
         $this->cms()->admin()->widget('i18n-coverage', ['label' => 'Translations', 'description' => __('How much of the content exists in each language.'), 'icon' => 'translate', 'column' => 'side', 'order' => 55]);
         $this->adminModule(import: '@letterncms/i18n');
     }

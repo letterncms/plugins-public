@@ -33,7 +33,7 @@ final class SeoHealthTest extends TestCase
         $this->assertSame(1, $health['pages']);
         $this->assertSame(1, $health['attention']);
         $this->assertSame($page['id'], $health['worst'][0]['id']);
-        $this->assertSame('Enough substance', $health['worst'][0]['top']);
+        $this->assertSame('Enough Substance', $health['worst'][0]['top']);
         $this->assertContains('length', array_column($health['issues'], 'id'));
         $this->assertGreaterThan(0, $health['issues'][0]['failing']);
     }

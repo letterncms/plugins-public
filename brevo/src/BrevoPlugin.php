@@ -18,7 +18,7 @@ final class BrevoPlugin extends Plugin
     {
         $this->cms()->whenAvailable(Transports::class, static function (Transports $transports): void {
             $transports->register('brevo', 'Brevo', [
-                ['handle' => 'brevo_api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true, 'instructions' => 'Brevo → SMTP & API → API keys. Your sender domain must be verified.'],
+                ['handle' => 'brevo_api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true, 'instructions' => 'From Brevo → SMTP & API → API keys.'],
             ], static fn (array $settings) => new BrevoTransport((string) ($settings['brevo_api_key'] ?? '')));
         });
     }

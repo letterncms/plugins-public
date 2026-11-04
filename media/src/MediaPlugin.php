@@ -24,10 +24,10 @@ final class MediaPlugin extends Plugin
     public function boot(): void
     {
         $p = $this->cms()->permissions();
-        $p->register('media.view', __('Browse the media library'), __('Media'));
+        $p->register('media.view', __('View the Media Library'), __('Media'));
         $p->register('media.upload', __('Upload Files'), __('Media'));
-        $p->register('media.edit', 'Edit media details', 'Media');
-        $p->register('media.delete', 'Delete files', 'Media');
+        $p->register('media.edit', 'Edit Media Details', 'Media');
+        $p->register('media.delete', 'Delete Files', 'Media');
 
         $this->settingsSchema();
         $this->routes();
@@ -36,7 +36,7 @@ final class MediaPlugin extends Plugin
         $this->mediaAsContent();
 
         $admin = $this->cms()->admin();
-        $admin->nav('media', ['label' => 'Media', 'path' => '/media', 'icon' => 'media', 'section' => 'content', 'order' => 70, 'pinned' => true, 'permission' => 'media.view']);
+        $admin->nav('media', ['path' => '/media', 'icon' => 'media', 'section' => 'content', 'order' => 70, 'pinned' => true, 'permission' => 'media.view']);
         $admin->command('upload-media', ['label' => 'Upload Files', 'icon' => 'upload', 'path' => '/media?upload=1', 'permission' => 'media.upload']);
         $admin->widget('media-recent', ['label' => 'Recent Uploads', 'description' => __('The latest files in the media library.'), 'icon' => 'media', 'column' => 'main', 'order' => 40, 'permission' => 'media.view']);
         $this->adminModule(import: '@letterncms/media');
@@ -84,18 +84,33 @@ final class MediaPlugin extends Plugin
 
     private function settingsSchema(): void
     {
-        $this->cms()->settingsRegistry()->register('media', __('Media'), [
-            ['handle' => 'max_upload_mb', 'type' => 'number', 'label' => 'Maximum Upload Size (MB)', 'default' => 32, 'min' => 1, 'max' => 512],
+        $this->cms()->settingsRegistry()->register('media', fields: [
+            ['handle' => 'max_upload_mb', 'type' => 'number', 'label' => 'Max Upload Size', 'suffix' => 'MB', 'default' => 32, 'min' => 1, 'max' => 512],
+            ['handle' => 'quality', 'type' => 'number', 'display' => 'slider', 'label' => 'Image Quality', 'default' => 78, 'min' => 40, 'max' => 95],
+            // The switches together, one group of rows.
             ['handle' => 'avif', 'type' => 'toggle', 'label' => 'Serve AVIF Images', 'default' => true, 'instructions' => 'Smaller than WebP; slower to generate.'],
-            ['handle' => 'quality', 'type' => 'number', 'label' => 'Image Quality', 'default' => 78, 'min' => 40, 'max' => 95],
-            ['handle' => 'strip_metadata', 'type' => 'toggle', 'label' => 'Remove Photo Metadata (Location, Camera)', 'default' => true],
-        ], icon: 'media', description: __('Uploads and responsive images.'), package: $this->manifest->name, order: 30);
+            ['handle' => 'strip_metadata', 'type' => 'toggle', 'label' => 'Remove Photo Metadata', 'default' => true, 'instructions' => 'Location and camera details.'],
+        ], icon: 'media', description: __('Uploads and responsive images.'), package: $this->manifest->name, order: 30, home: 'media');
 
         // The server's own limit, in the reader's language (settings are registered at boot, before it is known).
         $this->cms()->hooks()->addFilter('settings.fields', static fn (array $fields, string $namespace) => $namespace !== 'media' ? $fields : array_map(
-            static fn (array $field) => $field['handle'] === 'max_upload_mb' ? [...$field, 'instructions' => __('Your server allows :size per upload.', ['size' => ini_get('upload_max_filesize')])] : $field,
+            static fn (array $field) => $field['handle'] === 'max_upload_mb' && ($limit = self::serverLimitMb()) !== null ? [...$field, 'instructions' => __('Your server allows up to :size MB.', ['size' => $limit])] : $field,
             $fields,
         ));
+    }
+
+    /** PHP's upload limit (`64M`, `2G`, bytes) in MB, like the field it is shown under; null when there is none. */
+    private static function serverLimitMb(): ?int
+    {
+        $value = trim((string) ini_get('upload_max_filesize'));
+        $bytes = (float) $value * match (strtolower(substr($value, -1))) {
+            'g' => 1024 ** 3,
+            'm' => 1024 ** 2,
+            'k' => 1024,
+            default => 1,
+        };
+
+        return $bytes > 0 ? max(1, (int) floor($bytes / 1024 ** 2)) : null;
     }
 
     private function routes(): void

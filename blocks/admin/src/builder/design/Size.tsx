@@ -52,13 +52,13 @@ export function Size({ s, media }: { s: StyleApi; media?: boolean }) {
               { handle: 'maxHeight', type: 'text', component: 'blocks-value', label: t('Max Height'), prefix: 'H', placeholder: t('Max'), title: t('Maximum Height'), min: 0, keywords: ['none'] },
             ],
           },
-          { handle: 'aspectRatio', type: 'select', size: 'xs', label: t('Aspect'), placeholder: t('Free'), options: [{ value: '1/1', label: t('1:1 square') }, { value: '4/3', label: '4:3' }, { value: '3/2', label: '3:2' }, { value: '16/9', label: '16:9' }, { value: '21/9', label: '21:9' }, { value: '3/4', label: t('3:4 portrait') }, { value: '4/5', label: '4:5' }, { value: '9/16', label: t('9:16 story') }] },
+          { handle: 'aspectRatio', type: 'select', size: 'sm', label: t('Aspect'), placeholder: t('Auto'), options: [{ value: '1/1', label: t('1:1 square') }, { value: '4/3', label: '4:3' }, { value: '3/2', label: '3:2' }, { value: '16/9', label: '16:9' }, { value: '21/9', label: '21:9' }, { value: '3/4', label: t('3:4 portrait') }, { value: '4/5', label: '4:5' }, { value: '9/16', label: t('9:16 story') }] },
           {
             handle: 'overflow',
             type: 'select',
             display: 'segmented',
             block: true,
-            size: 'xs',
+            size: 'sm',
             label: t('Overflow'),
             placeholder: 'visible',
             options: [
@@ -68,7 +68,7 @@ export function Size({ s, media }: { s: StyleApi; media?: boolean }) {
               { value: 'clip', icon: 'b-scissors', title: t('Clip, without scrolling') },
             ],
           },
-          media && { handle: 'objectFit', type: 'select', display: 'segmented', block: true, size: 'xs', label: t('Fit'), options: [{ value: 'cover', label: t('Cover') }, { value: 'contain', label: t('Contain') }, { value: 'fill', label: t('Stretch') }, { value: 'none', label: t('None') }] },
+          media && { handle: 'objectFit', type: 'select', display: 'segmented', block: true, size: 'sm', label: t('Fit'), options: [{ value: 'cover', label: t('Cover') }, { value: 'contain', label: t('Contain') }, { value: 'fill', label: t('Stretch') }, { value: 'none', label: t('None') }] },
           media && { handle: 'objectPosition', type: 'json', component: 'blocks-origin', label: t('Focus'), className: 'items-start py-0.5 [&>label]:leading-6' },
         ]}
       />

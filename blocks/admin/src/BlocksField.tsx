@@ -39,9 +39,9 @@ export function BlocksField({ field, value, onChange, context, disabled }: Field
       <div className="h-[480px] min-w-0 overflow-hidden rounded-sm border border-border">
         <LiveEditor collection={context.collection} entryId={context.entry?.id} content={{ title: context.title ?? context.entry?.title ?? '', slug: context.entry?.slug ?? '', authorId: context.entry?.authorId ?? null, data: { ...(context.values ?? context.entry?.data ?? {}), [field.handle]: value ?? [] } }} onInspect={setInspected} standalone />
       </div>
-      <InspectorPanel docked={false} open={!!inspected} onOpenChange={(open) => !open && setInspected(null)} title={t('Block settings')}>
+      <InspectorPanel docked={false} open={!!inspected} onOpenChange={(open) => !open && setInspected(null)} title={t('Block Settings')}>
         <div className="flex h-10 shrink-0 items-center justify-end border-b border-border px-2"><IconButton icon="close" label={t('Close Panel')} size="xs" onClick={() => setInspected(null)} /></div>
-        {inspected && tree.find(nodes, inspected) && <Inspector node={tree.find(nodes, inspected)!} />}
+        {inspected && tree.find(nodes, inspected) && <Inspector node={tree.find(nodes, inspected)!} onClose={() => setInspected(null)} />}
       </InspectorPanel>
     </EditorProvider>
   )

@@ -1,5 +1,5 @@
 import { can, invalidate, locale, plural, prefetchAbility, run, t, useAbility, type FieldDef } from '@letterncms/sdk'
-import { Badge, Button, DataView, Dialog, EmptyState, Fields, Icon, IconButton, Menu, SelectionBar, confirm, cn, toast, readViewPrefs } from '@letterncms/ui'
+import { Badge, Button, DataView, Dialog, EmptyState, Fields, Icon, IconButton, Menu, NoMatches, SelectionBar, confirm, cn, copyText, toast, readViewPrefs } from '@letterncms/ui'
 import { useState, type ReactNode } from 'react'
 import { formatBytes, upload, type MediaItem } from './upload'
 
@@ -15,16 +15,9 @@ export function loadMediaLibrary() {
 
 function filterFields(): FieldDef[] {
   return [
-    { handle: 'search', type: 'text', label: t('Search Files'), icon: 'search', size: 'sm', placeholder: t('Search files…'), className: 'w-60' },
+    { handle: 'search', type: 'text', label: t('Search Files'), icon: 'search', size: 'sm', placeholder: t('Search files…'), className: 'w-full sm:w-60' },
     { handle: 'kind', type: 'select', label: t('Kind'), display: 'segmented', required: true, options: { all: t('All'), image: t('Images'), video: t('Videos'), audio: t('Audio'), pdf: 'PDF', file: t('Other') } },
   ]
-}
-
-interface Uploading {
-  key: string
-  name: string
-  progress: number
-  error?: string
 }
 
 /**
@@ -38,28 +31,32 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
   const [sort, setSort] = useState(() => readViewPrefs('overview.media', 'grid').sort)
   const [chosen, setChosen] = useState<Set<string>>(new Set())
   const [deleting, setDeleting] = useState(false)
-  const [uploads, setUploads] = useState<Uploading[]>([])
   const [open, setOpen] = useState<MediaItem | null>(null)
   const list = useAbility<{ items: MediaItem[]; total: number; page: number; pages: number; folders: string[] }>('media/list', mediaInput(filters, page, sort), { placeholderData: (p) => p })
   const items = list.data?.items ?? []
   const allow = can('media.upload')
   const filter = (handle: string, value: unknown) => { setPage(1); setChosen(new Set()); setFilters((f) => ({ ...f, [handle]: value })) }
-  // The same upload button in the page toolbar, picker and standard empty state.
+  // The upload button, in the page's top bar or the picker's toolbar: the one way to add files.
   const uploader = (field: Partial<FieldDef>): FieldDef[] => [{ handle: 'files', type: 'json', component: 'media-upload', label: t('Upload'), multiple: mode === 'manage' || multiple, accept: accept === '*' ? undefined : accept, ...field }]
 
+  // Progress shows where the person is looking, whatever they scroll to: one toast for the batch, then what came of it.
   const send = async (files: FileList | File[]) => {
-    const batch = Array.from(files).map((f) => ({ file: f, key: `${f.name}-${Math.random().toString(36).slice(2)}` }))
-    setUploads((u) => [...u, ...batch.map((b) => ({ key: b.key, name: b.file.name, progress: 0 }))])
+    const batch = Array.from(files)
+    if (!batch.length) return
+    const progress = batch.map(() => 0)
+    const title = plural(batch.length, 'Uploading {count} file…', 'Uploading {count} files…')
+    const id = toast.loading(title, { description: '0%' })
+    const report = () => toast.loading(title, { id, description: `${Math.round((progress.reduce((a, b) => a + b, 0) / batch.length) * 100)}%` })
     const done: MediaItem[] = []
+    const failed: { name: string; error: unknown }[] = []
     await Promise.all(
-      batch.map(async ({ file, key }) => {
+      batch.map(async (file, index) => {
         try {
-          const item = await upload(file, folder ?? '', (p) => setUploads((u) => u.map((x) => (x.key === key ? { ...x, progress: p } : x))))
-          done.push(item)
-          setUploads((u) => u.filter((x) => x.key !== key))
-        } catch (e) {
-          setUploads((u) => u.map((x) => (x.key === key ? { ...x, error: e instanceof Error ? e.message : String(e) } : x)))
+          done.push(await upload(file, folder ?? '', (p) => { progress[index] = p; report() }))
+        } catch (error) {
+          failed.push({ name: file.name, error })
         }
+        progress[index] = 1
       }),
     )
     invalidate('media/')
@@ -67,7 +64,9 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
       const ids = multiple ? [...selected, ...done.map((d) => d.id)] : [done[0].id]
       onSelectionChange?.(ids, done)
     }
-    if (done.length) toast.success(plural(done.length, '{count} file uploaded', '{count} files uploaded'))
+    if (done.length) toast.success(plural(done.length, '{count} file uploaded', '{count} files uploaded'), { id, description: undefined })
+    else toast.dismiss(id)
+    for (const { name, error } of failed) toast.error(t('Couldn’t upload {name}: {reason}', { name, reason: error instanceof Error ? error.message : String(error) }))
   }
 
   const toggle = (item: MediaItem) => {
@@ -86,7 +85,8 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
     } else setChosen((current) => { const next = new Set(current); ids.forEach((id) => on ? next.add(id) : next.delete(id)); return next })
   }
   const deleteItems = async (ids: string[]) => {
-    if (deleting || !await confirm({ title: plural(ids.length, 'Delete {count} file?', 'Delete {count} files?'), description: t('Pages that use it will show nothing in its place.'), confirm: t('Delete'), danger: true })) return
+    const one = ids.length === 1 ? items.find((item) => item.id === ids[0]) : undefined
+    if (deleting || !await confirm({ title: one ? t('Delete “{name}”?', { name: one.name }) : plural(ids.length, 'Delete {count} file?', 'Delete {count} files?'), description: t('Pages that use it will show nothing in its place.'), confirm: t('Delete'), danger: true })) return
     setDeleting(true)
     try {
       const results = await Promise.allSettled(ids.map((id) => run('media/delete', { id })))
@@ -100,16 +100,20 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
   }
   const preview = (item: MediaItem) => item.thumb ? <img src={item.thumb} alt={item.alt ?? ''} loading="lazy" className="absolute inset-0 size-full object-cover" style={{ objectPosition: `${item.focal.x}% ${item.focal.y}%` }} /> : <div className="grid size-full place-items-center text-faint"><Icon name={item.kind === 'video' ? 'video' : item.kind === 'audio' ? 'file' : 'file-text'} size={24} /></div>
   const filtered = !!filters.search || kind !== 'all' || folder !== null
+  // An empty library is its empty state and the way to fill it (the top bar's Upload, or the picker's own): no filters, display or count yet.
+  const blank = !filtered && !list.isError && list.data?.total === 0
   const body = (
     <div className="min-w-0">
       <DataView id="media" label={t('Media')} items={items} source={{ ability: 'media/list', input: mediaInput(filters, 1, sort), perPage: 60 }} rowKey={(item) => item.id} onRowClick={toggle} defaultView="grid" image={preview}
         pagination={list.data && { page: list.data.page, pages: list.data.pages, total: list.data.total, perPage: 60, onPage: setPage }}
         loading={list.isLoading} stale={list.isPlaceholderData} error={list.isError} onRetry={() => void list.refetch()}
-        sort={sort} dateSort={{ published: 'created_at', updated: 'updated_at' }} onSort={(sort) => { setPage(1); setSort(sort) }}
+        // Uploaded is a column of its own; a file is never "published".
+        dates={(item) => ({ publishedAt: null, updatedAt: item.updatedAt })}
+        sort={sort} dateSort={{ updated: 'updated_at' }} onSort={(sort) => { setPage(1); setSort(sort) }}
         selection={{ ids: mode === 'manage' ? chosen : new Set(selected), onSelect: select }}
         selected={(item) => open?.id === item.id}
-        toolbar={<>
-          <Fields layout="inline" bare className="flex min-w-0 flex-wrap items-center gap-2" fields={[...filterFields(), ...(list.data?.folders.length ? [{ handle: 'folder', type: 'select', label: t('Folder'), size: 'sm' as const, placeholder: t('All Folders'), options: list.data.folders.map((f) => ({ value: f, label: f, icon: 'folder' })), className: 'w-44' }] : [])]} values={filters} onChange={filter} />
+        toolbar={blank ? undefined : <>
+          <Fields layout="inline" bare className="flex min-w-0 flex-wrap items-center gap-2 max-sm:w-full" fields={[...filterFields(), ...(list.data?.folders.length ? [{ handle: 'folder', type: 'select', label: t('Folder'), size: 'sm' as const, placeholder: t('All Folders'), options: list.data.folders.map((f) => ({ value: f, label: f, icon: 'folder' })), className: 'w-44' }] : [])]} values={filters} onChange={filter} />
           {!frame && uploadButton(autoUpload)}
         </>}
         columns={[
@@ -122,12 +126,11 @@ export function Library({ mode = 'manage', accept = '*', multiple = false, selec
         ]}
         actions={(item) => <Menu trigger={<IconButton icon="more" label={t('Actions for {name}', { name: item.name })} size="xs" />} items={[
           { label: mode === 'pick' ? t('Select') : t('Open'), icon: 'edit', onSelect: () => toggle(item) },
-          { label: t('Copy URL'), icon: 'copy', onSelect: () => void navigator.clipboard.writeText(new URL(item.url, location.origin).href).then(() => toast.success(t('URL copied')), toast.error) },
+          { label: t('Copy URL'), icon: 'copy', onSelect: () => void copyText(new URL(item.url, location.origin).href, { copied: t('URL copied'), failed: t('Couldn’t copy the URL') }) },
           mode === 'manage' && can('media.delete') && { label: t('Delete'), icon: 'trash', danger: true, disabled: deleting, onSelect: () => void deleteItems([item.id]) },
         ]} />}
-        empty={filtered ? <EmptyState icon="search" title={t('No matches')} description={t('Nothing matches these filters.')} action={<Button onClick={() => { setFilters({ search: '', kind: 'all', folder: null }); setPage(1) }}>{t('Clear Filters')}</Button>} /> : <EmptyState icon="media" title={t('No files yet')} action={uploadButton()} />}
+        empty={filtered ? <NoMatches onClear={() => { setFilters({ search: '', kind: 'all', folder: null }); setPage(1) }} /> : <EmptyState icon="media" title={t('No files yet')} description={allow ? t('Images, videos and documents for your pages.') : undefined} action={frame ? undefined : uploadButton()} />}
       />
-      {uploads.length > 0 && <div className="my-4 space-y-2" aria-live="polite">{uploads.map((u) => <div key={u.key} className="flex items-center gap-3 text-xs"><span className="min-w-0 flex-1 truncate">{u.name}</span>{u.error ? <span role="alert" className="text-danger">{u.error}</span> : <progress value={u.progress} max={1} aria-label={u.name} className="h-1 w-32" />}</div>)}</div>}
 
       {mode === 'manage' && <SelectionBar count={chosen.size} onClear={() => setChosen(new Set())}>{can('media.delete') && <Button size="sm" variant="ghost" loading={deleting} onClick={() => void deleteItems([...chosen])}>{t('Delete')}</Button>}</SelectionBar>}
 
@@ -188,7 +191,7 @@ function Details({ item, onClose }: { item: MediaItem; onClose: () => void }) {
         <dt className="text-faint">{t('URL')}</dt>
         <dd className="m-0 flex items-center gap-1">
           <span className="truncate font-mono">{item.url}</span>
-          <IconButton icon="copy" label={t('Copy URL')} size="xs" onClick={() => navigator.clipboard.writeText(location.origin + item.url).then(() => toast.success(t('URL copied')))} />
+          <IconButton icon="copy" label={t('Copy URL')} size="xs" onClick={() => void copyText(new URL(item.url, location.origin).href, { copied: t('URL copied'), failed: t('Couldn’t copy the URL') })} />
         </dd>
       </dl>
 

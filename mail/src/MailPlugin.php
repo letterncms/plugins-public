@@ -47,7 +47,7 @@ final class MailPlugin extends Plugin
 
         $fields[] = ['handle' => 'footer', 'type' => 'text', 'label' => 'Email Footer', 'instructions' => 'Shown under every email, like your address.'];
 
-        $this->cms()->settingsRegistry()->register('mail', __('Email'), $fields, icon: 'mail', description: __('How :brand sends email (forms, invitations, password resets).'), package: $this->manifest->name, order: 40);
+        $this->cms()->settingsRegistry()->register('mail', fields: $fields, icon: 'mail', description: __('How :brand sends email.'), package: $this->manifest->name, order: 40);
     }
 
     private function abilities(): void

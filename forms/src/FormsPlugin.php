@@ -27,8 +27,8 @@ final class FormsPlugin extends Plugin
     public function boot(): void
     {
         $p = $this->cms()->permissions();
-        $p->register('forms.view', __('View form submissions'), __('Forms'));
-        $p->register('forms.manage', __('Build forms and change their settings'), __('Forms'));
+        $p->register('forms.view', __('View Form Submissions'), __('Forms'));
+        $p->register('forms.manage', __('Manage Forms'), __('Forms'));
 
         $this->blocks();
         $this->routes();
@@ -40,7 +40,7 @@ final class FormsPlugin extends Plugin
             $builder->available() && $builder->queue(null, __('A form changed'));
         });
 
-        $this->cms()->admin()->nav('forms', ['label' => 'Forms', 'path' => '/forms', 'icon' => 'form', 'section' => 'content', 'order' => 75, 'pinned' => true, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
+        $this->cms()->admin()->nav('forms', ['path' => '/forms', 'icon' => 'form', 'section' => 'content', 'order' => 75, 'pinned' => true, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
         $this->cms()->admin()->widget('forms-submissions', ['label' => 'Form Submissions', 'description' => __('New submissions over the last two weeks and the latest ones.'), 'icon' => 'form', 'column' => 'side', 'order' => 40, 'permission' => 'forms.view']);
         $this->adminModule(import: '@letterncms/forms');
 
@@ -78,10 +78,12 @@ final class FormsPlugin extends Plugin
             'title' => __('Form'),
             'icon' => 'form',
             'category' => 'form',
-            'description' => __('Embed a form (contact, quote request, newsletter…).'),
+            'description' => __('Shows one of your forms'),
             'keywords' => ['contact', 'form', 'signup', 'newsletter', 'quote'],
             'styles' => ['spacing', 'size', 'background', 'border'],
-            'fields' => [['handle' => 'form', 'type' => 'select', 'label' => 'Form', 'options' => [], 'dynamic' => 'forms', 'required' => true]],
+            // With no forms yet, its list says so and offers to make one.
+            'fields' => [['handle' => 'form', 'type' => 'select', 'label' => 'Form', 'placeholder' => 'Choose a Form', 'options' => [], 'dynamic' => 'forms', 'required' => true,
+                'empty' => 'No forms yet', 'action' => ['label' => 'New Form', 'icon' => 'plus', 'to' => '/forms?new=1']]],
             'render' => FieldView::form(...),
             'package' => $this->manifest->name,
         ]);
@@ -100,11 +102,11 @@ final class FormsPlugin extends Plugin
 
     private function settingsSchema(): void
     {
-        $this->cms()->settingsRegistry()->register('forms', __('Forms'), [
-            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Submission Endpoint', 'instructions' => 'Leave empty when the site and {brand} share a domain. For a static site hosted elsewhere, the {brand} URL (like https://cms.example.com).'],
-            ['handle' => 'origins', 'type' => 'tags', 'label' => 'Other Allowed Websites', 'instructions' => 'Origins (https://example.com) allowed to post forms here.'],
-            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Delete Submissions After (Days)', 'min' => 0, 'instructions' => '0 keeps them forever.', 'default' => 0],
-        ], icon: 'form', description: __('Where forms send submissions and how long they are kept.'), package: $this->manifest->name, permission: 'forms.manage', order: 50);
+        $this->cms()->settingsRegistry()->register('forms', fields: [
+            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Submission Address', 'placeholder' => 'https://cms.example.com', 'instructions' => 'Only when the site is hosted elsewhere.'],
+            ['handle' => 'origins', 'type' => 'tags', 'label' => 'Other Allowed Websites', 'placeholder' => 'https://example.com', 'instructions' => 'Like https://example.com.'],
+            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Submissions For', 'suffix' => 'days', 'min' => 0, 'instructions' => '0 keeps them forever.', 'default' => 0],
+        ], icon: 'form', description: __('Where submissions go and how long they stay.'), package: $this->manifest->name, permission: 'forms.manage', order: 50, home: 'forms');
     }
 
     private function abilities(): void
