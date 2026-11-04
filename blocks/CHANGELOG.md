@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-11-04)
+
 ### Added
 
 - A plugin can name its own block category (`BlockRegistry::category()`). Categories without a name show their handle in title case, after the built-in ones.
