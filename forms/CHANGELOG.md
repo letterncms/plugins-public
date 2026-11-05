@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.0 (2026-11-05)
+
 ### Changed
 
 - **Breaking.** Needs CMS 0.12. Forms look as they did in 0.8.0 again, styled by the site’s tokens and custom CSS.
