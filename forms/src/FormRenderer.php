@@ -60,7 +60,7 @@ final class FormRenderer
   <input type="hidden" name="_cms_t" value="">
   <input type="hidden" name="_cms_locale" value="{$this->e($locale)}">
   <div class="cms-form__error" id="{$id}-error" role="alert" tabindex="-1"><p>{$error}</p></div>
-  <button type="submit" class="cms-button cms-form__submit" data-variant="primary" data-size="md">{$this->e((string) $s['submit'])}</button>
+  <button type="submit" class="button cms-button cms-form__submit" data-variant="solid" data-color="primary" data-size="md">{$this->e((string) $s['submit'])}</button>
 </form>
 <div class="cms-form__success" id="{$id}-ok" role="status" tabindex="-1"><p>{$this->e((string) $s['success'])}</p></div>
 HTML;
@@ -77,16 +77,23 @@ HTML;
         $this->cms->hooks()->dispatch('render.head', 'cms-forms-css', '<style>'.$this->css().'</style>');
     }
 
+    /**
+     * Layout and states only. Inputs, labels and the button are the site's own components (the
+     * `form` field recipe, the label text style, `.button`), so a form looks like the site in any
+     * scheme. It sits with the theme's components: a block's own styles still win.
+     */
     private function css(): string
     {
-        return '.cms-form{display:grid;gap:1.1rem}.cms-form__hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}'
-            .'[data-field]{display:grid;gap:.4rem}[data-field]>label,[data-field] legend{font-weight:500;font-size:var(--text-sm,.95rem)}[data-field] .cms-req{color:var(--color-muted,#888)}'
-            .'[data-field] input:not([type=checkbox]):not([type=radio]),[data-field] select,[data-field] textarea{width:100%;font:inherit;color:inherit;padding:.65em .8em;border:1px solid var(--color-border,#d4d4d1);border-radius:var(--radius-sm,.4rem);background:var(--color-background,#fff)}'
-            .'[data-field] input:focus,[data-field] select:focus,[data-field] textarea:focus{outline:2px solid var(--color-primary,#2563eb);outline-offset:1px}'
-            .'[data-field] fieldset{border:0;padding:0;margin:0;display:grid;gap:.4rem}[data-field] .cms-choice{display:flex;gap:.55rem;align-items:flex-start;font-weight:400}'
-            .'[data-field] .cms-help{font-size:var(--text-xs,.8rem);color:var(--color-muted,#777)}[data-field] .cms-msg{font-size:var(--text-xs,.8rem);color:#dc2626}[data-field].is-invalid input,[data-field].is-invalid textarea,[data-field].is-invalid select{border-color:#dc2626}'
-            .'[data-field][hidden]{display:none}.cms-form__error,.cms-form__success{display:none}.cms-form__error:target,.cms-form__error.is-shown{display:block;color:#dc2626}'
-            .'.cms-form__success:target,.cms-form__success.is-shown{display:block;padding:1rem 1.25rem;border-radius:var(--radius-md,.6rem);background:color-mix(in srgb,#16a34a 10%,transparent)}.cms-form__submit{justify-self:start}.cms-form.is-busy .cms-form__submit{opacity:.6;pointer-events:none}';
+        return '@layer design.reset,design.tokens,design.base,design.layout,design.recipes,design.styles;@layer design.recipes{'
+            .'.cms-form{display:grid;gap:var(--space-md)}.cms-form__hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}'
+            .'[data-field]{display:grid;gap:var(--space-2xs)}[data-field][hidden]{display:none}[data-field]>label{margin:0}[data-field] fieldset{display:grid;gap:var(--space-2xs);min-inline-size:0}'
+            .'[data-field] .cms-req{color:var(--color-foreground-muted)}'
+            .'[data-field] .cms-choice{display:flex;gap:var(--space-xs);align-items:flex-start;margin:0;font:inherit;letter-spacing:inherit;text-transform:inherit;font-feature-settings:inherit}'
+            .'[data-field] .cms-help,[data-field] .cms-msg{font-size:var(--text-xs);line-height:var(--text-xs--leading);color:var(--color-foreground-muted)}[data-field] .cms-msg{color:var(--color-danger-text)}'
+            .'[data-field].is-invalid .field:not(:focus-visible){box-shadow:inset 0 0 0 2px var(--color-danger-text)}'
+            .'.cms-form__error,.cms-form__success{display:none}.cms-form__error:target,.cms-form__error.is-shown{display:block;color:var(--color-danger-text)}'
+            .'.cms-form__success:target,.cms-form__success.is-shown{display:block;padding:var(--space-md) var(--space-lg);border-radius:var(--radius-md);background:var(--color-success-soft)}'
+            .'.cms-form__submit{justify-self:start}.cms-form.is-busy .cms-form__submit{opacity:.6;pointer-events:none}}';
     }
 
     private function script(): string

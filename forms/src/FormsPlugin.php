@@ -100,7 +100,7 @@ final class FormsPlugin extends Plugin
             'category' => 'form',
             'description' => __('Shows one of your forms'),
             'keywords' => ['contact', 'form', 'signup', 'newsletter', 'quote'],
-            'styles' => ['spacing', 'size', 'background', 'border'],
+            'styles' => ['spacing', 'size', 'color', 'border'],
             // With no forms yet, its list says so and offers to make one.
             'fields' => [['handle' => 'form', 'type' => 'select', 'label' => 'Form', 'placeholder' => 'Choose a Form', 'options' => [], 'dynamic' => 'forms', 'required' => true,
                 'empty' => 'No forms yet', 'action' => ['label' => 'New Form', 'icon' => 'plus', 'to' => '/forms?do=new-form']]],

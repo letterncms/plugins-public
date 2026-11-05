@@ -38,22 +38,22 @@ final class FieldView
                 : '<input type="hidden" name="'.$e($name).'" value="'.$e($b['value'] ?? '').'" '.$d['attrs'].'>';
         }
 
-        // A field outside a form (or before one is chosen) still looks like a field.
+        // A field outside a form (or before one is chosen) still looks like a field: its control is a `.field`, its label a `.text-label`.
         app(FormRenderer::class)->styles();
 
         $options = static fn () => FormFields::options($b);
 
         $control = match ($kind) {
-            'textarea' => '<label for="'.$e($id).'">'.$label.'</label><textarea id="'.$e($id).'" name="'.$e($name).'" rows="'.(int) ($b['rows'] ?? 5).'" maxlength="'.(int) ($b['max'] ?? 5000).'" placeholder="'.$e($b['placeholder'] ?? '').'"'.$req.$describe.'></textarea>',
-            'select' => '<label for="'.$e($id).'">'.$label.'</label><select id="'.$e($id).'" name="'.$e($name).'"'.$req.$describe.'><option value="">'.$e($b['placeholder'] ?? 'Choose…').'</option>'
+            'textarea' => '<label class="text-label" for="'.$e($id).'">'.$label.'</label><textarea class="field" id="'.$e($id).'" name="'.$e($name).'" rows="'.(int) ($b['rows'] ?? 5).'" maxlength="'.(int) ($b['max'] ?? 5000).'" placeholder="'.$e($b['placeholder'] ?? '').'"'.$req.$describe.'></textarea>',
+            'select' => '<label class="text-label" for="'.$e($id).'">'.$label.'</label><select class="field" id="'.$e($id).'" name="'.$e($name).'"'.$req.$describe.'><option value="">'.$e($b['placeholder'] ?? 'Choose…').'</option>'
                 .implode('', array_map(static fn ($v, $t) => '<option value="'.e((string) $v).'">'.e((string) $t).'</option>', array_keys($options()), $options())).'</select>',
-            'radio', 'checkboxes' => '<fieldset'.$describe.'><legend>'.$label.'</legend>'.implode('', array_map(
+            'radio', 'checkboxes' => '<fieldset'.$describe.'><legend class="text-label">'.$label.'</legend>'.implode('', array_map(
                 static fn ($v, $t) => '<label class="cms-choice"><input type="'.($kind === 'radio' ? 'radio' : 'checkbox').'" name="'.e($kind === 'radio' ? $name : $name.'[]').'" value="'.e((string) $v).'"'.($kind === 'radio' && $required ? ' required' : '').'> '.e((string) $t).'</label>',
                 array_keys($options()), $options(),
             )).'</fieldset>',
             'checkbox' => '<label class="cms-choice"><input type="checkbox" name="'.$e($name).'" value="yes"'.$req.$describe.'> '.$label.'</label>',
             'consent' => '<label class="cms-choice"><input type="checkbox" name="'.$e($name).'" value="yes" required aria-required="true"> <span>'.($b['text'] ?? 'I agree').'</span></label>',
-            'file' => '<label for="'.$e($id).'">'.$label.'</label><input id="'.$e($id).'" type="file" name="'.$e($name).'" accept="'.(['documents' => '.pdf,.doc,.docx,.odt,.txt', 'images' => 'image/*', 'any' => '.pdf,.doc,.docx,.odt,.txt,image/*'][$b['accept'] ?? 'documents'] ?? '.pdf').'"'.$req.$describe.'>',
+            'file' => '<label class="text-label" for="'.$e($id).'">'.$label.'</label><input id="'.$e($id).'" type="file" name="'.$e($name).'" accept="'.(['documents' => '.pdf,.doc,.docx,.odt,.txt', 'images' => 'image/*', 'any' => '.pdf,.doc,.docx,.odt,.txt,image/*'][$b['accept'] ?? 'documents'] ?? '.pdf').'"'.$req.$describe.'>',
             default => self::input($kind, $b, $id, $name, $label, $req.$describe),
         };
 
@@ -71,6 +71,6 @@ final class FieldView
         $attrs .= $kind === 'number' && isset($b['max']) ? ' max="'.e((string) $b['max']).'"' : '';
         $attrs .= $kind === 'text' ? ' maxlength="'.(int) ($b['max'] ?? 200).'"' : '';
 
-        return '<label for="'.e($id).'">'.$label.'</label><input id="'.e($id).'" type="'.$type.'" name="'.e($name).'" placeholder="'.e((string) ($b['placeholder'] ?? '')).'"'.$attrs.$extra.'>';
+        return '<label class="text-label" for="'.e($id).'">'.$label.'</label><input class="field" id="'.e($id).'" type="'.$type.'" name="'.e($name).'" placeholder="'.e((string) ($b['placeholder'] ?? '')).'"'.$attrs.$extra.'>';
     }
 }
