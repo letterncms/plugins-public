@@ -49,24 +49,6 @@ final class FormsTest extends TestCase
         $this->assertSame(1, substr_count($html, 'data-cms-node='));
     }
 
-    public function test_a_form_is_made_of_the_sites_own_components(): void
-    {
-        $head = [];
-        $this->cms()->hooks()->on('render.head', static function (string $key, string $html) use (&$head) {
-            $head[$key] = $html;
-        });
-        $html = app(FormRenderer::class)->render('quote');
-        $css = $head['cms-forms-css'] ?? '';
-
-        $this->assertStringContainsString('class="button cms-button cms-form__submit" data-variant="solid" data-color="primary" data-size="md"', $html);
-        $this->assertStringContainsString('<input class="field" id="f-email-', $html);
-        $this->assertStringContainsString('<legend class="text-label">Type</legend>', $html);
-        // Layout and states only, in the design's own names, under a block's own styles.
-        $this->assertStringContainsString('@layer design.recipes{', $css);
-        $this->assertStringContainsString('var(--color-danger-text)', $css);
-        $this->assertDoesNotMatchRegularExpression('/#[0-9a-f]{3,6}\b|--color-muted|data-variant="primary"/i', $css.$html);
-    }
-
     public function test_a_page_showing_a_form_is_built_again_when_that_form_changes(): void
     {
         $page = new PageContext(null);
