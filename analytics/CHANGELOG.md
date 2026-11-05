@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-11-05)
+
 ### Changed
 
 - **Breaking.** Needs the CMS 0.9.
