@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Cms\Seo;
 
+use Cms\Cms;
 use Cms\Content\Entries\Entry;
 
 /**
@@ -12,7 +13,7 @@ use Cms\Content\Entries\Entry;
  */
 final class Analyzer
 {
-    public function __construct(private readonly Meta $meta) {}
+    public function __construct(private readonly Cms $cms, private readonly Meta $meta) {}
 
     /** @return array{score: int, checks: list<array{id: string, status: string, label: string, message: string}>} */
     public function analyze(Entry $entry): array
@@ -115,7 +116,7 @@ final class Analyzer
     private function walk(array $data): array
     {
         $stats = ['words' => 0, 'h1' => 0, 'h2' => 0, 'questions' => 0, 'images' => 0, 'images_missing_alt' => 0, 'internal_links' => 0, 'faq' => false];
-        $site = $this->meta->siteUrl();
+        $site = $this->cms->url();
 
         $walk = function ($value) use (&$walk, &$stats, $site): void {
             if (is_string($value)) {

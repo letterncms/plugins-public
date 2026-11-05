@@ -18,7 +18,7 @@ final class SeoPlugin extends Plugin
     public const array FIELDS = [
         ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120, 'instructions' => 'Defaults to the page title.'],
         ['handle' => 'description', 'type' => 'textarea', 'label' => 'Meta Description', 'max' => 320, 'instructions' => '70–160 characters. Defaults to the first paragraph.'],
-        ['handle' => 'image', 'type' => 'media', 'fallback' => 'url', 'label' => 'Social Image', 'max' => 1],
+        ['handle' => 'image', 'type' => 'media', 'label' => 'Social Image', 'max' => 1],
         ['handle' => 'canonical', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'Canonical URL', 'placeholder' => 'This Page'],
         ['handle' => 'schema', 'type' => 'select', 'label' => 'Page Type', 'options' => ['WebPage' => 'Web Page', 'Article' => 'Article', 'AboutPage' => 'About Page', 'ContactPage' => 'Contact Page', 'CollectionPage' => 'Collection Page', 'FAQPage' => 'FAQ Page', 'ProfilePage' => 'Profile Page']],
         ['handle' => 'noindex', 'type' => 'toggle', 'label' => 'Hide from Search Engines'],
@@ -51,7 +51,7 @@ final class SeoPlugin extends Plugin
 
     public function boot(): void
     {
-        $this->cms()->permissions()->register('seo.manage', __('Manage SEO Settings and Redirects'), __('Site'));
+        $this->cms()->permissions()->register('seo.manage', 'Manage SEO Settings and Redirects', 'Site');
         $this->addSeoField();
         $this->settingsSchema();
         $this->rendering();
@@ -103,17 +103,17 @@ final class SeoPlugin extends Plugin
         $this->cms()->settingsRegistry()->register('seo', fields: [
             ['handle' => 'title_format', 'width' => 'half', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'instructions' => 'Use {title} and {site}.'],
             ['handle' => 'home_title', 'width' => 'half', 'type' => 'text', 'label' => 'Home Page Title', 'instructions' => 'Defaults to the site name.'],
-            ['handle' => 'default_image', 'type' => 'media', 'fallback' => 'url', 'label' => 'Default Social Image', 'max' => 1],
+            ['handle' => 'default_image', 'type' => 'media', 'label' => 'Default Social Image', 'max' => 1],
             ['handle' => 'org_type', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
             ['handle' => 'org_name', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
-            ['handle' => 'org_logo', 'section' => 'Who You Are', 'type' => 'media', 'fallback' => 'url', 'label' => 'Logo', 'max' => 1],
+            ['handle' => 'org_logo', 'section' => 'Who You Are', 'type' => 'media', 'label' => 'Logo', 'max' => 1],
             ['handle' => 'same_as', 'section' => 'Who You Are', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://…', 'instructions' => 'Like LinkedIn or GitHub.'],
             ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)', 'instructions' => 'Who you are and what you offer.'],
             ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'instructions' => 'At the page’s address with .md, like /about.md.', 'default' => true],
             ['handle' => 'blocked_crawlers', 'section' => 'AI Crawlers', 'type' => 'select', 'label' => 'Block These AI Crawlers', 'multiple' => true, 'options' => array_combine(array_keys($crawlers), array_map(static fn ($label, $agent) => "{$agent} — {$label}", $crawlers, array_keys($crawlers))), 'instructions' => 'Blocked search crawlers can’t cite you.'],
             ['handle' => 'security_contact', 'section' => 'Indexing and Security', 'type' => 'text', 'label' => 'Security Contact', 'instructions' => 'Where people report vulnerabilities.'],
             ['handle' => 'discourage_indexing', 'section' => 'Indexing and Security', 'type' => 'toggle', 'label' => 'Discourage All Indexing', 'instructions' => 'For staging sites.'],
-        ], icon: 'seo', description: __('Titles, social cards, structured data, sitemap and AI crawlers.'), package: $this->manifest->name, permission: 'seo.manage', order: 20);
+        ], icon: 'seo', description: __('Titles, social cards, structured data, sitemap and AI crawlers.'), permission: 'seo.manage', order: 20);
     }
 
     private function rendering(): void
@@ -140,7 +140,6 @@ final class SeoPlugin extends Plugin
             $tags = [
                 '<meta name="description" content="'.e($m['description']).'">',
                 '<link rel="canonical" href="'.e($m['canonical']).'">',
-                '<meta name="robots" content="'.e($context->preview ? 'noindex, nofollow' : $m['robots']).'">',
                 '<meta property="og:type" content="'.$m['type'].'">',
                 '<meta property="og:title" content="'.e(Meta::isHome($entry) ? $m['title'] : ($entry->data['seo']['title'] ?? $entry->title)).'">',
                 '<meta property="og:description" content="'.e($m['description']).'">',
@@ -149,6 +148,11 @@ final class SeoPlugin extends Plugin
                 '<meta property="og:locale" content="'.e(Meta::ogLocale($entry->locale)).'">',
                 '<meta name="twitter:card" content="'.($m['image'] ? 'summary_large_image' : 'summary').'">',
             ];
+
+            // A preview already says noindex, from the core.
+            if (! $context->preview) {
+                $tags[] = '<meta name="robots" content="'.e($m['robots']).'">';
+            }
 
             if ($m['image']) {
                 $tags[] = '<meta property="og:image" content="'.e($m['image']).'">';
@@ -270,14 +274,8 @@ final class SeoPlugin extends Plugin
         // Moving a live page keeps old links working.
         $hooks->on('entry.uri-changed', fn (Entry $entry, string $from, string $to) => $this->app->make(Redirects::class)->moved($from, $to));
 
-        foreach (['settings.saved'] as $event) {
-            $hooks->on($event, function (string $namespace) {
-                if ($namespace === 'seo') {
-                    $builder = $this->app->make(\Cms\Contracts\SiteBuilder::class);
-                    $builder->available() && $builder->queue(null, __('SEO settings changed'));
-                }
-            });
-        }
+        // Every SEO setting ends up in the built files (head tags, JSON-LD, robots.txt, llms.txt): changing one rebuilds the site.
+        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'seo' => md5((string) json_encode($this->cms()->settings('seo')))]);
     }
 
     private function routes(): void
@@ -314,14 +312,12 @@ final class SeoPlugin extends Plugin
     private function abilities(): void
     {
         $a = $this->cms()->abilities();
-        $package = $this->manifest->name;
 
         $a->register('seo/analyze', [
             'label' => 'Check SEO',
             'description' => 'On-page checks for search engines and AI answers (title, description, headings, alt text, answer-first, questions, links) with a score.',
             'permission' => fn ($user, array $in) => ($e = $this->cms()->entries()->find((string) $in['id'])) && $user?->hasPermission("entries.{$e->collection}.view"),
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string', 'format' => 'ulid']], 'required' => ['id']],
             'handler' => fn (array $in) => $this->app->make(Analyzer::class)->analyze($this->cms()->entries()->findOrFail($in['id'])),
         ]);
@@ -331,7 +327,6 @@ final class SeoPlugin extends Plugin
             'description' => 'The on-page checks of seo/analyze across published pages (the 200 changed last; noindex pages left out): average score, how many pages score below 80, the most common issues and the lowest-scoring pages. Refreshed at most every 10 minutes.',
             'permission' => 'admin.access',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'default' => 5]]],
             'handler' => function (array $in, AbilityContext $ctx) {
                 $health = $this->app->make(Health::class);
@@ -351,7 +346,6 @@ final class SeoPlugin extends Plugin
             'description' => 'The clean Markdown version of a live page that AI crawlers receive.',
             'permission' => 'admin.access',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string', 'format' => 'ulid']], 'required' => ['id']],
             'handler' => fn (array $in) => ['markdown' => $this->app->make(MarkdownTwin::class)->render($this->cms()->entries()->findOrFail($in['id'])->withWorkingCopy())],
         ]);
@@ -361,7 +355,6 @@ final class SeoPlugin extends Plugin
             'description' => 'URL redirects (content/redirects.yaml).',
             'permission' => 'seo.manage',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'handler' => fn () => $this->app->make(Redirects::class)->all(),
         ]);
 
@@ -369,7 +362,6 @@ final class SeoPlugin extends Plugin
             'label' => 'Save Redirects',
             'description' => 'Replace the redirect list. Each: {from: "/old", to: "/new" or "https://…", status: 301|302}.',
             'permission' => 'seo.manage',
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['redirects' => ['type' => 'array', 'items' => ['type' => 'object', 'properties' => [
                 'from' => ['type' => 'string', 'default' => ''], 'to' => ['type' => 'string', 'default' => ''], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
             ]]]], 'required' => ['redirects']],

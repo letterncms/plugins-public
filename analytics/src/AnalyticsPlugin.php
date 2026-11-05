@@ -33,7 +33,7 @@ final class AnalyticsPlugin extends Plugin
     public function boot(): void
     {
         $cms = $this->cms();
-        $cms->permissions()->register('analytics.view', 'View Site Analytics', 'Analytics');
+        $cms->permissions()->register('analytics.view', 'View Site Analytics', 'Analytics', roles: ['editor']);
 
         $cms->settingsRegistry()->register(Collector::SETTINGS, fields: [
             ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true, 'instructions' => 'Visitors who opt out are skipped.'],

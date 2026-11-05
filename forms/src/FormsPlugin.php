@@ -12,6 +12,7 @@ use Cms\Abilities\AbilityException;
 use Cms\Modules\Blocks\BlockRegistry;
 use Cms\Forms\Http\FileController;
 use Cms\Forms\Http\SubmitController;
+use Cms\Modules\Site\Build\SiteBuilder;
 use Cms\Modules\Workspace\Answers;
 use Cms\Packages\Plugin;
 use Throwable;
@@ -28,17 +29,19 @@ final class FormsPlugin extends Plugin
     public function boot(): void
     {
         $p = $this->cms()->permissions();
-        $p->register('forms.view', __('View Form Submissions'), __('Forms'));
-        $p->register('forms.manage', __('Manage Forms'), __('Forms'));
+        $p->register('forms.view', 'View Form Submissions', 'Forms', roles: ['editor']);
+        $p->register('forms.manage', 'Manage Forms', 'Forms', roles: ['editor']);
 
         $this->blocks();
         $this->routes();
         $this->settingsSchema();
         $this->abilities();
 
-        $this->cms()->hooks()->on('form.saved', function () {
-            $builder = $this->app->make(\Cms\Contracts\SiteBuilder::class);
-            $builder->available() && $builder->queue(null, __('A form changed'));
+        // The pages showing a form recorded it while they were built: only those are built again, when the site builds on its own.
+        $this->cms()->hooks()->on('form.saved', function (string $handle) {
+            if ($this->cms()->isActive('letterncms/site') && $this->cms()->settings('site', 'auto_build', true)) {
+                $this->app->make(SiteBuilder::class)->queueForDependency('form:'.$handle, __('A form changed'));
+            }
         });
 
         $this->cms()->admin()->nav('forms', ['path' => '/forms', 'icon' => 'form', 'section' => 'content', 'order' => 75, 'pinned' => true, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
@@ -86,7 +89,7 @@ final class FormsPlugin extends Plugin
     {
         $registry = $this->app->make(BlockRegistry::class);
 
-        foreach (FormFields::blocks($this->manifest->name) as $block) {
+        foreach (FormFields::blocks() as $block) {
             $registry->register($block);
         }
 
@@ -102,10 +105,9 @@ final class FormsPlugin extends Plugin
             'fields' => [['handle' => 'form', 'type' => 'select', 'label' => 'Form', 'placeholder' => 'Choose a Form', 'options' => [], 'dynamic' => 'forms', 'required' => true,
                 'empty' => 'No forms yet', 'action' => ['label' => 'New Form', 'icon' => 'plus', 'to' => '/forms?do=new-form']]],
             'render' => FieldView::form(...),
-            'package' => $this->manifest->name,
         ]);
 
-        $this->cms()->hooks()->addFilter('blocks.options.forms', fn () => array_map(static fn ($f) => $f['title'], $this->app->make(FormRepository::class)->all()));
+        $this->cms()->hooks()->addFilter('fields.options.forms', fn (array $options) => [...$options, ...array_map(static fn ($f) => $f['title'], $this->app->make(FormRepository::class)->all())]);
     }
 
     private function routes(): void
@@ -124,14 +126,13 @@ final class FormsPlugin extends Plugin
             ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Submission Address', 'placeholder' => 'https://cms.example.com', 'instructions' => 'Only when the site is hosted elsewhere.'],
             ['handle' => 'origins', 'type' => 'tags', 'label' => 'Other Allowed Websites', 'placeholder' => 'https://example.com', 'instructions' => 'Like https://example.com.'],
             ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Submissions For', 'suffix' => 'days', 'min' => 0, 'instructions' => '0 keeps them forever.', 'default' => 0],
-        ], icon: 'form', description: __('Where submissions go and how long they stay.'), package: $this->manifest->name, permission: 'forms.manage', order: 50, home: 'forms');
+        ], icon: 'form', description: __('Where submissions go and how long they stay.'), permission: 'forms.manage', order: 50, home: 'forms');
     }
 
     private function abilities(): void
     {
         $a = $this->cms()->abilities();
         $forms = fn () => $this->app->make(FormRepository::class);
-        $package = $this->manifest->name;
         $guard = static function (callable $fn) {
             try {
                 return $fn();
@@ -145,7 +146,6 @@ final class FormsPlugin extends Plugin
             'description' => 'Forms with their field counts and new submissions.',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'handler' => function () use ($forms) {
                 $counts = Submission::query()->selectRaw('form, status, count(*) as n')->groupBy('form', 'status')->get()->groupBy('form');
 
@@ -170,7 +170,6 @@ final class FormsPlugin extends Plugin
             'description' => 'Number of forms, unread submissions across all forms, submissions per day for the last 14 days (oldest first) and the latest submissions with a one-line summary.',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'default' => 5]]],
             'handler' => function (array $in) use ($forms) {
                 $since = now()->startOfDay()->subDays(13);
@@ -206,7 +205,6 @@ final class FormsPlugin extends Plugin
             'description' => 'A form definition: fields (blocks) and settings.',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string']], 'required' => ['handle']],
             'handler' => fn (array $in) => $forms()->find($in['handle']) ?? throw new AbilityException(__('Form not found.'), 'not_found'),
         ]);
@@ -215,7 +213,6 @@ final class FormsPlugin extends Plugin
             'label' => 'Create Form',
             'description' => 'A new form named title, with name, email and message fields to start from. Its handle is made from the title.',
             'permission' => 'forms.manage',
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120]], 'required' => ['title']],
             // What it starts with is a form to change: open it to, or take it back.
             'answer' => static fn (array $form) => Answers::done(__('Created :name', ['name' => $form['title']]), null, [
@@ -244,7 +241,6 @@ final class FormsPlugin extends Plugin
             'label' => 'Save Form',
             'description' => 'Create or update a form. fields is a block tree using form/* blocks (form/text, form/email, form/textarea, form/select, form/radio, form/checkboxes, form/checkbox, form/consent, form/file, form/number, form/date, form/tel, form/url, form/hidden) and layout blocks; each field has props label, name, required. On an existing form, what is left out stays as it is; settings given are merged over its settings.',
             'permission' => 'forms.manage',
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => [
                 'handle' => ['type' => 'string', 'pattern' => '^[a-z0-9][a-z0-9_-]{0,63}$'],
                 'title' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120],
@@ -259,7 +255,6 @@ final class FormsPlugin extends Plugin
             'label' => 'Configure Form',
             'description' => 'Change some of a form’s settings (submit, success, redirect, notify, subject, reply_to_field, store, confirmation, confirmation_subject, confirmation_message, honeypot, min_seconds, webhook, enabled); the rest stay. Returns its settings.',
             'permission' => 'forms.manage',
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string'], 'settings' => ['type' => 'object']], 'required' => ['handle', 'settings']],
             'handler' => function (array $in) use ($forms, $guard) {
                 $forms()->find($in['handle']) ?? throw new AbilityException(__('Form not found.'), 'not_found');
@@ -273,7 +268,6 @@ final class FormsPlugin extends Plugin
             'description' => 'What a form says to visitors in each of the site’s other languages: the fields to fill in, and their values, one per "<language>:s:<setting>" and "<language>:f:<field name>:<property>".',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'expose' => ['mcp' => false],
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string']], 'required' => ['handle']],
             'handler' => function (array $in) use ($forms) {
@@ -287,7 +281,6 @@ final class FormsPlugin extends Plugin
             'label' => 'Translate Form',
             'description' => 'Store what a form says in other languages, as forms/words returns it.',
             'permission' => 'forms.manage',
-            'package' => $package,
             'expose' => ['mcp' => false],
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string'], 'words' => ['type' => 'object']], 'required' => ['handle', 'words']],
             'handler' => function (array $in) use ($forms, $guard) {
@@ -303,7 +296,6 @@ final class FormsPlugin extends Plugin
             'description' => 'Delete a form definition (submissions are kept).',
             'permission' => 'forms.manage',
             'annotations' => ['destructive' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string']], 'required' => ['handle']],
             'handler' => function (array $in) use ($forms) {
                 $forms()->delete($in['handle']);
@@ -317,7 +309,6 @@ final class FormsPlugin extends Plugin
             'description' => 'Submissions of a form, newest first.',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => [
                 'form' => ['type' => 'string'],
                 'status' => ['type' => 'string', 'enum' => ['all', 'new', 'read', 'spam', 'archived'], 'default' => 'all'],
@@ -344,7 +335,6 @@ final class FormsPlugin extends Plugin
             'description' => 'One submission, with its form’s field labels. A new one is marked read.',
             'permission' => 'forms.view',
             'annotations' => ['idempotent' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']],
             'handler' => function (array $in) use ($forms) {
                 $s = Submission::query()->find(strtolower($in['id'])) ?? throw new AbilityException(__('Submission not found.'), 'not_found');
@@ -363,7 +353,6 @@ final class FormsPlugin extends Plugin
             'label' => 'Update Submission',
             'description' => 'Mark a submission as read, spam or archived.',
             'permission' => 'forms.view',
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['ids' => ['type' => 'array', 'items' => ['type' => 'string'], 'maxItems' => 500], 'status' => ['type' => 'string', 'enum' => ['new', 'read', 'spam', 'archived']]], 'required' => ['ids', 'status']],
             'handler' => fn (array $in) => ['updated' => Submission::query()->whereIn('id', array_map('strtolower', $in['ids']))->update(['status' => $in['status'], 'updated_at' => now()])],
         ]);
@@ -373,7 +362,6 @@ final class FormsPlugin extends Plugin
             'description' => 'Permanently delete submissions and their files.',
             'permission' => 'forms.manage',
             'annotations' => ['destructive' => true],
-            'package' => $package,
             'input' => ['type' => 'object', 'properties' => ['ids' => ['type' => 'array', 'items' => ['type' => 'string'], 'maxItems' => 500]], 'required' => ['ids']],
             'handler' => function (array $in) {
                 $subs = Submission::query()->whereIn('id', array_map('strtolower', $in['ids']))->get();
@@ -392,7 +380,6 @@ final class FormsPlugin extends Plugin
             'description' => 'All submissions of a form as CSV.',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
-            'package' => $package,
             'expose' => ['mcp' => false],
             'input' => ['type' => 'object', 'properties' => ['form' => ['type' => 'string']], 'required' => ['form']],
             'handler' => function (array $in) use ($forms) {

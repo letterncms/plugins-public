@@ -4,7 +4,18 @@
 
 ### Changed
 
+- **Breaking.** Needs the CMS 0.9.
+- The Editor role a site starts with can view submissions and manage forms because Forms gives it both permissions, not the CMS: without Forms, the role doesn’t list them.
+- **Breaking.** The Form block lists the forms through the `fields.options.forms` filter (was `blocks.options.forms`), and `FormFields::blocks()` takes no package name.
+- A form that isn’t there says so with the admin’s own Not Found page.
 - Sync lists form submissions as **Form Submissions**, pulled but not pushed, from this plugin's own `composer.json`.
+- A changed form rebuilds only the pages that show it, and only when the site rebuilds on its own (Settings › Site › Rebuild Automatically on Publish), instead of the whole site every time.
+- The notification email wears the site’s mail colours, like every other message the site sends, and comes with a plain-text version.
+- Language names on a form’s Languages tab come from the Languages module.
+
+### Security
+
+- A webhook goes only to a public address, checked after DNS and pinned for the request, IPv6 included.
 
 ## 0.7.0 (2026-11-04)
 

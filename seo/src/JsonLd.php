@@ -30,7 +30,7 @@ final class JsonLd
 
     public function graph(Entry $entry): array
     {
-        $site = $this->meta->siteUrl();
+        $site = $this->cms->url();
         $m = $this->meta->forEntry($entry);
         $org = array_filter([
             '@type' => $this->meta->settings('org_type', 'Organization'),
@@ -79,7 +79,7 @@ final class JsonLd
     {
         $user = $entry->authorId ? \Cms\Users\User::query()->find($entry->authorId) : null;
 
-        return $user ? ['@type' => 'Person', 'name' => $user->name] : ['@id' => $this->meta->siteUrl().'/#organization'];
+        return $user ? ['@type' => 'Person', 'name' => $user->name] : ['@id' => $this->cms->url().'/#organization'];
     }
 
     private function breadcrumbs(Entry $entry): array

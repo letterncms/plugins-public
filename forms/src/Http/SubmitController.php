@@ -85,7 +85,7 @@ final class SubmitController
     /** @return list<string> */
     private function allowedOrigins(Request $request): array
     {
-        $origins = [rtrim($request->getSchemeAndHttpHost(), '/'), rtrim((string) $this->cms->site('url', config('app.url')), '/')];
+        $origins = [rtrim($request->getSchemeAndHttpHost(), '/'), $this->cms->url()];
 
         foreach ((array) $this->cms->settings('forms', 'origins', []) as $origin) {
             $origins[] = rtrim((string) $origin, '/');

@@ -5,7 +5,7 @@ import { registerFieldViews } from './FieldView'
 import { LabelField } from './fields'
 
 registerFieldViews()
-registry.fields.set('forms-label', LabelField as any)
+registry.fields.set('forms-label', LabelField)
 registry.widgets.set('forms-submissions', lazy(() => import('./WidgetSubmissions')))
 // The places are views (FormsViews): these are the pieces they draw with.
 registry.components.set('forms/builder', lazy(() => import('./FormBuilder')))

@@ -7,6 +7,7 @@ namespace Cms\Analytics;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Cms\Cms;
+use Cms\Modules\Languages\Languages;
 
 /** Reads the daily totals back: headline numbers, a series per day and breakdowns. */
 final class Reports
@@ -125,7 +126,7 @@ final class Reports
     {
         $result = $this->rows($period, $dimension, $limit);
         $total = $result['total'];
-        $site = rtrim((string) config('app.url'), '/');
+        $site = $this->cms->url();
         $kinds = ['desktop' => 'desktop', 'mobile' => 'phone', 'tablet' => 'tablet'];
 
         // Each value's share of the whole (0 to 1), a page's address on the site, and a kind of device's icon.
@@ -204,16 +205,24 @@ final class Reports
         ])->all()];
     }
 
-    /** Page views per language, by the path's prefix. */
+    /** Page views per language, by the path's prefix: the Languages module's, so /pt-br/… counts for pt-BR. */
     private function languages(array $between, int $limit): array
     {
-        $locales = $this->cms->locales();
         $default = $this->cms->defaultLocale();
+        $prefixes = [];
+
+        if ($this->cms->isActive('letterncms/languages')) {
+            $languages = app(Languages::class);
+
+            foreach ($languages->codes() as $code) {
+                ($prefix = $languages->prefix($code)) !== '' && $prefixes[$prefix] = $code;
+            }
+        }
+
         $views = [];
 
         foreach (DB::table('analytics_pages')->selectRaw('path, sum(views) as views')->whereBetween('day', $between)->groupBy('path')->get() as $row) {
-            $first = explode('/', ltrim((string) $row->path, '/'))[0];
-            $locale = in_array($first, $locales, true) ? $first : $default;
+            $locale = $prefixes[explode('/', ltrim((string) $row->path, '/'))[0]] ?? $default;
             $views[$locale] = ($views[$locale] ?? 0) + (int) $row->views;
         }
 
@@ -221,7 +230,7 @@ final class Reports
         $items = [];
 
         foreach (array_slice($views, 0, $limit, true) as $locale => $count) {
-            $items[] = ['key' => (string) $locale, 'label' => (class_exists(\Locale::class) ? \Locale::getDisplayLanguage((string) $locale, $locale) : '') ?: (string) $locale, 'visitors' => null, 'views' => $count];
+            $items[] = ['key' => (string) $locale, 'label' => Languages::name((string) $locale), 'visitors' => null, 'views' => $count];
         }
 
         return ['dimension' => 'languages', 'total' => array_sum($views), 'items' => $items];

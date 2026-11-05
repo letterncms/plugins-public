@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Cms\Forms;
 
+use Cms\Admin\Views;
 use Cms\Cms;
+use Cms\Modules\Languages\Languages;
 use Cms\Users\User;
 
 /**
@@ -66,9 +68,7 @@ final class FormsViews
         $form = $this->forms->find($handle);
 
         if ($form === null) {
-            return ['type' => 'ui/page', 'props' => ['title' => __('Not Found'), 'icon' => 'form', 'back' => ['to' => '/forms', 'label' => __('Forms')]], 'children' => [
-                ['type' => 'ui/empty', 'props' => ['icon' => 'form', 'title' => __('Not Found'), 'action' => ['label' => __('Back to Forms'), 'icon' => 'arrow-left', 'to' => '/forms']]],
-            ]];
+            return Views::notFound('form', ['to' => '/forms', 'label' => __('Forms')]);
         }
 
         $input = ['handle' => $handle];
@@ -191,7 +191,7 @@ final class FormsViews
         $fields = [];
 
         foreach (array_values(array_diff($this->cms->locales(), [$this->cms->defaultLocale()])) as $code) {
-            $section = self::language($code, $locale);
+            $section = Languages::name($code, $locale);
             $fields[] = ['handle' => "{$code}:s:submit", 'type' => 'text', 'label' => __('Button Label'), 'placeholder' => $settings['submit'], 'section' => $section];
             $fields[] = ['handle' => "{$code}:s:success", 'type' => 'textarea', 'label' => __('Success Message'), 'placeholder' => $settings['success'], 'rows' => 2, 'section' => $section];
 
@@ -217,14 +217,6 @@ final class FormsViews
         }
 
         return $fields;
-    }
-
-    /** "Nederlands" for nl, in the admin's language. */
-    private static function language(string $code, string $in): string
-    {
-        $name = class_exists(\Locale::class) ? (string) \Locale::getDisplayLanguage(str_replace('-', '_', $code), str_replace('-', '_', $in)) : '';
-
-        return $name !== '' && $name !== $code ? mb_strtoupper(mb_substr($name, 0, 1)).mb_substr($name, 1) : strtoupper($code);
     }
 
     /** A form's translations as one value per field of the Languages tab. */

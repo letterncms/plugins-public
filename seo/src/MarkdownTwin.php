@@ -6,6 +6,7 @@ namespace Cms\Seo;
 
 use Cms\Content\Entries\Entry;
 use Cms\Cms;
+use Cms\Modules\Site\Rendering\Renderer;
 use Cms\Support\Html\Sanitizer;
 
 /**
@@ -94,9 +95,7 @@ final class MarkdownTwin
     /** Components, Repeats and bindings resolved, so the twin has the words visitors see. */
     private function materialize(Entry $entry, array $nodes): array
     {
-        return app()->bound(\Cms\Modules\Site\Rendering\Renderer::class)
-            ? app(\Cms\Modules\Site\Rendering\Renderer::class)->materialize($entry, $nodes)
-            : $nodes;
+        return app(Renderer::class)->materialize($entry, $nodes);
     }
 
     private function entries(array $p): string

@@ -7,6 +7,7 @@ namespace Cms\Forms;
 use Cms\Admin\Translations;
 use Cms\Modules\Blocks\BlockRenderer;
 use Cms\Cms;
+use Cms\Modules\Site\Rendering\PageContext;
 
 /**
  * Renders a form as plain HTML that works without JavaScript (POST + redirect)
@@ -28,6 +29,9 @@ final class FormRenderer
 
     public function render(string $handle, array $options = []): string
     {
+        // A page showing a form is built again when the form changes, even one that's off or not made yet.
+        PageContext::depend('form:'.$handle);
+
         // Visitors read the form and its messages in the page's language.
         $translations = $this->cms->app()->make(Translations::class);
         $locale = $translations->current();
