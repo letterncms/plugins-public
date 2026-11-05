@@ -18,12 +18,21 @@
             "label": "Forms",
             "icon": "form",
             "provider": "Cms\\Forms\\FormsPlugin",
-            "provides": [
-                "forms"
-            ],
             "modules": [
                 "letterncms/blocks"
-            ]
+            ],
+            "sync": {
+                "groups": {
+                    "forms": {
+                        "label": "Form Submissions",
+                        "description": "What visitors sent through forms.",
+                        "tables": [
+                            "form_submissions"
+                        ],
+                        "push": false
+                    }
+                }
+            }
         }
     },
     "homepage": "https://github.com/letterncms/forms"

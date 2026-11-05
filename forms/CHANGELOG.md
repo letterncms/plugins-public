@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Sync lists form submissions as **Form Submissions**, pulled but not pushed, from this plugin's own `composer.json`.
+
 ## 0.7.0 (2026-11-04)
 
 ### Changed
