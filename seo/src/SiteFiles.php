@@ -119,7 +119,7 @@ final class SiteFiles
         }
 
         $lines[] = '';
-        $lines[] = 'Sitemap: '.$this->meta->siteUrl().'/sitemap.xml';
+        $lines[] = 'Sitemap: '.$this->cms->url().'/sitemap.xml';
 
         return implode("\n", $lines)."\n";
     }

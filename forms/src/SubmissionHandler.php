@@ -6,13 +6,14 @@ namespace Cms\Forms;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Http;
 use Cms\Admin\Translations;
 use Cms\Modules\Email\Message;
 use Cms\Modules\Email\Mailer;
+use Cms\Modules\Email\Body;
 use Cms\Cms;
 use Cms\Support\DailySalt;
 use Cms\Support\Files;
+use Cms\Support\SafeFetcher;
 use Throwable;
 
 /**
@@ -203,12 +204,17 @@ final class SubmissionHandler
             return;
         }
 
+        // In the site's mail colours, like every other message it sends.
+        $c = Body::colors();
         $rows = '';
+        $text = [];
 
         foreach (FormFields::extract($form['fields']) as $field) {
             if (array_key_exists($field['name'], $data)) {
+                $label = strip_tags((string) ($field['props']['label'] ?? $field['name']));
                 $value = is_array($data[$field['name']]) ? implode(', ', $data[$field['name']]) : (string) $data[$field['name']];
-                $rows .= '<tr><td style="padding:6px 12px 6px 0;color:#6b6b67;vertical-align:top;white-space:nowrap">'.e(strip_tags((string) ($field['props']['label'] ?? $field['name']))).'</td><td style="padding:6px 0;white-space:pre-wrap">'.e($value).'</td></tr>';
+                $rows .= '<tr><td style="padding:6px 12px 6px 0;color:'.e($c['muted']).';vertical-align:top;white-space:nowrap">'.e($label).'</td><td style="padding:6px 0;color:'.e($c['text']).';white-space:pre-wrap">'.e($value).'</td></tr>';
+                $text[] = $label.': '.$value;
             }
         }
 
@@ -219,10 +225,12 @@ final class SubmissionHandler
         // Written for the people who run the site: in the admin's default language.
         $locale = $this->cms->app()->make(Translations::class)->locale();
 
+        $note = $files ? (count($files) === 1 ? __('1 file is in the admin.', [], $locale) : __(':count files are in the admin.', ['count' => count($files)], $locale)) : null;
         app(Mailer::class)->send(new Message(
             to: $to,
             subject: mb_substr($subject, 0, 200),
-            html: '<p style="margin:0 0 16px"><strong>'.e($form['title']).'</strong></p><table cellpadding="0" cellspacing="0" style="font-size:14px">'.$rows.'</table>'.($files ? '<p style="margin-top:16px;color:#6b6b67">'.e(count($files) === 1 ? __('1 file is in the admin.', [], $locale) : __(':count files are in the admin.', ['count' => count($files)], $locale)).'</p>' : ''),
+            html: '<p style="margin:0 0 16px;color:'.e($c['text']).'"><strong>'.e($form['title']).'</strong></p><table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px">'.$rows.'</table>'.($note !== null ? '<p style="margin:16px 0 0;color:'.e($c['muted']).'">'.e($note).'</p>' : ''),
+            text: implode("\n\n", array_filter([$form['title'], implode("\n", $text), $note])),
             replyTo: $replyTo,
             tag: 'form:'.$form['handle'],
         ));
@@ -254,14 +262,8 @@ final class SubmissionHandler
         }
 
         try {
-            $host = (string) parse_url($url, PHP_URL_HOST);
-            $ip = gethostbyname($host);
-
-            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                throw new \RuntimeException('Webhook host is not public.');
-            }
-
-            Http::timeout(8)->withoutRedirecting()->post($url, ['form' => $form['handle'], 'id' => $submission?->id, 'data' => $data, 'submittedAt' => now()->toIso8601String()]);
+            // Public addresses only, checked after DNS and pinned for the request, and no redirects.
+            SafeFetcher::postJson($url, ['form' => $form['handle'], 'id' => $submission?->id, 'data' => $data, 'submittedAt' => now()->toIso8601String()], 8);
         } catch (Throwable $e) {
             report($e);
         }

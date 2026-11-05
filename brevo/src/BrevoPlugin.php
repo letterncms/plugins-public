@@ -30,7 +30,6 @@ final class BrevoPlugin extends Plugin
             'description' => 'Transactional email totals from Brevo for the last 7 days: requests, delivered, unique opens and clicks, bounces, blocked and spam reports. state is "ok", "inactive" (Brevo is not the mail transport), "no-key" or "error" (with a message). Cached for 10 minutes.',
             'permission' => 'settings.manage',
             'annotations' => ['readOnly' => true],
-            'package' => $this->manifest->name,
             'handler' => fn () => $this->stats(),
         ]);
 

@@ -6,6 +6,7 @@ namespace Cms\Analytics\Http;
 
 use Illuminate\Http\Request;
 use Cms\Analytics\Collector;
+use Cms\Cms;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -14,9 +15,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 final class HitController
 {
-    public function __invoke(Request $request, Collector $collector): Response
+    public function __invoke(Request $request, Collector $collector, Cms $cms): Response
     {
-        $own = array_values(array_filter([$request->getHost(), parse_url((string) config('app.url'), PHP_URL_HOST)]));
+        $own = array_values(array_filter([$request->getHost(), parse_url($cms->url(), PHP_URL_HOST)]));
 
         if ($this->consents($request) && ! $request->cookies->has(Collector::STAFF_COOKIE) && $this->fromOwnSite($request, $own)) {
             $hit = json_decode((string) $request->getContent(), true);

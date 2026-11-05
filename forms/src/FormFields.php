@@ -10,7 +10,7 @@ final class FormFields
     public const array TYPES = ['text', 'email', 'tel', 'url', 'number', 'date', 'textarea', 'select', 'radio', 'checkboxes', 'checkbox', 'consent', 'file', 'hidden'];
 
     /** @return list<array> block definitions */
-    public static function blocks(string $package): array
+    public static function blocks(): array
     {
         $common = [
             ['handle' => 'label', 'type' => 'text', 'label' => 'Label', 'required' => true],
@@ -66,7 +66,6 @@ final class FormFields
                 // The label visitors see starts as the type in sentence case: “Short text”, not “Short Text”.
                 'defaults' => $type === 'consent' ? ['required' => true, 'name' => 'consent'] : ['label' => mb_strtoupper(mb_substr($title, 0, 1)).mb_strtolower(mb_substr($title, 1))],
                 'render' => FieldView::field(...),
-                'package' => $package,
             ];
         }
 

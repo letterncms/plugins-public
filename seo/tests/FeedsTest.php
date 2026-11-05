@@ -13,7 +13,7 @@ final class FeedsTest extends TestCase
 {
     protected function plugins(): array
     {
-        return ['letterncms/blocks', 'letterncms/site', 'letterncms/seo'];
+        return ['letterncms/seo'];
     }
 
     private function publish(string $title, string $at = '2026-10-01T10:00:00+00:00', array $extra = []): array

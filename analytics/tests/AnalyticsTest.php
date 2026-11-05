@@ -105,6 +105,11 @@ final class AnalyticsTest extends TestCase
         $this->assertSame([null, 'Hacker News', 'spring-newsletter'], DB::table('analytics_visitors')->orderBy('id')->pluck('source')->all());
     }
 
+    public function test_editors_start_with_analytics(): void
+    {
+        $this->assertContains('analytics.view', app(\Cms\Users\Roles::class)->defaults()['editor']['permissions']);
+    }
+
     public function test_reports_sum_up_a_period_and_compare_it_with_the_one_before(): void
     {
         $collector = $this->app->make(Collector::class);

@@ -4,7 +4,14 @@
 
 ### Changed
 
+- **Breaking.** Needs the CMS 0.9.
+- The Editor role a site starts with can view analytics because Analytics gives it **View Site Analytics**, not the CMS: without Analytics, the role doesn’t list it.
+- Links to pages in the reports, and which visits count as from the site itself, follow the site’s **Public URL** (Settings → **General**).
 - Sync lists page views and visitors as **Analytics**, pulled but not pushed, from this plugin's own `composer.json`.
+
+### Fixed
+
+- Page views per language count a language whose address prefix differs from its code, such as `/pt-br/` for `pt-BR`, and follow the Languages module’s prefixes. Without the module, every view counts for the default language.
 
 ## 0.5.0 (2026-11-04)
 

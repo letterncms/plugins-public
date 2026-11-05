@@ -18,18 +18,14 @@ final class Meta
         return $this->cms->settings('seo', $key, $default);
     }
 
-    public function siteUrl(): string
-    {
-        return rtrim((string) $this->cms->site('url', config('app.url')), '/');
-    }
-
+    /** A link as search engines and feeds want it: a path on this site made absolute, a full URL as it is. */
     public function absolute(?string $path): ?string
     {
         if ($path === null || $path === '') {
             return null;
         }
 
-        return preg_match('#^https?://#', $path) ? $path : $this->siteUrl().'/'.ltrim($path, '/');
+        return preg_match('#^https?://#', $path) ? $path : $this->cms->url($path);
     }
 
     /** @return array{title: string, description: string, image: ?string, canonical: string, robots: string, type: string, schema: string, published: ?string, modified: ?string} */
@@ -50,7 +46,7 @@ final class Meta
             'canonical' => (string) $this->absolute((string) ($seo['canonical'] ?? '') ?: $entry->uri),
             'robots' => ! empty($seo['noindex']) ? 'noindex, follow' : 'index, follow, max-image-preview:large',
             'type' => $entry->collection()->isDated() ? 'article' : 'website',
-            'schema' => (string) ($seo['schema'] ?? '') ?: ($entry->collection()->isDated() ? 'Article' : ($isHome ? 'WebPage' : 'WebPage')),
+            'schema' => (string) ($seo['schema'] ?? '') ?: ($entry->collection()->isDated() ? 'Article' : 'WebPage'),
             'published' => $entry->publishedAt?->toIso8601String(),
             'modified' => $entry->updatedAt?->toIso8601String(),
         ];

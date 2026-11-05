@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed
+
+- **Breaking.** Needs the CMS 0.9.
+- **Breaking.** `Cms\Seo\Meta::siteUrl()` is gone: use `cms()->url()`, which canonical links, the sitemap, feeds, structured data and the Markdown versions now build on.
+- **Breaking.** Needs the Site module: SEO turns it on with itself.
+- Changing an SEO setting rebuilds the site through the build’s signature, like a plugin update, instead of queueing a full rebuild by hand.
+
+### Fixed
+
+- A preview has one robots tag, the core’s `noindex, nofollow`, instead of two.
+
 ## 0.6.0 (2026-11-04)
 
 ### Changed

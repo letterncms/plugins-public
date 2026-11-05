@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace Cms\Forms\Tests;
 
+use Cms\Forms\FormRenderer;
 use Cms\Forms\FormRepository;
 use Cms\Forms\Submission;
 use Cms\Abilities\AbilityContext;
+use Cms\Modules\Email\Mailer;
+use Cms\Modules\Email\Message;
+use Cms\Modules\Site\Rendering\PageContext;
 use Cms\Tests\TestCase;
 
 final class FormsTest extends TestCase
 {
     protected function plugins(): array
     {
-        return ['letterncms/blocks', 'letterncms/forms'];
+        return ['letterncms/forms'];
     }
 
     protected function setUp(): void
@@ -43,6 +47,54 @@ final class FormsTest extends TestCase
         $this->assertStringContainsString('name="email"', $html);
         // Anything else the canvas found in this document, it would remove as deleted.
         $this->assertSame(1, substr_count($html, 'data-cms-node='));
+    }
+
+    public function test_a_page_showing_a_form_is_built_again_when_that_form_changes(): void
+    {
+        $page = new PageContext(null);
+        $page->run(static fn () => app(FormRenderer::class)->render('quote'));
+        $page->run(static fn () => app(FormRenderer::class)->render('not-made-yet'));
+
+        $this->assertSame(['form:quote', 'form:not-made-yet'], array_keys($page->dependencies));
+    }
+
+    public function test_the_notification_wears_the_sites_mail_colours_and_has_a_plain_text_version(): void
+    {
+        $sent = [];
+        $this->app->instance(Mailer::class, new class($sent) extends Mailer
+        {
+            public function __construct(private array &$sent) {}
+
+            public function send(Message $message): void
+            {
+                $this->sent[] = $message;
+            }
+        });
+        $this->cms()->hooks()->addFilter('email.colors', static fn (array $colors) => [...$colors, 'muted' => '#123456']);
+        app(FormRepository::class)->update('quote', static fn (array $form) => [...$form, 'settings' => [...$form['settings'], 'notify' => ['team@example.com']]]);
+
+        $this->postJson('/api/forms/quote', ['name' => 'Ada', 'email' => 'ada@example.com', 'type' => 'site'])->assertOk();
+
+        $this->assertCount(1, $sent);
+        $this->assertStringContainsString('color:#123456', $sent[0]->html);
+        $this->assertStringNotContainsString('#6b6b67', $sent[0]->html);
+        $this->assertSame("Quote\n\nName: Ada\nEmail: ada@example.com\nType: site", $sent[0]->text);
+    }
+
+    public function test_a_webhook_to_a_private_address_is_never_sent_and_the_submission_still_goes_through(): void
+    {
+        $reported = [];
+        $this->app->make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->reportable(static function (\Throwable $e) use (&$reported) {
+            $reported[] = $e->getMessage();
+
+            return false;
+        });
+        app(FormRepository::class)->update('quote', static fn (array $form) => [...$form, 'settings' => [...$form['settings'], 'webhook' => 'https://127.0.0.1/hook']]);
+
+        $this->postJson('/api/forms/quote', ['name' => 'Ada', 'email' => 'ada@example.com', 'type' => 'site'])->assertOk();
+
+        $this->assertSame(1, Submission::query()->count());
+        $this->assertSame([__('That address is not allowed.')], $reported);
     }
 
     public function test_valid_submission_is_stored(): void
@@ -140,6 +192,16 @@ final class FormsTest extends TestCase
         $tabs = array_column(array_column($this->place('form', ['handle' => 'quote'])['children'][0]['children'], 'props'), 'id');
         $this->assertSame(count($this->cms()->locales()) > 1 ? ['fields', 'options', 'languages', 'submissions'] : ['fields', 'options', 'submissions'], $tabs);
         $this->assertSame('ui/empty', $this->place('form', ['handle' => 'gone'])['children'][0]['type']);
+    }
+
+    public function test_editors_start_with_forms_and_the_form_block_lists_them(): void
+    {
+        $editor = app(\Cms\Users\Roles::class)->defaults()['editor']['permissions'];
+        $this->assertContains('forms.view', $editor);
+        $this->assertContains('forms.manage', $editor);
+
+        $field = \Cms\Content\Fields\Blueprint::withOptions(['handle' => 'form', 'type' => 'select', 'dynamic' => 'forms']);
+        $this->assertSame(['quote' => 'Quote'], $field['options']);
     }
 
     public function test_a_form_page_renames_and_deletes_on_every_tab_and_reads_for_viewers(): void

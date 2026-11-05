@@ -49,9 +49,7 @@ final class FormRepository
         $out = [];
 
         foreach (glob(content_path('forms/*.json')) ?: [] as $file) {
-            $data = json_decode((string) file_get_contents($file), true);
-
-            if (is_array($data)) {
+            if ($data = Files::readJson($file)) {
                 $handle = basename($file, '.json');
                 $out[$handle] = $this->shape($handle, $data);
             }
@@ -137,13 +135,13 @@ final class FormRepository
             throw new InvalidArgumentException(__('Two fields share the same name: :names.', ['names' => implode(', ', array_unique(array_diff_assoc($names, array_unique($names))))]));
         }
 
-        Files::put(content_path("forms/{$handle}.json"), json_encode([
+        Files::putJson(content_path("forms/{$handle}.json"), [
             ...RecordTimestamps::saved($this->find($handle)),
             'title' => (string) ($form['title'] ?? $handle),
             'settings' => $settings,
             'fields' => $fields,
             ...(self::cleanLocales((array) ($form['locales'] ?? [])) ?: []),
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)."\n");
+        ]);
 
         $this->cache = null;
         cms()->hooks()->dispatch('form.saved', $handle);

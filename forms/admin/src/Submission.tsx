@@ -1,5 +1,5 @@
 import { invalidate, locale, run, t, useAbility, type SurfaceComponentProps } from '@letterncms/sdk'
-import { Badge, Button, Dialog, QueryError, Spinner, toast } from '@letterncms/ui'
+import { Badge, Button, Dialog, QueryError, Spinner, formatBytes, toast } from '@letterncms/ui'
 import { useEffect } from 'react'
 
 interface Submission {
@@ -33,7 +33,6 @@ export default function SubmissionDialog({ props, close }: SurfaceComponentProps
       toast.error(e)
     }
   }
-  const kb = (size: number) => new Intl.NumberFormat(locale(), { style: 'unit', unit: 'kilobyte', maximumFractionDigits: 0 }).format(size / 1024)
   const email = typeof s?.data.email === 'string' ? s.data.email : null
 
   return (
@@ -57,7 +56,7 @@ export default function SubmissionDialog({ props, close }: SurfaceComponentProps
           {s.files.map((f, i) => (
             <div key={i} className="contents">
               <dt className="text-muted">{s.labels[f.field] ?? f.field}</dt>
-              <dd className="m-0 max-sm:mb-2"><a href={`/api/admin/forms/files/${s.id}/${i}`} className="underline">{f.name}</a> <span className="text-xs text-faint">{kb(f.size)}</span></dd>
+              <dd className="m-0 max-sm:mb-2"><a href={`/api/admin/forms/files/${s.id}/${i}`} className="underline">{f.name}</a> <span className="text-xs text-faint">{formatBytes(f.size)}</span></dd>
             </div>
           ))}
           {s.meta.page && <div className="contents"><dt className="text-muted">{t('Page')}</dt><dd className="m-0 truncate text-xs">{s.meta.page}</dd></div>}
