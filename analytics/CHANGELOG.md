@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- Sync lists page views and visitors as **Analytics**, pulled but not pushed, from this plugin's own `composer.json`.
+
 ## 0.5.0 (2026-11-04)
 
 ### Changed

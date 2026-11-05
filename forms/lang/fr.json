@@ -200,5 +200,6 @@
   "Webhook": "Webhook",
   "Webhooks must use https://.": "Les webhooks doivent utiliser https://.",
   "Website": "Site web",
+  "What visitors sent through forms.": "Ce que les visiteurs ont envoyé par formulaire.",
   "Where submissions go and how long they stay.": "Où vont les envois et combien de temps ils restent."
 }

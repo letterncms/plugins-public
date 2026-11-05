@@ -18,9 +18,18 @@
             "label": "Analytics",
             "icon": "chart",
             "provider": "Cms\\Analytics\\AnalyticsPlugin",
-            "provides": [
-                "analytics"
-            ]
+            "sync": {
+                "groups": {
+                    "analytics": {
+                        "label": "Analytics",
+                        "description": "Page views and visitors.",
+                        "tables": [
+                            "analytics_*"
+                        ],
+                        "push": false
+                    }
+                }
+            }
         }
     },
     "homepage": "https://github.com/letterncms/analytics"

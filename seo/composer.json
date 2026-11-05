@@ -17,10 +17,7 @@
         "cms": {
             "label": "SEO",
             "icon": "seo",
-            "provider": "Cms\\Seo\\SeoPlugin",
-            "provides": [
-                "seo"
-            ]
+            "provider": "Cms\\Seo\\SeoPlugin"
         }
     },
     "homepage": "https://github.com/letterncms/seo"

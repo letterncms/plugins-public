@@ -15,7 +15,6 @@
     "require": {
         "letterncms/cms": "dev-main as 0.9.0",
         "letterncms/analytics": "*",
-        "letterncms/assistant": "*",
         "letterncms/brevo": "*",
         "letterncms/forms": "*",
         "letterncms/seo": "*"
@@ -26,7 +25,6 @@
     "autoload-dev": {
         "psr-4": {
             "Cms\\Analytics\\Tests\\": "analytics/tests/",
-            "Cms\\Assistant\\Tests\\": "assistant/tests/",
             "Cms\\Forms\\Tests\\": "forms/tests/",
             "Cms\\Seo\\Tests\\": "seo/tests/",
             "Cms\\Tests\\": "vendor/letterncms/cms/tests/"
