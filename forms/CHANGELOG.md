@@ -6,7 +6,6 @@
 
 ### Changed
 
-- **Breaking.** Needs the CMS 0.11.
 - **Breaking.** Forms speak Lettern Design: the submit button is the theme’s `.button` (`data-variant="solid" data-color="primary"`, was `data-variant="primary"`), inputs, selects and labels are the site’s own form fields (`.field`, `.text-label`), errors use the danger text colour, and spacing comes from the theme’s steps. The Form block’s style groups take **Color** where they took Background. A site that styled `.cms-form` fields or `[data-variant="primary"]` restyles them through the theme.
 
 ## 0.8.0 (2026-11-05)
