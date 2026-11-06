@@ -130,6 +130,40 @@ final class FormsTest extends TestCase
         $this->assertArrayNotHasKey('store', Submission::query()->first()->data);
     }
 
+    public function test_tags_sliders_switches_and_chips_look_like_every_field_of_the_site(): void
+    {
+        app(FormRepository::class)->save('brief', [
+            'title' => 'Brief',
+            'fields' => [
+                ['type' => 'form/tags', 'props' => ['label' => 'Topics', 'name' => 'topics', 'max' => 2, 'suggestions' => "Design\nBuild"]],
+                ['type' => 'form/range', 'props' => ['label' => 'Budget', 'name' => 'budget', 'min' => 1000, 'max' => 9000, 'step' => 500, 'prefix' => '€']],
+                ['type' => 'form/checkbox', 'props' => ['label' => 'Newsletter', 'name' => 'news', 'look' => 'switch']],
+                ['type' => 'form/checkboxes', 'props' => ['label' => 'Services', 'name' => 'services', 'look' => 'chips', 'options' => "a|Design\nb|Build"]],
+            ],
+        ]);
+
+        $renderer = app(\Cms\Modules\Blocks\BlockRenderer::class);
+        $html = $renderer->render([['id' => 'embed', 'type' => 'forms/form', 'props' => ['form' => 'brief']]]);
+
+        $this->assertStringContainsString('<div class="cms-input cms-tags" data-cms-tags data-name="topics[]" data-max="2"', $html);
+        $this->assertStringContainsString('<datalist id=', $html);
+        $this->assertStringContainsString('class="cms-range" type="range"', $html);
+        $this->assertStringContainsString('min="1000" max="9000" step="500" value="5000" style="--cms-range:0.5"', $html);
+        $this->assertStringContainsString('€5000</output>', $html);
+        $this->assertStringContainsString('<input type="checkbox" class="cms-switch" role="switch" name="news"', $html);
+        $this->assertStringContainsString('<label class="cms-chip"><input type="checkbox" name="services[]" value="a">Design</label>', $html);
+        $this->assertTrue($renderer->features['fields'] ?? false);
+
+        // Tags arrive one by one, or comma-separated without a script; the same word counts once.
+        $this->postJson('/api/forms/brief', ['topics' => ['Design', ' design ', 'Build'], 'budget' => '4500'])->assertOk();
+        $this->assertSame(['Design', 'Build'], Submission::query()->latest('id')->first()->data['topics']);
+        $this->postJson('/api/forms/brief', ['topics' => 'Design, Build', 'budget' => '1000'])->assertOk();
+        $this->postJson('/api/forms/brief', ['topics' => 'a, b, c', 'budget' => '9500'])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.topics', 'Choose 2 at most.')
+            ->assertJsonPath('errors.budget', 'This number is out of range.');
+    }
+
     public function test_invalid_options_and_emails_are_rejected(): void
     {
         $this->postJson('/api/forms/quote', ['name' => 'Ada', 'email' => 'nope', 'type' => 'evil'])

@@ -131,6 +131,23 @@ final class SubmissionHandler
                 $value = array_values(array_filter((array) $value, 'is_string'));
                 $options = array_keys(FormFields::options($p));
                 $value = array_values(array_intersect($value, array_map('strval', $options)));
+            } elseif ($field['type'] === 'tags') {
+                // Tags arrive one by one (name[]), or comma-separated when the page ran no script.
+                $words = is_array($value) ? array_filter($value, 'is_string') : explode(',', is_string($value) ? $value : '');
+                $value = [];
+
+                foreach ($words as $word) {
+                    $word = mb_substr(trim($word), 0, 40);
+
+                    if ($word !== '' && ! in_array(mb_strtolower($word), array_map('mb_strtolower', $value), true)) {
+                        $value[] = $word;
+                    }
+                }
+
+                if (count($value) > max(1, (int) ($p['max'] ?? 10))) {
+                    $errors[$name] = __('Choose :count at most.', ['count' => max(1, (int) ($p['max'] ?? 10))]);
+                    continue;
+                }
             } elseif (is_array($value)) {
                 $value = null;
             } elseif (is_string($value)) {
@@ -156,6 +173,7 @@ final class SubmissionHandler
                 'email' => filter_var($value, FILTER_VALIDATE_EMAIL) ? null : __('Enter a valid email address.'),
                 'url' => preg_match('#^https?://[^\s]+\.[^\s]+$#i', (string) $value) ? null : __('Enter a full web address (https://…).'),
                 'tel' => preg_match('/^[+()0-9\s.\-]{5,30}$/', (string) $value) ? null : __('Enter a valid phone number.'),
+                'range' => ! is_numeric($value) || (float) $value < (float) ($p['min'] ?? 0) || (float) $value > (float) ($p['max'] ?? 100) ? __('This number is out of range.') : null,
                 'number' => ! is_numeric($value) ? __('Enter a number.') : ((isset($p['min']) && (float) $value < (float) $p['min']) || (isset($p['max']) && (float) $value > (float) $p['max']) ? __('This number is out of range.') : null),
                 'date' => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $value) && strtotime((string) $value) ? null : __('Enter a valid date.'),
                 'select', 'radio' => array_key_exists((string) $value, FormFields::options($p)) ? null : __('Choose one of the options.'),

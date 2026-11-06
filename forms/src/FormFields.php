@@ -7,7 +7,7 @@ namespace Cms\Forms;
 /** Form field blocks (category "form") and helpers to read fields out of a form's block tree. */
 final class FormFields
 {
-    public const array TYPES = ['text', 'email', 'tel', 'url', 'number', 'date', 'textarea', 'select', 'radio', 'checkboxes', 'checkbox', 'consent', 'file', 'hidden'];
+    public const array TYPES = ['text', 'email', 'tel', 'url', 'number', 'date', 'textarea', 'select', 'radio', 'checkboxes', 'checkbox', 'consent', 'tags', 'range', 'file', 'hidden'];
 
     /** @return list<array> block definitions */
     public static function blocks(): array
@@ -20,6 +20,7 @@ final class FormFields
         ];
         $placeholder = ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Placeholder'];
         $options = ['handle' => 'options', 'type' => 'textarea', 'label' => 'Options', 'instructions' => 'One per line. Use value|Label to store a different value.', 'default' => "Option one\nOption two"];
+        $look = ['handle' => 'look', 'type' => 'select', 'label' => 'Show As', 'display' => 'segmented', 'options' => ['list' => __('List'), 'chips' => __('Chips')], 'default' => 'list'];
         $condition = ['handle' => 'show_if', 'type' => 'group', 'label' => 'Only Show When', 'fields' => [
             ['handle' => 'field', 'type' => 'text', 'label' => 'Field Name', 'width' => 'third'],
             ['handle' => 'op', 'type' => 'select', 'label' => 'Is', 'options' => ['equals' => __('equal to'), 'not' => __('not equal to'), 'filled' => __('filled in'), 'empty' => __('empty')], 'default' => 'equals', 'width' => 'third'],
@@ -35,10 +36,12 @@ final class FormFields
             'date' => [__('Date'), __('A date'), 'calendar', []],
             'textarea' => [__('Long Text'), __('Several lines of text'), 'paragraph', [$placeholder, ['handle' => 'rows', 'type' => 'number', 'label' => 'Rows', 'default' => 5], ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 5000]]],
             'select' => [__('Dropdown'), __('One option from a list'), 'select', [$options, ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Empty Option', 'default' => 'Choose…']]],
-            'radio' => [__('Choice'), __('One option, all in view'), 'radio', [$options]],
-            'checkboxes' => [__('Checkboxes'), __('Any number of options'), 'checkbox', [$options]],
-            'checkbox' => [__('Checkbox'), __('A single yes or no'), 'checkbox', []],
+            'radio' => [__('Choice'), __('One option, all in view'), 'radio', [$options, $look]],
+            'checkboxes' => [__('Checkboxes'), __('Any number of options'), 'checkbox', [$options, $look]],
+            'checkbox' => [__('Checkbox'), __('A single yes or no'), 'checkbox', [['handle' => 'look', 'type' => 'select', 'label' => 'Show As', 'display' => 'segmented', 'options' => ['checkbox' => __('Checkbox'), 'switch' => __('Switch')], 'default' => 'checkbox']]],
             'consent' => [__('Consent'), __('Agreement to a statement'), 'shield', [['handle' => 'text', 'type' => 'richtext', 'label' => 'Statement', 'inline' => true, 'default' => 'I agree to the <a href="/privacy">privacy policy</a>.']]],
+            'tags' => [__('Tags'), __('Several words or names'), 'tag', [['handle' => 'placeholder', 'type' => 'text', 'label' => 'Placeholder', 'default' => 'Type and press Enter'], ['handle' => 'max', 'type' => 'number', 'label' => 'Most Tags', 'default' => 10, 'min' => 1, 'max' => 50], ['handle' => 'suggestions', 'type' => 'textarea', 'label' => 'Suggestions', 'instructions' => 'One per line. Offered while typing; anything else can be typed too.']]],
+            'range' => [__('Slider'), __('A number picked on a scale'), 'sliders', [['handle' => 'min', 'type' => 'number', 'label' => 'Minimum', 'default' => 0], ['handle' => 'max', 'type' => 'number', 'label' => 'Maximum', 'default' => 100], ['handle' => 'step', 'type' => 'number', 'label' => 'Step', 'default' => 1, 'min' => 0], ['handle' => 'value', 'type' => 'number', 'label' => 'Starts At'], ['handle' => 'prefix', 'type' => 'text', 'label' => 'Before the Number', 'instructions' => 'Like €.'], ['handle' => 'suffix', 'type' => 'text', 'label' => 'After the Number', 'instructions' => 'Like % or people.'], ['handle' => 'scale', 'type' => 'toggle', 'label' => 'Show Minimum and Maximum', 'default' => true]]],
             'file' => [__('File Upload'), __('A file the visitor sends'), 'upload', [['handle' => 'accept', 'type' => 'select', 'label' => 'Allowed Files', 'options' => ['documents' => __('Documents (PDF, Word)'), 'images' => __('Images'), 'any' => __('Documents and images')], 'default' => 'documents'], ['handle' => 'max_mb', 'type' => 'number', 'label' => 'Max Size (MB)', 'default' => 10, 'min' => 1, 'max' => 50]]],
             'hidden' => [__('Hidden Value'), __('A value sent unseen'), 'eye-off', [['handle' => 'value', 'type' => 'text', 'label' => 'Value']]],
         ];
@@ -49,7 +52,7 @@ final class FormFields
             $fields = match ($type) {
                 'consent' => [['handle' => 'name', 'type' => 'text', 'label' => 'Field Name', 'default' => 'consent'], ...$extra, $condition],
                 'hidden' => [['handle' => 'name', 'type' => 'text', 'label' => 'Field Name', 'required' => true], ...$extra],
-                'checkbox' => [...$common, $condition],
+                'checkbox' => [...$common, ...$extra, $condition],
                 default => [...$common, ...$extra, $condition],
             };
 
