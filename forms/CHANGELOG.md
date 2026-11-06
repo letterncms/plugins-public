@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 (2026-11-06)
+
 ### Added
 
 - **Tags**: visitors add several words or names, each with Enter, with suggestions you give. Without a script they're typed comma-separated.
