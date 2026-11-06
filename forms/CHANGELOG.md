@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- **Tags**: visitors add several words or names, each with Enter, with suggestions you give. Without a script they're typed comma-separated.
+- **Slider**: a number picked on a scale, with what comes before or after it, like *€* or *%*, and the minimum and maximum beside it.
+- **Show As** on **Checkbox** makes it a switch, and on **Choice** and **Checkboxes** shows the options as chips.
+
+### Changed
+
+- **Breaking.** Needs CMS 0.17. Fields look as **Design System → Form Fields** sets them, like every other form on the site, instead of carrying styles of their own, and the send button takes the form's size. A field the server rejects is marked invalid for screen readers too.
+
 ## 0.10.0 (2026-11-05)
 
 ### Changed

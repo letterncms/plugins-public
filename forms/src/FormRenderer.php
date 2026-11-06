@@ -60,7 +60,7 @@ final class FormRenderer
   <input type="hidden" name="_cms_t" value="">
   <input type="hidden" name="_cms_locale" value="{$this->e($locale)}">
   <div class="cms-form__error" id="{$id}-error" role="alert" tabindex="-1"><p>{$error}</p></div>
-  <button type="submit" class="cms-button cms-form__submit" data-variant="primary" data-size="md">{$this->e((string) $s['submit'])}</button>
+  <button type="submit" class="cms-button cms-form__submit" data-variant="primary">{$this->e((string) $s['submit'])}</button>
 </form>
 <div class="cms-form__success" id="{$id}-ok" role="status" tabindex="-1"><p>{$this->e((string) $s['success'])}</p></div>
 HTML;
@@ -77,16 +77,17 @@ HTML;
         $this->cms->hooks()->dispatch('render.head', 'cms-forms-css', '<style>'.$this->css().'</style>');
     }
 
+    /**
+     * What only these forms have: the busy, error and success states. How fields look and sit
+     * is the site's design system (`fields`), as on every form.
+     */
     private function css(): string
     {
-        return '.cms-form{display:grid;gap:1.1rem}.cms-form__hp{position:absolute!important;left:-9999px;width:1px;height:1px;overflow:hidden}'
-            .'[data-field]{display:grid;gap:.4rem}[data-field]>label,[data-field] legend{font-weight:500;font-size:var(--text-sm,.95rem)}[data-field] .cms-req{color:var(--color-muted,#888)}'
-            .'[data-field] input:not([type=checkbox]):not([type=radio]),[data-field] select,[data-field] textarea{width:100%;font:inherit;color:inherit;padding:.65em .8em;border:1px solid var(--color-border,#d4d4d1);border-radius:var(--radius-sm,.4rem);background:var(--color-background,#fff)}'
-            .'[data-field] input:focus,[data-field] select:focus,[data-field] textarea:focus{outline:2px solid var(--color-primary,#2563eb);outline-offset:1px}'
-            .'[data-field] fieldset{border:0;padding:0;margin:0;display:grid;gap:.4rem}[data-field] .cms-choice{display:flex;gap:.55rem;align-items:flex-start;font-weight:400}'
-            .'[data-field] .cms-help{font-size:var(--text-xs,.8rem);color:var(--color-muted,#777)}[data-field] .cms-msg{font-size:var(--text-xs,.8rem);color:#dc2626}[data-field].is-invalid input,[data-field].is-invalid textarea,[data-field].is-invalid select{border-color:#dc2626}'
-            .'[data-field][hidden]{display:none}.cms-form__error,.cms-form__success{display:none}.cms-form__error:target,.cms-form__error.is-shown{display:block;color:#dc2626}'
-            .'.cms-form__success:target,.cms-form__success.is-shown{display:block;padding:1rem 1.25rem;border-radius:var(--radius-md,.6rem);background:color-mix(in srgb,#16a34a 10%,transparent)}.cms-form__submit{justify-self:start}.cms-form.is-busy .cms-form__submit{opacity:.6;pointer-events:none}';
+        return '@layer theme,base,elements,components,utilities;@layer components{'
+            .'.cms-form.is-busy .cms-form__submit{opacity:.6;pointer-events:none}'
+            .'.cms-form__error,.cms-form__success{display:none}.cms-form__error:target,.cms-form__error.is-shown{display:block;color:var(--field-invalid-color,#d92d20)}'
+            .'.cms-form__success:target,.cms-form__success.is-shown{display:block;padding:1rem 1.25rem;border-radius:var(--field-radius,.5rem);background:color-mix(in srgb,var(--color-success,#16a34a) 10%,transparent)}'
+            .'}';
     }
 
     private function script(): string
@@ -103,6 +104,7 @@ for (const form of document.querySelectorAll('form[data-cms-form]')) {
     form.classList.add('is-busy');
     form.querySelectorAll('.cms-msg').forEach((m) => m.remove());
     form.querySelectorAll('.is-invalid').forEach((f) => f.classList.remove('is-invalid'));
+    form.querySelectorAll('[aria-invalid]').forEach((c) => c.removeAttribute('aria-invalid'));
     const error = document.getElementById(form.id + '-error');
     error?.classList.remove('is-shown');
     try {
@@ -119,6 +121,7 @@ for (const form of document.querySelectorAll('form[data-cms-form]')) {
         const field = form.querySelector(`[data-field="${name}"]`);
         if (!field) continue;
         field.classList.add('is-invalid');
+        field.querySelectorAll('input,select,textarea').forEach((c) => c.setAttribute('aria-invalid', 'true'));
         const p = document.createElement('p'); p.className = 'cms-msg'; p.textContent = message; field.appendChild(p);
       }
       if (error) { error.querySelector('p').textContent = json.message || error.querySelector('p').textContent; error.classList.add('is-shown'); error.focus() }
