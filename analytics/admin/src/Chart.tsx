@@ -5,11 +5,15 @@ import { longDate, shortDate } from './data'
 
 const PAD = { top: 12, right: 12, bottom: 28, left: 48 }
 
-/** Round numbers for the y axis: 0 and two to four clean steps, the top as close to the maximum as they allow. */
-function ticks(max: number, decimals: boolean): number[] {
-  if (max <= 0) return [0, 1, 2, 3]
+/**
+ * Round numbers for the y axis: 0 and two to four clean steps, the top as close to the maximum as they allow.
+ * A count (`whole`) only has whole steps: one view is drawn against 0, 1 and 2, never against 0.5.
+ */
+function ticks(max: number, whole: boolean): number[] {
+  if (max <= 0) return whole ? [0, 1, 2] : [0, 1, 2, 3]
+  if (whole && max < 4) return Array.from({ length: Math.max(2, Math.ceil(max)) + 1 }, (_, i) => i)
   const magnitude = 10 ** Math.floor(Math.log10(max / 4))
-  const steps = [1, 2, 2.5, 5, 10, 20].map((m) => m * magnitude).filter((s) => decimals || Number.isInteger(s))
+  const steps = [1, 2, 2.5, 5, 10, 20].map((m) => m * magnitude).filter((s) => !whole || Number.isInteger(s))
   const fits = steps.map((step) => ({ step, count: Math.ceil(max / step) })).filter((c) => c.count >= 2 && c.count <= 4)
   const best = fits.sort((a, b) => a.step * a.count - b.step * b.count || a.count - b.count)[0] ?? { step: Math.ceil(max / 3), count: 3 }
   return Array.from({ length: best.count + 1 }, (_, i) => Number((i * best.step).toPrecision(12)))
@@ -20,7 +24,7 @@ function ticks(max: number, decimals: boolean): number[] {
  * few dates. Hover or arrow keys move a crosshair that reads out the day; the numbers are
  * also in a table for screen readers.
  */
-export function AreaChart({ points, format, label, height = 240, pending }: { points: { date: string; value: number }[]; format: (value: number) => string; label: string; height?: number; pending?: boolean }) {
+export function AreaChart({ points, format, label, height = 240, pending, whole = false }: { points: { date: string; value: number }[]; format: (value: number) => string; label: string; height?: number; pending?: boolean; /** The values are counts: the axis has whole numbers only. */ whole?: boolean }) {
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -36,7 +40,7 @@ export function AreaChart({ points, format, label, height = 240, pending }: { po
 
   const n = points.length
   const values = points.map((p) => p.value)
-  const scale = ticks(Math.max(...values, 0), values.some((v) => !Number.isInteger(v)) || Math.max(...values, 0) < 3)
+  const scale = ticks(Math.max(...values, 0), whole)
   const top = scale[scale.length - 1]
   const plotW = Math.max(0, width - PAD.left - PAD.right)
   const plotH = height - PAD.top - PAD.bottom
@@ -70,7 +74,7 @@ export function AreaChart({ points, format, label, height = 240, pending }: { po
   const today = n > 0 && point === points[n - 1]
 
   return (
-    <div ref={box} className={cn('relative select-none transition-opacity duration-180', pending && 'opacity-60')}>
+    <div ref={box} className={cn('relative select-none transition-opacity duration-move', pending && 'opacity-60')}>
       {width > 0 && (
         <svg width={width} height={height} role="img" aria-label={label} tabIndex={0} onKeyDown={keys} onBlur={() => setActive(null)} className="block overflow-visible text-ink outline-none focus-visible:[&_.cms-focus]:stroke-focus">
           <defs>
@@ -112,7 +116,7 @@ export function AreaChart({ points, format, label, height = 240, pending }: { po
       {point && active !== null && (
         <div
           role="status"
-          className="pointer-events-none absolute top-0 z-10 min-w-36 -translate-x-1/2 rounded-md border border-border-float bg-bg px-3 py-2 shadow-pop"
+          className="pointer-events-none absolute top-0 z-raised min-w-36 -translate-x-1/2 rounded-md border border-border-float bg-bg px-3 py-2 shadow-pop"
           style={{ left: Math.max(PAD.left + 64, Math.min(width - 64, x(active))) }}
         >
           <p className="m-0 text-2xs text-muted">{today ? t('Today so far') : longDate(point.date)}</p>

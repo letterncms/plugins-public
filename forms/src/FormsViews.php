@@ -34,7 +34,7 @@ final class FormsViews
     {
         // The one way to make a form, once: in the header, also while the list is empty.
         $new = ['label' => __('New Form'), 'name' => 'new-form', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'forms/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/forms/{result.handle}',
-            'form' => ['title' => __('New Form'), 'text' => __('Starts with name, email and message.'), 'confirm' => __('Create'), 'fields' => [
+            'form' => ['title' => __('New Form'), 'confirm' => __('Create Form'), 'fields' => [
                 ['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Quote Request'), 'required' => true, 'autofocus' => true],
             ]]];
 
@@ -112,7 +112,7 @@ final class FormsViews
         return ['type' => 'ui/records', 'props' => [
             'id' => 'submissions', 'label' => __('Submissions'),
             'source' => ['ability' => 'form-submissions/list', 'input' => ['form' => $form['handle']]],
-            'search' => ['param' => 'search', 'placeholder' => __('Search…')],
+            'search' => ['param' => 'search', 'placeholder' => __('Search Submissions')],
             'filters' => [['param' => 'status', 'label' => __('Show'), 'all' => __('Inbox'), 'options' => self::options(['new' => __('Unread'), 'archived' => __('Archived'), 'spam' => __('Spam')])]],
             'paged' => ['perPage' => 100],
             'columns' => [
@@ -168,18 +168,18 @@ final class FormsViews
             ['handle' => 'enabled', 'type' => 'toggle', 'label' => __('Accept Submissions')],
             ['handle' => 'submit', 'type' => 'text', 'label' => __('Button Label')],
             ['handle' => 'success', 'type' => 'textarea', 'label' => __('Success Message'), 'rows' => 2],
-            ['handle' => 'redirect', 'type' => 'url', 'component' => 'link', 'label' => __('Or Redirect To'), 'placeholder' => __('A Thank-You Page')],
+            ['handle' => 'redirect', 'type' => 'url', 'component' => 'link', 'label' => __('Or Redirect To'), 'placeholder' => '/thank-you'],
             ['handle' => 'notify', 'type' => 'tags', 'label' => __('Email Submissions To'), 'placeholder' => 'name@example.com', 'section' => __('Email')],
             // Literal braces: the subject's own placeholders, not the view's.
-            ['handle' => 'subject', 'type' => 'text', 'label' => __('Email Subject'), 'instructions' => __('Use {{form}} or any {{field_name}}.'), 'section' => __('Email')],
-            ['handle' => 'reply_to_field', 'type' => 'text', 'label' => __('Reply-to Field'), 'instructions' => __('The field that holds the sender’s email.'), 'section' => __('Email')],
+            ['handle' => 'subject', 'type' => 'text', 'label' => __('Email Subject'), 'placeholder' => 'New submission: {{form}}', 'section' => __('Email')],
+            ['handle' => 'reply_to_field', 'type' => 'text', 'label' => __('Reply-to Field'), 'placeholder' => 'email', 'mono' => true, 'section' => __('Email')],
             ['handle' => 'confirmation', 'type' => 'toggle', 'label' => __('Send the Person a Confirmation Email'), 'section' => __('Email')],
             ['handle' => 'confirmation_subject', 'type' => 'text', 'label' => __('Confirmation Subject'), 'if' => ['confirmation' => true], 'section' => __('Email')],
             ['handle' => 'confirmation_message', 'type' => 'richtext', 'label' => __('Confirmation Message'), 'if' => ['confirmation' => true], 'section' => __('Email')],
             ['handle' => 'store', 'type' => 'toggle', 'label' => __('Keep Submissions in {brand}'), 'section' => __('Submissions')],
             ['handle' => 'honeypot', 'type' => 'toggle', 'label' => __('Hidden Spam Trap'), 'section' => __('Submissions')],
             ['handle' => 'min_seconds', 'type' => 'number', 'label' => __('Minimum Seconds to Fill In'), 'min' => 0, 'max' => 60, 'section' => __('Submissions')],
-            ['handle' => 'webhook', 'type' => 'url', 'label' => __('Webhook'), 'instructions' => __('Each submission is POSTed as JSON to this https:// URL (Zapier, Make, n8n, your CRM).'), 'section' => __('Submissions')],
+            ['handle' => 'webhook', 'type' => 'url', 'label' => __('Webhook'), 'placeholder' => 'https://example.com/hook', 'section' => __('Submissions')],
         ];
     }
 

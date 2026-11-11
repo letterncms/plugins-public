@@ -248,6 +248,15 @@ final class CountsModeTest extends TestCase
         $this->assertNull($this->cms()->abilities()->execute('analytics/summary', [], AbilityContext::system())['visitors']);
     }
 
+    public function test_the_settings_explain_only_what_a_choice_costs(): void
+    {
+        $fields = $this->cms()->settingsRegistry()->schemas()['analytics']['fields'];
+
+        // One note, for the one choice that deletes something. The rest is said by labels and placeholders.
+        $this->assertSame([], array_filter(array_column($fields, 'instructions', 'handle')));
+        $this->assertSame(['exclude' => '/drafts/*', 'retention_days' => 'Forever', 'endpoint' => 'https://cms.example.com'], array_filter(array_column($fields, 'placeholder', 'handle')));
+    }
+
     public function test_the_place_is_a_view_of_what_is_counted(): void
     {
         $view = fn () => json_encode($this->cms()->abilities()->execute('views/get', ['id' => 'analytics'], AbilityContext::forUser($this->admin(), 'admin'))['root'], JSON_UNESCAPED_SLASHES);

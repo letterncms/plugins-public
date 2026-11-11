@@ -80,6 +80,16 @@ final class RedirectsTest extends TestCase
         $this->assertSame($set, $this->run_('redirects/list'));
     }
 
+    public function test_the_settings_explain_only_what_a_choice_costs(): void
+    {
+        $fields = $this->cms()->settingsRegistry()->schemas()['seo']['fields'];
+
+        $this->assertSame(['blocked_crawlers' => 'Blocked search crawlers can’t cite you.'], array_filter(array_column($fields, 'instructions', 'handle')));
+        $this->assertSame(['Organization', 'AI Crawlers', 'Indexing and Security'], array_values(array_unique(array_filter(array_column($fields, 'section')))));
+        // The SEO panel of an entry has no notes either.
+        $this->assertSame([], array_filter(array_column(\Cms\Seo\SeoPlugin::FIELDS, 'instructions')));
+    }
+
     public function test_an_address_redirects_once_and_only_to_somewhere(): void
     {
         $this->run_('redirects/create', ['from' => '/old', 'to' => 'https://example.com/new', 'status' => 302]);
