@@ -62,7 +62,7 @@ export function SeoPanel({ entry, collection, values, title, setValue, editable,
 
       <section className="border-b border-border px-4 pb-4">
         <h3 className="m-0 flex h-10 items-center text-xs font-semibold text-ink">{t('Search Preview')}</h3>
-        <div className="rounded-md bg-bg px-3 py-2.5 shadow-[0_0_0_1px_var(--cms-border)]">
+        <div className="rounded-md bg-bg px-3 py-2.5 ring-1 ring-border">
           <div className="truncate text-xs text-muted">{host}{entry?.uri && entry.uri !== '/' ? entry.uri.replace(/\//g, ' › ').replace(/^ › /, ' › ') : ''}</div>
           <div className="mt-0.5 line-clamp-2 text-[15px] leading-5 text-[#1a0dab] dark:text-[#8ab4f8]">{shownTitle}</div>
           <div className="mt-1 line-clamp-2 text-xs leading-[18px] text-muted">{description || <span className="text-faint">{t('No description: the first paragraph is used.')}</span>}</div>
@@ -86,7 +86,7 @@ export function SeoPanel({ entry, collection, values, title, setValue, editable,
           )}
           {analysis.isLoading && <Spinner size={14} />}
           {analysis.data && <Score value={analysis.data.score} />}
-          {open.length > 0 && <Icon name="chevron-down" size={14} className={cn('shrink-0 text-faint transition-transform duration-120', !expanded && '-rotate-90')} />}
+          {open.length > 0 && <Icon name="chevron-down" size={14} className={cn('shrink-0 text-faint transition-transform duration-base', !expanded && '-rotate-90')} />}
         </button>
         {!entry && <p className="m-0 text-xs text-muted">{t('Checks are available after the first save.')}</p>}
         {analysis.isError && <QueryError compact message={t('Couldn’t load SEO checks.')} onRetry={() => void analysis.refetch()} />}

@@ -17,8 +17,8 @@ use Cms\Users\User;
 final class SeoPlugin extends Plugin
 {
     public const array FIELDS = [
-        ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120, 'instructions' => 'Defaults to the page title.'],
-        ['handle' => 'description', 'type' => 'textarea', 'label' => 'Meta Description', 'max' => 320, 'instructions' => '70–160 characters. Defaults to the first paragraph.'],
+        ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120],
+        ['handle' => 'description', 'type' => 'textarea', 'label' => 'Meta Description', 'max' => 320],
         ['handle' => 'image', 'type' => 'media', 'label' => 'Social Image', 'max' => 1],
         ['handle' => 'canonical', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'Canonical URL', 'placeholder' => 'This Page'],
         ['handle' => 'schema', 'type' => 'select', 'label' => 'Page Type', 'options' => ['WebPage' => 'Web Page', 'Article' => 'Article', 'AboutPage' => 'About Page', 'ContactPage' => 'Contact Page', 'CollectionPage' => 'Collection Page', 'FAQPage' => 'FAQ Page', 'ProfilePage' => 'Profile Page']],
@@ -117,18 +117,18 @@ final class SeoPlugin extends Plugin
         $crawlers = SiteFiles::AI_CRAWLERS;
 
         $this->cms()->settingsRegistry()->register('seo', fields: [
-            ['handle' => 'title_format', 'width' => 'half', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'instructions' => 'Use {title} and {site}.'],
-            ['handle' => 'home_title', 'width' => 'half', 'type' => 'text', 'label' => 'Home Page Title', 'instructions' => 'Defaults to the site name.'],
+            ['handle' => 'title_format', 'width' => 'half', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'placeholder' => '{title} · {site}'],
+            ['handle' => 'home_title', 'width' => 'half', 'type' => 'text', 'label' => 'Home Page Title'],
             ['handle' => 'default_image', 'type' => 'media', 'label' => 'Default Social Image', 'max' => 1],
-            ['handle' => 'org_type', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
-            ['handle' => 'org_name', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
-            ['handle' => 'org_logo', 'section' => 'Who You Are', 'type' => 'media', 'label' => 'Logo', 'max' => 1],
-            ['handle' => 'same_as', 'section' => 'Who You Are', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://…', 'instructions' => 'Like LinkedIn or GitHub.'],
-            ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)', 'instructions' => 'Who you are and what you offer.'],
-            ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'instructions' => 'At the page’s address with .md, like /about.md.', 'default' => true],
+            ['handle' => 'org_type', 'section' => 'Organization', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
+            ['handle' => 'org_name', 'section' => 'Organization', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
+            ['handle' => 'org_logo', 'section' => 'Organization', 'type' => 'media', 'label' => 'Logo', 'max' => 1],
+            ['handle' => 'same_as', 'section' => 'Organization', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://linkedin.com/company/…'],
+            ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)'],
+            ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'default' => true],
             ['handle' => 'blocked_crawlers', 'section' => 'AI Crawlers', 'type' => 'select', 'label' => 'Block These AI Crawlers', 'multiple' => true, 'options' => array_combine(array_keys($crawlers), array_map(static fn ($label, $agent) => "{$agent} — {$label}", $crawlers, array_keys($crawlers))), 'instructions' => 'Blocked search crawlers can’t cite you.'],
-            ['handle' => 'security_contact', 'section' => 'Indexing and Security', 'type' => 'text', 'label' => 'Security Contact', 'instructions' => 'Where people report vulnerabilities.'],
-            ['handle' => 'discourage_indexing', 'section' => 'Indexing and Security', 'type' => 'toggle', 'label' => 'Discourage All Indexing', 'instructions' => 'For staging sites.'],
+            ['handle' => 'security_contact', 'section' => 'Indexing and Security', 'type' => 'text', 'label' => 'Security Contact', 'placeholder' => 'security@example.com'],
+            ['handle' => 'discourage_indexing', 'section' => 'Indexing and Security', 'type' => 'toggle', 'label' => 'Discourage All Indexing'],
         ], icon: 'seo', description: __('Titles, social cards, structured data, sitemap and AI crawlers.'), permission: 'seo.manage', order: 20);
     }
 

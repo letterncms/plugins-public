@@ -36,12 +36,12 @@ final class AnalyticsPlugin extends Plugin
         $cms->permissions()->register('analytics.view', 'View Site Analytics', 'Analytics', roles: ['editor']);
 
         $cms->settingsRegistry()->register(Collector::SETTINGS, fields: [
-            ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true, 'instructions' => 'Visitors who opt out are skipped.'],
-            ['handle' => 'mode', 'type' => 'select', 'label' => 'What to Count', 'default' => Collector::COUNTS, 'options' => [Collector::COUNTS => __('Page Views Only'), Collector::VISITORS => __('Visitors, Sources and Devices')], 'display' => 'radio', 'instructions' => 'Switching back to page views deletes visitor data.', 'if' => ['enabled' => true]],
-            ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS], 'instructions' => 'Many countries require it for visitor data.'],
-            ['handle' => 'exclude', 'type' => 'tags', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'instructions' => 'A path, or a pattern like /drafts/*.', 'if' => ['enabled' => true]],
-            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Visits For', 'suffix' => 'days', 'min' => 0, 'default' => 730, 'instructions' => '0 keeps them forever.', 'if' => ['enabled' => true]],
-            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Reporting Address', 'placeholder' => 'https://cms.example.com', 'instructions' => 'Only when the site is hosted elsewhere.', 'if' => ['enabled' => true]],
+            ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true],
+            ['handle' => 'mode', 'type' => 'select', 'label' => 'What to Count', 'default' => Collector::COUNTS, 'options' => [Collector::COUNTS => __('Page Views Only'), Collector::VISITORS => __('Visitors, Sources and Devices')], 'display' => 'radio', 'if' => ['enabled' => true]],
+            ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS]],
+            ['handle' => 'exclude', 'type' => 'tags', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'if' => ['enabled' => true]],
+            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Visits For', 'suffix' => 'days', 'min' => 0, 'default' => 730, 'placeholder' => 'Forever', 'if' => ['enabled' => true]],
+            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Reporting Address', 'placeholder' => 'https://cms.example.com', 'if' => ['enabled' => true]],
         ], icon: 'chart', description: 'Visitor counting on the published site.', order: 55, home: 'analytics');
 
         $this->routes();
