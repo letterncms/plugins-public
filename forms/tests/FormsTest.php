@@ -223,6 +223,10 @@ final class FormsTest extends TestCase
     public function test_the_forms_places_are_views(): void
     {
         $this->assertSame('ui/records', $this->place('forms')['children'][0]['children'][0]['children'][0]['type']);
+        // The empty list offers the one way to make a form, the same as the tab's.
+        $list = $this->place('forms')['children'][0]['children'][0];
+        $this->assertSame('forms/create', $list['props']['actions'][0]['ability']);
+        $this->assertSame($list['props']['actions'][0], $list['children'][0]['props']['empty']['action']);
         $tabs = array_column(array_column($this->place('form', ['handle' => 'quote'])['children'][0]['children'], 'props'), 'id');
         $this->assertSame(count($this->cms()->locales()) > 1 ? ['fields', 'options', 'languages', 'submissions'] : ['fields', 'options', 'submissions'], $tabs);
         $this->assertSame('ui/empty', $this->place('form', ['handle' => 'gone'])['children'][0]['type']);

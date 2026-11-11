@@ -12,6 +12,7 @@
 
 - The Forms settings say less: no notes under the fields, and **Keep Submissions For** left empty reads **Forever**.
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- With no forms yet, the Forms screen offers **New Form** right where the list would be.
 
 ## 0.11.0 (2026-11-06)
 

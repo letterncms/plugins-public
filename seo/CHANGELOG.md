@@ -5,12 +5,14 @@
 ### Added
 
 - German, for everything the plugin says in the admin.
+- `redirects/create` adds one redirect without replacing the list, for the admin, agents, the API and the CLI.
 
 ### Changed
 
 - The Editor role a site starts with can manage SEO settings and redirects: **Manage SEO Settings and Redirects** comes with it, as the permissions of the other plugins do.
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- With no redirects yet, the Redirects tab says so and offers **New Redirect**; the table shows once there is one.
 
 ## 0.7.0 (2026-11-05)
 

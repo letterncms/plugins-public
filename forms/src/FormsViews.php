@@ -32,14 +32,15 @@ final class FormsViews
 
     private function list(): array
     {
+        // The one way to make a form: in the header, and in the list while it is empty.
+        $new = ['label' => __('New Form'), 'name' => 'new-form', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'forms/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/forms/{result.handle}',
+            'form' => ['title' => __('New Form'), 'text' => __('Starts with name, email and message.'), 'confirm' => __('Create'), 'fields' => [
+                ['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Quote Request'), 'required' => true, 'autofocus' => true],
+            ]]];
+
         return ['type' => 'ui/page', 'props' => ['title' => __('Forms'), 'icon' => 'form'], 'children' => [
             ['type' => 'ui/tabs', 'children' => [
-                ['type' => 'ui/tab', 'props' => ['id' => 'forms', 'label' => __('Forms'), 'actions' => [
-                    ['label' => __('New Form'), 'name' => 'new-form', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'forms/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/forms/{result.handle}',
-                        'form' => ['title' => __('New Form'), 'text' => __('Starts with name, email and message.'), 'confirm' => __('Create'), 'fields' => [
-                            ['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Quote Request'), 'required' => true, 'autofocus' => true],
-                        ]]],
-                ]], 'children' => [
+                ['type' => 'ui/tab', 'props' => ['id' => 'forms', 'label' => __('Forms'), 'actions' => [$new]], 'children' => [
                     ['type' => 'ui/records', 'props' => [
                         'id' => 'forms', 'label' => __('Forms'), 'key' => 'handle',
                         'source' => ['ability' => 'forms/list'],
@@ -56,7 +57,7 @@ final class FormsViews
                             ['label' => __('Submissions'), 'icon' => 'inbox', 'to' => '/forms/{row.handle}?tab=submissions'],
                             ['label' => __('Settings'), 'icon' => 'settings', 'to' => '/forms/{row.handle}?tab=options'],
                         ],
-                        'empty' => ['icon' => 'form', 'title' => __('No forms yet')],
+                        'empty' => ['icon' => 'form', 'title' => __('No forms yet'), 'action' => $new],
                     ]],
                 ]],
             ]],

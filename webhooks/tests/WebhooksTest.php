@@ -465,6 +465,8 @@ final class WebhooksTest extends TestCase
         $list = $views->resolve('webhooks', $admin);
         $this->assertSame('ui/page', $list['root']['type']);
         $this->assertSame('webhooks/create', $list['root']['props']['actions'][0]['ability']);
+        // The empty list offers the same one action as the header.
+        $this->assertSame($list['root']['props']['actions'][0], $list['root']['children'][0]['props']['empty']['action']);
         $this->assertSame('Warehouse {1}', $this->run_('webhooks/list')[0]['title']);
 
         // Whoever made it sees the secret on its page once; nobody else, and never again.
