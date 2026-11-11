@@ -37,11 +37,11 @@ Each form has settings of its own on its Settings tab: what the button and the s
 | `forms/configure` | `forms.manage` | Change some of a form's settings. |
 | `forms/words` | `forms.view` | What a form says in the site's other languages. |
 | `forms/translate` | `forms.manage` | Store what a form says in other languages. |
-| `forms/delete` | `forms.manage` | Delete a form. Its submissions are kept. |
+| `forms/delete` | `forms.manage` | Delete a form. Its submissions are kept. With `dryRun: true` it only names the form. |
 | `forms/submissions` | `forms.view` | Submissions of a form, newest first. |
 | `forms/submission` | `forms.view` | One submission. A new one is marked read. |
 | `forms/submission-update` | `forms.view` | Mark submissions as new, read, spam or archived. |
-| `forms/submission-delete` | `forms.manage` | Delete submissions and their files. |
+| `forms/submission-delete` | `forms.manage` | Delete submissions and their files. With `dryRun: true` it only lists them. |
 | `forms/export` | `forms.view` | All submissions of a form as CSV. |
 
 The Editor role starts with `forms.view` and `forms.manage`.

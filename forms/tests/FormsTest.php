@@ -275,6 +275,22 @@ final class FormsTest extends TestCase
         $this->assertCount(4, $quote['fields']);
     }
 
+    public function test_a_dry_run_names_the_form_or_submissions_a_delete_would_remove(): void
+    {
+        $s = Submission::query()->create(['form' => 'quote', 'data' => ['name' => 'Ada'], 'status' => 'new']);
+        $dry = fn (string $ability, array $input) => $this->cms()->abilities()->execute($ability, [...$input, 'dryRun' => true], AbilityContext::forUser($this->admin(), 'admin'));
+
+        $report = $dry('forms/delete', ['handle' => 'quote']);
+        $this->assertSame('full', $report['checked']);
+        $this->assertSame([['action' => 'delete', 'type' => 'form', 'handle' => 'quote', 'title' => 'Quote', 'keeps' => ['submissions' => 1]]], $report['changes']);
+        $this->assertSame([], $dry('forms/delete', ['handle' => 'nothing'])['changes']);
+        $this->assertNotNull(app(FormRepository::class)->find('quote'));
+
+        $report = $dry('forms/submission-delete', ['ids' => [strtoupper((string) $s->id), 'no-such-id']]);
+        $this->assertSame([['action' => 'delete', 'type' => 'submission', 'id' => $s->id, 'form' => 'quote', 'removes' => ['files' => false]]], $report['changes']);
+        $this->assertSame(1, Submission::query()->count());
+    }
+
     public function test_opening_a_submission_reads_it_and_the_export_downloads(): void
     {
         $s = Submission::query()->create(['form' => 'quote', 'data' => ['name' => 'Ada', 'email' => 'ada@example.com'], 'status' => 'new']);

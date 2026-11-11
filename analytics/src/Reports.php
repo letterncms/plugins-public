@@ -34,12 +34,12 @@ final class Reports
     /** Page views only (the default), rather than visitors, sources and devices. */
     public function counting(): bool
     {
-        return $this->cms->settings(Collector::SETTINGS, 'mode', Collector::COUNTS) !== Collector::VISITORS;
+        return $this->cms->setting(Collector::SETTINGS, 'mode', Collector::COUNTS) !== Collector::VISITORS;
     }
 
     public function enabled(): bool
     {
-        return (bool) $this->cms->settings(Collector::SETTINGS, 'enabled', true);
+        return (bool) $this->cms->setting(Collector::SETTINGS, 'enabled', true);
     }
 
     /** Whether anything was ever counted in the current mode. */

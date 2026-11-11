@@ -22,7 +22,7 @@ final class FormRenderer
 
     public function endpoint(string $handle): string
     {
-        $base = rtrim((string) $this->cms->settings('forms', 'endpoint', ''), '/');
+        $base = rtrim((string) $this->cms->setting('forms', 'endpoint', ''), '/');
 
         return ($base !== '' ? $base : '').'/api/forms/'.$handle;
     }

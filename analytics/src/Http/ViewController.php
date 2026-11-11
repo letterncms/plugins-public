@@ -41,7 +41,7 @@ final class ViewController
         // Any page can embed this image, which would inflate the numbers. A site published to another domain has said so in its settings.
         $site = $request->header('Sec-Fetch-Site');
 
-        if ($site !== null && $site !== 'same-origin' && (string) cms()->settings(Collector::SETTINGS, 'endpoint', '') === '') {
+        if ($site !== null && $site !== 'same-origin' && (string) cms()->setting(Collector::SETTINGS, 'endpoint', '') === '') {
             return false;
         }
 

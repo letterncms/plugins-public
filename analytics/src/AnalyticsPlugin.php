@@ -83,7 +83,7 @@ final class AnalyticsPlugin extends Plugin
     {
         $hooks = $this->cms()->hooks();
         $collector = fn () => $this->app->make(Collector::class);
-        $base = fn () => rtrim((string) ($this->settings('endpoint') ?: ''), '/');
+        $base = fn () => rtrim((string) ($this->setting('endpoint') ?: ''), '/');
 
         $hooks->addFilter('site.foot', function (array $foot, $context = null) use ($collector, $base) {
             if (($context->editor ?? false) || ($context->preview ?? false) || ! $collector()->enabled()) {
@@ -91,7 +91,7 @@ final class AnalyticsPlugin extends Plugin
             }
 
             if ($collector()->mode() === Collector::VISITORS) {
-                $foot[] = Snippet::html($base().'/api/analytics/hit', (bool) $this->settings('consent_required', true));
+                $foot[] = Snippet::html($base().'/api/analytics/hit', (bool) $this->setting('consent_required', true));
             } elseif (is_string($context->uri ?? null)) {
                 $foot[] = Snippet::image($base().'/api/analytics/view', $context->uri);
             }
@@ -100,7 +100,7 @@ final class AnalyticsPlugin extends Plugin
         });
 
         // Changing what is counted, or where, rebuilds the static pages.
-        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'analytics:'.(int) $collector()->enabled().':'.$collector()->mode().':'.(int) $this->settings('consent_required', true).':'.$base()]);
+        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'analytics:'.(int) $collector()->enabled().':'.$collector()->mode().':'.(int) $this->setting('consent_required', true).':'.$base()]);
 
         $hooks->on('settings.saved', function (string $namespace) use ($collector) {
             if ($namespace === Collector::SETTINGS && $collector()->mode() === Collector::COUNTS) {

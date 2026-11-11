@@ -16,9 +16,9 @@ final class Captchas
     /** Null without a provider, or while one of its two keys is missing: a half-configured check would lock every form. */
     public function current(): ?Captcha
     {
-        $class = self::PROVIDERS[(string) $this->cms->settings('forms', 'captcha', 'none')] ?? null;
-        $siteKey = trim((string) $this->cms->settings('forms', 'captcha_site_key', ''));
-        $secret = trim((string) $this->cms->settings('forms', 'captcha_secret', ''));
+        $class = self::PROVIDERS[(string) $this->cms->setting('forms', 'captcha', 'none')] ?? null;
+        $siteKey = trim((string) $this->cms->setting('forms', 'captcha_site_key', ''));
+        $secret = trim((string) $this->cms->setting('forms', 'captcha_secret', ''));
 
         return $class === null || $siteKey === '' || $secret === '' ? null : new $class($this->cms->app()->make(Client::class), $siteKey, $secret);
     }
@@ -26,6 +26,6 @@ final class Captchas
     /** What a built page carries of it: a change builds the site again. */
     public function signature(): string
     {
-        return $this->current() === null ? 'none' : $this->cms->settings('forms', 'captcha').':'.trim((string) $this->cms->settings('forms', 'captcha_site_key', ''));
+        return $this->current() === null ? 'none' : $this->cms->setting('forms', 'captcha').':'.trim((string) $this->cms->setting('forms', 'captcha_site_key', ''));
     }
 }

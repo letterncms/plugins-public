@@ -40,32 +40,32 @@ final class ConsentPlugin extends Plugin
             $locale = is_object($context) && method_exists($context, 'locale') ? $context->locale() : $this->cms()->defaultLocale();
 
             // First in the foot: `window.cmsConsent` is there before any script that asks for it.
-            return [Banner::html($this->offered(), $this->copy($locale), (bool) $this->settings('reopen', true)), ...$foot];
+            return [Banner::html($this->offered(), $this->copy($locale), (bool) $this->setting('reopen', true)), ...$foot];
         });
 
         // Every setting ends up in the built pages.
-        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'consent' => md5((string) json_encode($this->cms()->settings(self::SETTINGS)))]);
+        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'consent' => md5((string) json_encode($this->cms()->setting(self::SETTINGS)))]);
     }
 
     /** @return list<string> The categories this site asks about. */
     private function offered(): array
     {
-        return array_values(array_filter(self::CATEGORIES, fn (string $category) => (bool) $this->settings($category, $category === 'analytics')));
+        return array_values(array_filter(self::CATEGORIES, fn (string $category) => (bool) $this->setting($category, $category === 'analytics')));
     }
 
     /** Whether visitors are asked anything: the banner is on and there is a category to choose. */
     private function asks(): bool
     {
-        return (bool) $this->settings('enabled', true) && $this->offered() !== [];
+        return (bool) $this->setting('enabled', true) && $this->offered() !== [];
     }
 
     /** Nothing, unless Analytics waits for an answer nobody is asked for: then its visitors are never counted. */
     private function widget(): array
     {
         $waits = $this->cms()->isActive('letterncms/analytics')
-            && $this->cms()->settings('analytics', 'enabled', true)
-            && $this->cms()->settings('analytics', 'mode') === 'visitors'
-            && $this->cms()->settings('analytics', 'consent_required', true);
+            && $this->cms()->setting('analytics', 'enabled', true)
+            && $this->cms()->setting('analytics', 'mode') === 'visitors'
+            && $this->cms()->setting('analytics', 'consent_required', true);
 
         return ['type' => 'ui/stack', 'children' => $waits && ! in_array('analytics', $this->asks() ? $this->offered() : [], true) ? [
             ['type' => 'ui/notice', 'props' => ['tone' => 'warning', 'title' => __('Analytics waits for consent, but visitors aren’t asked.'), 'action' => ['label' => __('Open Settings'), 'to' => '/settings/'.self::SETTINGS]]],
@@ -76,7 +76,7 @@ final class ConsentPlugin extends Plugin
     private function copy(string $locale): array
     {
         $key = self::key($locale);
-        $own = fn (string $field) => trim((string) $this->settings("{$field}_{$key}", ''));
+        $own = fn (string $field) => trim((string) $this->setting("{$field}_{$key}", ''));
         $default = self::defaults($this->offered());
 
         return [

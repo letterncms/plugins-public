@@ -392,7 +392,7 @@ final class Importer
     private function apply(Record $record, Collection $collection, array $prepared, string $locale, array $made, ?User $user): \Cms\Content\Entries\Entry
     {
         $publish = $prepared['status'] === 'published';
-        $content = $this->cms->content();
+        $content = $this->cms->entryService();
 
         if ($prepared['id'] !== null) {
             return $content->update($prepared['id'], ['title' => $record->title, 'data' => $prepared['data'], ...($record->slug !== null ? ['slug' => $record->slug] : []), ...($publish && $record->at !== null ? ['at' => $record->at] : [])], $user, $publish);

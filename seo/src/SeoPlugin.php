@@ -124,7 +124,7 @@ final class SeoPlugin extends Plugin
         $hooks->on('render.begin', fn () => $jsonLd()->reset());
 
         // Bindable: `page.markdown` is the URL of the page's Markdown twin (a "View as Markdown" link).
-        $hooks->addFilter('site.scope', fn (array $scope, $page) => $page->entry && $page->entry->uri !== null && $this->cms()->settings('seo', 'markdown_twins', true)
+        $hooks->addFilter('site.scope', fn (array $scope, $page) => $page->entry && $page->entry->uri !== null && $this->cms()->setting('seo', 'markdown_twins', true)
             ? [...$scope, 'page' => [...(array) ($scope['page'] ?? []), 'markdown' => $page->entry->uri === '/' ? '/index.md' : $page->entry->uri.'.md']]
             : $scope);
         $hooks->on('render.structured', fn (string $key, array $data) => $jsonLd()->add($key, $data));
@@ -163,7 +163,7 @@ final class SeoPlugin extends Plugin
                 $tags[] = '<meta property="article:modified_time" content="'.e((string) $m['modified']).'">';
             }
 
-            if ($this->cms()->settings('seo', 'markdown_twins', true) && empty($entry->data['seo']['noindex']) && ! $this->cms()->entries()->gate()->isGated($entry)) {
+            if ($this->cms()->setting('seo', 'markdown_twins', true) && empty($entry->data['seo']['noindex']) && ! $this->cms()->entries()->gate()->isGated($entry)) {
                 $tags[] = '<link rel="alternate" type="text/markdown" href="'.e($entry->uri === '/' ? '/index.md' : $entry->uri.'.md').'">';
             }
 
@@ -232,7 +232,7 @@ final class SeoPlugin extends Plugin
 
         // Markdown twin next to each built page.
         $hooks->on('site.page.built', function (string $uri, Entry $entry, string $file, int $page) {
-            if ($page !== 1 || ! $this->cms()->settings('seo', 'markdown_twins', true)) {
+            if ($page !== 1 || ! $this->cms()->setting('seo', 'markdown_twins', true)) {
                 return;
             }
 
@@ -275,7 +275,7 @@ final class SeoPlugin extends Plugin
         $hooks->on('entry.uri-changed', fn (Entry $entry, string $from, string $to) => $this->app->make(Redirects::class)->moved($from, $to));
 
         // Every SEO setting ends up in the built files (head tags, JSON-LD, robots.txt, llms.txt): changing one rebuilds the site.
-        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'seo' => md5((string) json_encode($this->cms()->settings('seo')))]);
+        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'seo' => md5((string) json_encode($this->cms()->setting('seo')))]);
     }
 
     private function routes(): void
@@ -297,7 +297,7 @@ final class SeoPlugin extends Plugin
             Route::get('/llms.txt', fn () => response($this->app->make(SiteFiles::class)->llms(), 200, ['Content-Type' => 'text/plain; charset=utf-8']));
             Route::get('/.well-known/security.txt', fn () => response($this->app->make(SiteFiles::class)->securityTxt() ?? abort(404), 200, ['Content-Type' => 'text/plain; charset=utf-8']));
             Route::get('/{path}.md', function (string $path) {
-                abort_unless($this->cms()->settings('seo', 'markdown_twins', true), 404);
+                abort_unless($this->cms()->setting('seo', 'markdown_twins', true), 404);
                 $entry = $this->cms()->entries()->findByUri($path === 'index' ? '/' : '/'.$path);
                 abort_if(! $entry || ! $entry->isLive() || ! empty($entry->data['seo']['noindex']) || $this->cms()->entries()->gate()->isGated($entry), 404);
 

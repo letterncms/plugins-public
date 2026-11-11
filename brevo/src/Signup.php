@@ -27,14 +27,14 @@ final class Signup
 
     public function doubleOptIn(): bool
     {
-        return (bool) $this->cms->settings('brevo', 'double_opt_in', true);
+        return (bool) $this->cms->setting('brevo', 'double_opt_in', true);
     }
 
     /** The list a signup goes to: the block's own, or the default from the settings. Null when neither is set. */
     public function list(mixed $asked = null): ?int
     {
         // A select's value is "#<id>" (see the `fields.options.brevo-lists` filter); an agent may give the number.
-        $list = (int) ltrim((string) ($asked ?: $this->cms->settings('brevo', 'list', '')), '#');
+        $list = (int) ltrim((string) ($asked ?: $this->cms->setting('brevo', 'list', '')), '#');
 
         return $list > 0 ? $list : null;
     }
@@ -45,7 +45,7 @@ final class Signup
      */
     public function base(): string
     {
-        return rtrim((string) $this->cms->settings('forms', 'endpoint', ''), '/');
+        return rtrim((string) $this->cms->setting('forms', 'endpoint', ''), '/');
     }
 
     /** What a page carries beside the list, so a visitor can't pick another list of the account. */
@@ -82,8 +82,8 @@ final class Signup
         $base = $this->base();
         $url = ($base !== '' ? $base.'/api/brevo/confirm' : $this->cms->url('/api/brevo/confirm')).'?token='.rawurlencode($this->token($email, $list, $locale));
         $site = (string) config('app.name');
-        $subject = trim((string) $this->cms->settings('brevo', 'confirmation_subject', '')) ?: __('Confirm your subscription', [], $locale);
-        $message = trim((string) $this->cms->settings('brevo', 'confirmation_message', '')) ?: __('Please confirm that you want to receive email from :site.', ['site' => $site], $locale);
+        $subject = trim((string) $this->cms->setting('brevo', 'confirmation_subject', '')) ?: __('Confirm your subscription', [], $locale);
+        $message = trim((string) $this->cms->setting('brevo', 'confirmation_message', '')) ?: __('Please confirm that you want to receive email from :site.', ['site' => $site], $locale);
         $body = Body::render(
             preg_split('/\R{2,}/', $message) ?: [$message],
             [__('Confirm Subscription', [], $locale), $url],

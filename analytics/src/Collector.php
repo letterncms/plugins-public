@@ -38,12 +38,12 @@ final class Collector
 
     public function enabled(): bool
     {
-        return (bool) $this->cms->settings(self::SETTINGS, 'enabled', true);
+        return (bool) $this->cms->setting(self::SETTINGS, 'enabled', true);
     }
 
     public function mode(): string
     {
-        return $this->cms->settings(self::SETTINGS, 'mode', self::COUNTS) === self::VISITORS ? self::VISITORS : self::COUNTS;
+        return $this->cms->setting(self::SETTINGS, 'mode', self::COUNTS) === self::VISITORS ? self::VISITORS : self::COUNTS;
     }
 
     /** Counts mode: one more view of a page that exists. Nobody can fill the table with invented paths. */
@@ -156,7 +156,7 @@ final class Collector
     /** Forget days older than the retention setting (0 keeps everything). */
     public function prune(): int
     {
-        $days = (int) $this->cms->settings(self::SETTINGS, 'retention_days', 0);
+        $days = (int) $this->cms->setting(self::SETTINGS, 'retention_days', 0);
 
         if ($days <= 0) {
             return 0;
@@ -181,7 +181,7 @@ final class Collector
 
     private function excluded(string $path): bool
     {
-        foreach ((array) $this->cms->settings(self::SETTINGS, 'exclude', []) as $pattern) {
+        foreach ((array) $this->cms->setting(self::SETTINGS, 'exclude', []) as $pattern) {
             $pattern = trim((string) $pattern);
 
             if ($pattern !== '' && ($pattern === $path || fnmatch($pattern, $path))) {

@@ -96,7 +96,7 @@ final class SubmitController
     {
         $origins = [rtrim($request->getSchemeAndHttpHost(), '/'), $this->cms->url()];
 
-        foreach ((array) $this->cms->settings('forms', 'origins', []) as $origin) {
+        foreach ((array) $this->cms->setting('forms', 'origins', []) as $origin) {
             $origins[] = rtrim((string) $origin, '/');
         }
 

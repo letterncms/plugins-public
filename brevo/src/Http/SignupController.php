@@ -82,7 +82,7 @@ final class SignupController
             return $this->page(503, __('That didn’t work'), __('Signing up isn’t possible right now. Please try again later.'));
         }
 
-        $to = trim((string) $this->cms->settings('brevo', 'confirmed_redirect', ''));
+        $to = trim((string) $this->cms->setting('brevo', 'confirmed_redirect', ''));
 
         if ($to !== '' && (preg_match('#^/(?!/)#', $to) || parse_url($to, PHP_URL_HOST) === parse_url($this->cms->url(), PHP_URL_HOST))) {
             return redirect()->away($to, 303);
