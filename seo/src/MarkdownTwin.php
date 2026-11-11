@@ -50,10 +50,55 @@ final class MarkdownTwin
             }
         }
 
+        // A term's archive is the term at another address: what is filed under it there is the page.
+        if ($filed = $this->filed($entry)) {
+            $lines[] = implode("\n", array_map(fn (Entry $item) => '- ['.$item->title.']('.$this->meta->absolute((string) $item->uri).')', $filed));
+            $lines[] = '';
+        }
+
         $lines[] = '---';
         $lines[] = 'Source: '.$m['canonical'].($entry->updatedAt ? ' · Updated '.$entry->updatedAt->toDateString() : '');
 
         return trim(implode("\n", $lines))."\n";
+    }
+
+    /** The page a twin is asked for at this address: the entry there, or the term whose archive it is. */
+    public function at(string $uri): ?Entry
+    {
+        if ($entry = $this->cms->entries()->findByUri($uri)) {
+            return $entry;
+        }
+
+        $archive = $this->archives()?->at($uri);
+        $term = $archive ? $this->archives()->term($archive['term']) : null;
+
+        if (! $term) {
+            return null;
+        }
+
+        $term = clone $term;
+        $term->uri = $archive['uri'];
+
+        return $term;
+    }
+
+    /** @return list<Entry> On a term's archive, the entries of its collection filed under the term. */
+    private function filed(Entry $entry): array
+    {
+        $archive = $entry->uri === null ? null : $this->archives()?->at($entry->uri, $entry->locale);
+
+        if (! $archive || $archive['term'] !== $entry->id) {
+            return [];
+        }
+
+        // Filed under it through the collection's terms fields for its taxonomy, as the archive itself lists them.
+        return array_values(array_filter($this->archives()->filed($entry, [$archive['collection']])->get(), static fn (Entry $item) => $item->uri !== null));
+    }
+
+    /** A core without term archives has none. */
+    private function archives(): ?\Cms\Content\Collections\Archives
+    {
+        return class_exists(\Cms\Content\Collections\Archives::class) ? app(\Cms\Content\Collections\Archives::class) : null;
     }
 
     private function blocks(array $nodes): string

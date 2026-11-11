@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- A term's archive in a collection (`/blog/topics/tides`, with the core that has them) is in the sitemap of its language, with links to the same term's archives in the other languages, and has a Markdown version, `/blog/topics/tides.md`, that lists the entries filed under the term. A term kept out of search keeps its archives out too.
+
+### Changed
+
+- `seo.sitemap` is told which language's sitemap is being written (`$locale`, `null` on a site with one), and an address that names its `locale` goes in that language's sitemap. One that names none stays in the default language's, as before. One that names an `entry` is left out when that entry is marked noindex, and gets the entry's other languages as alternates.
+
 ## 0.9.0 (2026-11-11)
 
 ### Added
