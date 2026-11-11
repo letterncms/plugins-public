@@ -37,8 +37,8 @@ final class AnalyticsViews
 
         if (! $this->reports->tracked()) {
             return $this->reports->enabled()
-                ? [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('No visits yet'), 'text' => __('Visits appear here as people open your published site.')]]]
-                : [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('Analytics is off'), 'text' => __('Turn it on to see who visits your site.'), 'action' => [...$settings, 'variant' => 'primary']]]];
+                ? [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('No visits yet')]]]
+                : [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('Analytics is off'), 'action' => [...$settings, 'variant' => 'primary']]]];
         }
 
         $counting = $this->reports->counting();

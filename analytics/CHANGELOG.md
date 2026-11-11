@@ -10,6 +10,7 @@
 
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- The empty Analytics screen says what is the case in a title and offers one action, as every empty screen of the admin does.
 
 ## 0.6.0 (2026-11-05)
 
@@ -58,7 +59,6 @@
 - Analytics settings say less and show only while counting is on. **Days to Keep Data** is **Keep Visits For**, and the admin's URL is **Reporting Address**.
 - The permission is **View Site Analytics**.
 - Analytics is as wide as the other work screens.
-
 
 ## 0.1.0 (2026-11-01)
 
