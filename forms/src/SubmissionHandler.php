@@ -14,6 +14,7 @@ use Cms\Cms;
 use Cms\Support\DailySalt;
 use Cms\Support\Files;
 use Cms\Support\SafeFetcher;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -27,10 +28,10 @@ final class SubmissionHandler
         'images' => ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'],
     ];
 
-    public function __construct(private readonly Cms $cms, private readonly FormRepository $forms) {}
+    public function __construct(private readonly Cms $cms, private readonly FormRepository $forms, private readonly Captcha\Captchas $captchas) {}
 
     /**
-     * @return array{status: 'ok'|'spam'|'invalid', errors: array<string, string>, submission: ?Submission}
+     * @return array{status: 'ok'|'spam'|'invalid', errors: array<string, string>, submission: ?Submission, captcha?: 'failed'|'unavailable'}
      */
     public function handle(array $form, Request $request): array
     {
@@ -48,6 +49,31 @@ final class SubmissionHandler
 
         if ($errors !== []) {
             return ['status' => 'invalid', 'errors' => $errors, 'submission' => null];
+        }
+
+        // After the fields, so a token isn't spent on a submission that comes back anyway. The visitor is told:
+        // unlike a bot in the trap, a person who failed the check can do it again.
+        $captcha = $this->captchas->current();
+
+        if ($captcha !== null) {
+            $token = $request->input($captcha->field());
+
+            if (! is_string($token) || $token === '' || strlen($token) > $captcha->maxToken()) {
+                return ['status' => 'invalid', 'errors' => [], 'submission' => null, 'captcha' => 'failed'];
+            }
+
+            $vouched = $captcha->verify($token);
+
+            // The provider is down or answered nonsense. Nothing gets through, the visitor hears it isn't them, and the site's log says so.
+            if ($vouched === null) {
+                report(new RuntimeException('Forms: '.$captcha->global().' could not be asked about a token, so the submission to “'.$form['handle'].'” was refused.'));
+
+                return ['status' => 'invalid', 'errors' => [], 'submission' => null, 'captcha' => 'unavailable'];
+            }
+
+            if (! $vouched) {
+                return ['status' => 'invalid', 'errors' => [], 'submission' => null, 'captcha' => 'failed'];
+            }
         }
 
         $data = $this->cms->hooks()->filter('form.data', $data, $form, $request);

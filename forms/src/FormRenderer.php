@@ -18,7 +18,7 @@ final class FormRenderer
 {
     private static bool $scriptAdded = false;
 
-    public function __construct(private readonly Cms $cms, private readonly FormRepository $forms, private readonly BlockRenderer $blocks) {}
+    public function __construct(private readonly Cms $cms, private readonly FormRepository $forms, private readonly BlockRenderer $blocks, private readonly Captcha\Captchas $captchas) {}
 
     public function endpoint(string $handle): string
     {
@@ -50,16 +50,33 @@ final class FormRenderer
         $honeypot = $s['honeypot'] ? '<div class="cms-form__hp" aria-hidden="true"><label>'.$empty.'<input type="text" name="_cms_website" tabindex="-1" autocomplete="off"></label></div>' : '';
         $rules = json_encode(array_values(array_filter(array_map(static fn ($f) => empty($f['props']['show_if']['field']) ? null : ['name' => $f['name'], 'rule' => $f['props']['show_if']], FormFields::extract($form['fields'])))), JSON_HEX_TAG | JSON_HEX_APOS);
 
+        // The provider's widget, with its script only on pages that show a form. The canvas shows where it sits, and loads nothing.
+        $captcha = $this->captchas->current();
+        $widget = '';
+        $again = '';
+
+        if ($captcha !== null) {
+            $editing = (bool) $this->blocks->editor;
+            $widget = $editing ? '<div class="cms-placeholder">'.$this->e(__('CAPTCHA')).'</div>' : $captcha->widget($locale);
+            $again = '<div class="cms-form__error" id="'.$id.'-captcha" role="alert" tabindex="-1"><p>'.$this->e(__('We could not confirm you are a person. Please try again.', [], $locale)).'</p></div>'
+                .'<div class="cms-form__error" id="'.$id.'-captcha-down" role="alert" tabindex="-1"><p>'.$this->e(__('We can’t check that you are a person right now, so nothing was sent. Please try again in a few minutes.', [], $locale)).'</p></div>';
+            $editing || $this->cms->hooks()->dispatch('render.foot', 'cms-forms-captcha', '<script src="'.$this->e($captcha->script()).'" async defer></script>');
+        }
+
+        $reset = $captcha !== null ? ' data-captcha="'.$this->e($captcha->global()).'"' : '';
+
         $this->cms->hooks()->dispatch('render.foot', 'cms-forms', '<script type="module">'.$this->script().'</script>');
         $this->styles();
 
         return <<<HTML
-<form id="{$id}" class="cms-form" method="post" action="{$this->e($this->endpoint($handle))}" enctype="multipart/form-data" data-cms-form="{$this->e($handle)}" data-rules='{$rules}' novalidate>
+<form id="{$id}" class="cms-form" method="post" action="{$this->e($this->endpoint($handle))}" enctype="multipart/form-data" data-cms-form="{$this->e($handle)}" data-rules='{$rules}'{$reset} novalidate>
   {$fields}
   {$honeypot}
+  {$widget}
   <input type="hidden" name="_cms_t" value="">
   <input type="hidden" name="_cms_locale" value="{$this->e($locale)}">
   <div class="cms-form__error" id="{$id}-error" role="alert" tabindex="-1"><p>{$error}</p></div>
+  {$again}
   <button type="submit" class="cms-button cms-form__submit" data-variant="primary">{$this->e((string) $s['submit'])}</button>
 </form>
 <div class="cms-form__success" id="{$id}-ok" role="status" tabindex="-1"><p>{$this->e((string) $s['success'])}</p></div>
@@ -106,6 +123,7 @@ for (const form of document.querySelectorAll('form[data-cms-form]')) {
     form.querySelectorAll('.is-invalid').forEach((f) => f.classList.remove('is-invalid'));
     form.querySelectorAll('[aria-invalid]').forEach((c) => c.removeAttribute('aria-invalid'));
     const error = document.getElementById(form.id + '-error');
+    const fallback = error && (error.dataset.text ??= error.querySelector('p').textContent);
     error?.classList.remove('is-shown');
     try {
       const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' }, credentials: 'omit' });
@@ -124,7 +142,8 @@ for (const form of document.querySelectorAll('form[data-cms-form]')) {
         field.querySelectorAll('input,select,textarea').forEach((c) => c.setAttribute('aria-invalid', 'true'));
         const p = document.createElement('p'); p.className = 'cms-msg'; p.textContent = message; field.appendChild(p);
       }
-      if (error) { error.querySelector('p').textContent = json.message || error.querySelector('p').textContent; error.classList.add('is-shown'); error.focus() }
+      if (json.captcha && form.dataset.captcha) { try { window[form.dataset.captcha]?.reset() } catch {} }
+      if (error) { error.querySelector('p').textContent = json.message || fallback; error.classList.add('is-shown'); error.focus() }
     } catch {
       error?.classList.add('is-shown');
     } finally {
