@@ -36,6 +36,15 @@ final class SubmitController
         $result = $handler->handle($form, $request);
         $back = (string) $request->headers->get('referer', '/');
 
+        // The check itself is down: not the visitor's doing, and trying the puzzle again won't help yet.
+        if (($result['captcha'] ?? null) === 'unavailable') {
+            return $this->respond($request, 503, ['message' => __('We can’t check that you are a person right now, so nothing was sent. Please try again in a few minutes.'), 'errors' => (object) [], 'captcha' => true], strtok($back, '#').'#cms-form-'.$handle.'-captcha-down');
+        }
+
+        if ($result['captcha'] ?? false) {
+            return $this->respond($request, 422, ['message' => __('We could not confirm you are a person. Please try again.'), 'errors' => (object) [], 'captcha' => true], strtok($back, '#').'#cms-form-'.$handle.'-captcha');
+        }
+
         if ($result['status'] === 'invalid') {
             return $this->respond($request, 422, ['message' => __('Please check the highlighted fields and try again.'), 'errors' => $result['errors']], strtok($back, '#').'#cms-form-'.$handle.'-error');
         }

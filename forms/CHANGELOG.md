@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- **CAPTCHA** in the Forms settings: Cloudflare Turnstile or hCaptcha. With a provider and its two keys, every form shows the provider's check and a submission is accepted only when the provider vouches for it. A visitor who fails is told and can try again. While the provider can't be reached nothing gets through: the visitor reads that it isn't them and to try again in a few minutes, and the site's log says what happened. The secret key is stored encrypted, and the provider's script loads only on pages that show a form.
+- The admin's words for Forms in German.
+
+### Changed
+
+- **Breaking.** Needs CMS 0.21.
+- The Forms settings say less: no notes under the fields, and **Keep Submissions For** left empty reads **Forever**.
+
 ## 0.11.0 (2026-11-06)
 
 ### Added
@@ -21,6 +31,8 @@
 - **Breaking.** Needs CMS 0.12. Forms look as they did in 0.8.0 again, styled by the site’s tokens and custom CSS.
 
 ## 0.9.0 (2026-11-05)
+
+### Changed
 
 - Built for CMS 0.11; 0.10.0 replaces it.
 

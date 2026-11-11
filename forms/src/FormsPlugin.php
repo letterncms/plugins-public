@@ -21,9 +21,11 @@ final class FormsPlugin extends Plugin
 {
     public function register(): void
     {
-        foreach ([FormRepository::class, FormRenderer::class, SubmissionHandler::class] as $service) {
+        foreach ([FormRepository::class, FormRenderer::class, SubmissionHandler::class, Captcha\Captchas::class] as $service) {
             $this->app->singleton($service);
         }
+
+        $this->app->bindIf(Captcha\Client::class, Captcha\HttpClient::class);
     }
 
     public function boot(): void
@@ -43,6 +45,9 @@ final class FormsPlugin extends Plugin
                 $this->app->make(SiteBuilder::class)->queueForDependency('form:'.$handle, __('A form changed'));
             }
         });
+
+        // The widget and its site key are in the built pages: another provider or key builds them again.
+        $this->cms()->hooks()->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'forms-captcha' => $this->app->make(Captcha\Captchas::class)->signature()]);
 
         $this->cms()->admin()->nav('forms', ['path' => '/forms', 'icon' => 'form', 'section' => 'content', 'order' => 75, 'pinned' => true, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
         $this->cms()->admin()->widget('forms-submissions', ['label' => 'Form Submissions', 'description' => __('New submissions over the last two weeks and the latest ones.'), 'icon' => 'form', 'column' => 'side', 'order' => 40, 'permission' => 'forms.view']);
@@ -123,9 +128,12 @@ final class FormsPlugin extends Plugin
     private function settingsSchema(): void
     {
         $this->cms()->settingsRegistry()->register('forms', fields: [
-            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Submission Address', 'placeholder' => 'https://cms.example.com', 'instructions' => 'Only when the site is hosted elsewhere.'],
-            ['handle' => 'origins', 'type' => 'tags', 'label' => 'Other Allowed Websites', 'placeholder' => 'https://example.com', 'instructions' => 'Like https://example.com.'],
-            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Submissions For', 'suffix' => 'days', 'min' => 0, 'instructions' => '0 keeps them forever.', 'default' => 0],
+            ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Submission Address', 'placeholder' => 'https://cms.example.com'],
+            ['handle' => 'origins', 'type' => 'tags', 'label' => 'Other Allowed Websites', 'placeholder' => 'https://example.com'],
+            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Submissions For', 'suffix' => 'days', 'min' => 0, 'placeholder' => 'Forever'],
+            ['handle' => 'captcha', 'type' => 'select', 'label' => 'CAPTCHA', 'default' => 'none', 'required' => true, 'options' => ['none' => __('None'), 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha']],
+            ['handle' => 'captcha_site_key', 'type' => 'text', 'label' => 'Site Key', 'width' => 'half', 'mono' => true, 'if' => ['captcha' => ['turnstile', 'hcaptcha']]],
+            ['handle' => 'captcha_secret', 'type' => 'text', 'label' => 'Secret Key', 'width' => 'half', 'secret' => true, 'if' => ['captcha' => ['turnstile', 'hcaptcha']]],
         ], icon: 'form', description: __('Where submissions go and how long they stay.'), permission: 'forms.manage', order: 50, home: 'forms');
     }
 
