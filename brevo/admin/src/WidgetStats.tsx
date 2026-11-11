@@ -1,5 +1,5 @@
 import { locale, navigate, t, timeAgo, useAbility } from '@letterncms/sdk'
-import { Button, Meter, Stat, Widget, compactNumber, type WidgetEmpty } from '@letterncms/ui'
+import { Button, Meter, QueryError, Stat, Widget, compactNumber, type WidgetEmpty } from '@letterncms/ui'
 
 type Stats =
   | { state: 'inactive' | 'no-key' }
@@ -31,14 +31,14 @@ export default function WidgetStats() {
       ? { icon: 'brevo', title: t('Brevo is not your mail transport'), action: settings }
       : s?.state === 'no-key'
         ? { icon: 'key', title: t('Add Your Brevo API Key'), action: settings }
-        : s?.state === 'error'
-          ? { icon: 'warning', title: t('No stats from Brevo'), description: s.message, action: <Button size="sm" variant="ghost" icon="refresh" onClick={() => void stats.refetch()}>{t('Try Again')}</Button> }
-          : s?.state === 'ok' && s.requests === 0
+        : s?.state === 'ok' && s.requests === 0
             ? { icon: 'brevo', title: t('No email sent through Brevo this week') }
             : null
 
   return (
     <Widget action={{ label: t('Settings'), to: '/settings/email' }} query={stats} empty={empty}>
+      {/* Brevo not answering is a failure, said as one: never an empty state. */}
+      {s?.state === 'error' && <QueryError compact title={t('No stats from Brevo')} message={s.message} onRetry={() => void stats.refetch()} retrying={stats.isFetching} />}
       {s?.state === 'ok' && <Report s={s} />}
     </Widget>
   )

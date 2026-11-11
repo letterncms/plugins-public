@@ -6,6 +6,10 @@
 
 - The Audit Log names a signup an agent made in the past tense: **Subscribed to Brevo List**.
 
+### Fixed
+
+- When Brevo doesn't answer, the home-screen widget says so as an error with **Try Again**, not as an empty state.
+
 ## 0.6.0 (2026-11-11)
 
 ### Added
