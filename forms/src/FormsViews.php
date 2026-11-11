@@ -32,7 +32,7 @@ final class FormsViews
 
     private function list(): array
     {
-        // The one way to make a form, once: in the header, also while the list is empty.
+        // The one way to make a form: in the header, and in the list's place while there is none.
         $new = ['label' => __('New Form'), 'name' => 'new-form', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'forms/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/forms/{result.handle}',
             'form' => ['title' => __('New Form'), 'confirm' => __('Create Form'), 'fields' => [
                 ['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Quote Request'), 'required' => true, 'autofocus' => true],
@@ -40,16 +40,16 @@ final class FormsViews
 
         return ['type' => 'ui/page', 'props' => ['title' => __('Forms'), 'icon' => 'form'], 'children' => [
             ['type' => 'ui/tabs', 'children' => [
-                ['type' => 'ui/tab', 'props' => ['id' => 'forms', 'label' => __('Forms'), 'actions' => [$new]], 'children' => [
+                ['type' => 'ui/tab', 'props' => ['id' => 'forms', 'label' => __('All Forms'), 'actions' => [$new]], 'children' => [
                     ['type' => 'ui/records', 'props' => [
                         'id' => 'forms', 'label' => __('Forms'), 'key' => 'handle',
                         'source' => ['ability' => 'forms/list'],
                         'columns' => [
                             ['key' => 'title', 'label' => __('Name'), 'icon' => 'icon'],
                             ['key' => 'enabled', 'label' => __('Status'), 'width' => '120px', 'format' => 'status', 'labels' => ['true' => __('On'), 'false' => __('Off')], 'tones' => ['true' => 'success', 'false' => 'neutral']],
-                            ['key' => 'fields', 'label' => __('Fields'), 'width' => '90px', 'align' => 'end', 'format' => 'number'],
-                            ['key' => 'total', 'label' => __('Submissions'), 'width' => '120px', 'align' => 'end', 'format' => 'number'],
-                            ['key' => 'unread', 'label' => __('Unread'), 'width' => '90px', 'align' => 'end', 'format' => 'badge'],
+                            ['key' => 'fields', 'label' => __('Fields'), 'width' => '90px', 'align' => 'end', 'format' => 'number', 'unit' => ['one' => __('{count} Field'), 'other' => __('{count} Fields')]],
+                            ['key' => 'total', 'label' => __('Submissions'), 'width' => '120px', 'align' => 'end', 'format' => 'number', 'unit' => ['one' => __('{count} Submission'), 'other' => __('{count} Submissions')]],
+                            ['key' => 'unread', 'label' => __('Unread'), 'width' => '90px', 'align' => 'end', 'format' => 'badge', 'unit' => ['one' => __('{count} Unread'), 'other' => __('{count} Unread')]],
                         ],
                         'open' => ['label' => __('Open'), 'to' => '/forms/{row.handle}'],
                         'actions' => [
@@ -57,7 +57,8 @@ final class FormsViews
                             ['label' => __('Submissions'), 'icon' => 'inbox', 'to' => '/forms/{row.handle}?tab=submissions'],
                             ['label' => __('Settings'), 'icon' => 'settings', 'to' => '/forms/{row.handle}?tab=options'],
                         ],
-                        'empty' => ['icon' => 'form', 'title' => __('No forms yet')],
+                        // The header's button stays the page's one primary, and the one `?do=new-form` opens.
+                        'empty' => ['icon' => 'form', 'title' => __('No forms yet'), 'action' => array_diff_key($new, ['variant' => true, 'name' => true])],
                     ]],
                 ]],
             ]],
@@ -129,7 +130,7 @@ final class FormsViews
                 ['label' => __('Delete'), 'ability' => 'form-submissions/delete', 'input' => ['ids' => '{ids}'],
                     'confirm' => ['title' => __('Delete the selected submissions?'), 'text' => __('{ids.length} selected. This cannot be undone.'), 'confirm' => __('Delete'), 'danger' => true]],
             ],
-            'empty' => ['icon' => 'inbox', 'title' => __('No submissions')],
+            'empty' => ['icon' => 'inbox', 'title' => __('No submissions yet')],
         ]];
     }
 
