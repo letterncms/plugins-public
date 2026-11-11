@@ -43,7 +43,10 @@ final class AnalyticsViews
 
         $counting = $this->reports->counting();
         // Short at a glance (1.2K), the whole number on hover.
-        $count = [...($counting ? ['key' => 'views', 'label' => __('Views')] : ['key' => 'visitors', 'label' => __('Visitors')]), 'width' => '64px', 'align' => 'end', 'format' => 'compact'];
+        // Named as the number above the chart is, and on a phone, where no header says it, with the number itself.
+        $count = [...($counting
+            ? ['key' => 'views', 'label' => __('Page Views'), 'width' => '112px', 'unit' => ['one' => __('{count} Page View'), 'other' => __('{count} Page Views')]]
+            : ['key' => 'visitors', 'label' => __('Visitors'), 'width' => '80px', 'unit' => ['one' => __('{count} Visitor'), 'other' => __('{count} Visitors')]]), 'align' => 'end', 'format' => 'compact'];
         $share = ['key' => 'share', 'label' => __('Share'), 'width' => '96px', 'format' => 'share'];
         // The name gives way first, down to nothing, so the bar and the number stay in a half-width list and on a phone.
         $name = ['width' => 'minmax(0,1fr)'];

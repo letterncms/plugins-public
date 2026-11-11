@@ -1,5 +1,9 @@
 {
   "{count} on the site now": "{count} nu op de site",
+  "{count} Page View": "{count} paginaweergave",
+  "{count} Page Views": "{count} paginaweergaven",
+  "{count} Visitor": "{count} bezoeker",
+  "{count} Visitors": "{count} bezoekers",
   "/drafts/*": "/drafts/*",
   "30 Days": "30 dagen",
   "7 Days": "7 dagen",
@@ -48,6 +52,7 @@
   "Site analytics on your own server: page views per day by default, with visitors, sources and devices as an option.": "Analytics op je eigen server: standaard paginaweergaven per dag, met bezoekers, bronnen en apparaten als optie.",
   "Source": "Bron",
   "Sources": "Bronnen",
+  "Switching back to page views deletes visitor data.": "Terug naar paginaweergaven wist de bezoekersgegevens.",
   "System": "Systeem",
   "Tablet": "Tablet",
   "The period’s visitors, views, views per visit and bounce rate, each switching the chart, with who is on the site now.": "Bezoekers, weergaven, weergaven per bezoek en bouncepercentage van de periode, elk met een eigen grafiek, en wie er nu op de site is.",
@@ -57,14 +62,12 @@
   "Type": "Type",
   "View Analytics": "Analytics bekijken",
   "View Site Analytics": "Analytics van de site bekijken",
-  "Views": "Weergaven",
   "Views per Visit": "Weergaven per bezoek",
   "Visitor counting on the published site.": "Bezoekers tellen op de gepubliceerde site.",
   "Visitors": "Bezoekers",
   "Visitors active in the last five minutes": "Bezoekers actief in de afgelopen vijf minuten",
   "Visitors per Day": "Bezoekers per dag",
   "Visitors, Sources and Devices": "Bezoekers, bronnen en apparaten",
-  "Visits appear here as people open your published site.": "Bezoeken verschijnen hier zodra mensen je gepubliceerde site openen.",
   "Wait for Consent": "Wachten op toestemming",
   "What to Count": "Wat te tellen"
 }

@@ -24,7 +24,6 @@ export default function WidgetOverview() {
         !s.tracked && {
           icon: 'chart',
           title: s.enabled ? t('No visits yet') : t('Analytics is off'),
-          description: s.enabled ? t('Visits appear here as people open your published site.') : undefined,
           action: !s.enabled && can('settings.manage') && <Button size="sm" onClick={() => navigate('/analytics?tab=settings')}>{t('Open Settings')}</Button>,
         }
       }
