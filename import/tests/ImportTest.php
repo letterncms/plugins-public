@@ -456,7 +456,6 @@ final class ImportTest extends TestCase
         $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml']);
 
         $this->assertSame(['Entries Imported' => 4, 'Files Imported' => 1, 'Sources Waiting' => count($this->ability('import/sources')['sources'])], array_column(array_column($widget()['children'], 'props'), 'value', 'label'));
-        $this->assertSame([], $this->cms()->packages()->problems(), 'Every plugin registers a home-screen widget.');
     }
 
     public function test_every_ability_says_what_it_answers_with(): void

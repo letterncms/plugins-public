@@ -25,7 +25,7 @@ final class ConsentPlugin extends Plugin
     {
         $this->settingsSchema();
 
-        // The CMS asks every plugin for a home-screen widget. This one only speaks when something is wrong: nothing to restate otherwise.
+        // The home-screen widget only speaks when something is wrong: nothing to restate otherwise.
         $this->cms()->admin()->widget('consent-banner', ['label' => 'Consent', 'description' => __('Warns when visitors are never asked, while Analytics waits for their answer.'), 'icon' => 'shield', 'column' => 'side', 'order' => 86, 'permission' => 'settings.manage', 'view' => fn () => $this->widget()]);
 
         $hooks = $this->cms()->hooks();

@@ -225,7 +225,5 @@ final class ConsentTest extends TestCase
         $this->save(['enabled' => false]);
         $this->assertSame('ui/notice', $widget()['children'][0]['type']);
         $this->assertSame('/settings/consent', $widget()['children'][0]['props']['action']['to']);
-
-        $this->assertSame([], $this->cms()->packages()->problems(), 'Every plugin registers a home-screen widget.');
     }
 }

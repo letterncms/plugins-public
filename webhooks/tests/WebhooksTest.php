@@ -494,13 +494,12 @@ final class WebhooksTest extends TestCase
         $form = $this->run_('webhooks/editable', ['id' => $hook['id']], $context);
         $this->assertSame([false, true, true, false], [$form['event_entry__saved'], $form['event_entry__published'], $form['event_account__email_changed'], $form['event_site__built']]);
 
-        // The home-screen widget every plugin must have says nothing while all is well.
+        // The home-screen widget says nothing while all is well.
         $widget = static fn () => $views->resolve('widget.webhooks-deliveries', $admin)['root'];
         $this->assertArrayNotHasKey('children', $widget());
         $this->sender->answers = [410];
         $this->publish();
         app(Dispatcher::class)->process();
         $this->assertSame('2 deliveries failed', $widget()['children'][0]['props']['title']);
-        $this->assertSame([], $this->cms()->packages()->problems());
     }
 }
