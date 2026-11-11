@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.0 (2026-11-11)
+
 ### Added
 
 - `redirects/create` adds one redirect without replacing the list, for the admin, agents, the API and the CLI.
