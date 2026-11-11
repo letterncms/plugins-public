@@ -10,6 +10,7 @@
 - A site hosted elsewhere sends signups to the **Submission Address** set under Forms.
 - The abilities `brevo/lists` and `brevo/subscribe`, the `brevo.subscribed` action and the `cms://brevo` context for agents.
 - German, for everything the plugin says.
+- `brevo/stats`, `brevo/lists` and `brevo/subscribe` say what they answer with (`output`), for agents, the API and the CLI.
 
 ### Changed
 

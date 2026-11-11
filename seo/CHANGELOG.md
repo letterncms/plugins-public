@@ -6,6 +6,7 @@
 
 - German, for everything the plugin says in the admin.
 - `redirects/create` adds one redirect without replacing the list, for the admin, agents, the API and the CLI.
+- Every SEO ability says what it answers with (`output`), for agents, the API and the CLI.
 
 ### Changed
 
@@ -13,6 +14,7 @@
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 - With no redirects yet, the Redirects tab says so and offers **New Redirect**; the table shows once there is one.
+- **Breaking.** `redirects/save` is `redirects/set`: it puts the whole list in place, as `set` does everywhere in the core. The old name is gone.
 
 ## 0.7.0 (2026-11-05)
 

@@ -47,7 +47,7 @@ final class SeoPlugin extends Plugin
                 : ['type' => 'ui/form', 'props' => [
                     'source' => ['ability' => 'redirects/list'], 'into' => 'redirects', 'width' => 'wide',
                     'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('New Redirect'), 'fields' => self::redirectFields()]],
-                    'save' => ['ability' => 'redirects/save', 'as' => '*'],
+                    'save' => ['ability' => 'redirects/set', 'as' => '*'],
                 ]],
             ],
         ]));
@@ -327,12 +327,24 @@ final class SeoPlugin extends Plugin
     {
         $a = $this->cms()->abilities();
 
+        // What they answer with.
+        $redirect = ['from' => Shape::STRING, 'to' => Shape::STRING, 'publishedAt' => Shape::STRING_OR_NULL, 'updatedAt' => Shape::STRING_OR_NULL, 'status' => Shape::enum(301, 302, 307, 308)];
+
+        // An act that changes nothing, like the core's content/search: it works the checks out for the entry as it is now, draft included.
         $a->register('seo/analyze', [
             'label' => 'Check SEO',
             'description' => 'On-page checks for search engines and AI answers (title, description, headings, alt text, answer-first, questions, links) with a score.',
             'permission' => fn ($user, array $in) => ($e = $this->cms()->entries()->find((string) $in['id'])) && $user?->hasPermission("entries.{$e->collection}.view"),
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string', 'format' => 'ulid']], 'required' => ['id']],
+            'output' => Shape::of([
+                'score' => Shape::INTEGER,
+                'checks' => [['id' => Shape::STRING, 'status' => Shape::enum('pass', 'warn', 'fail'), 'label' => Shape::STRING, 'message' => Shape::STRING]],
+                'meta' => [
+                    'title' => Shape::STRING, 'description' => Shape::STRING, 'image' => Shape::STRING_OR_NULL, 'canonical' => Shape::STRING, 'robots' => Shape::STRING,
+                    'type' => Shape::enum('article', 'website'), 'schema' => Shape::STRING, 'published' => Shape::STRING_OR_NULL, 'modified' => Shape::STRING_OR_NULL,
+                ],
+            ]),
             'handler' => fn (array $in) => $this->app->make(Analyzer::class)->analyze($this->cms()->entries()->findOrFail($in['id'])),
         ]);
 
@@ -342,6 +354,14 @@ final class SeoPlugin extends Plugin
             'permission' => 'admin.access',
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'default' => 5]]],
+            'output' => Shape::of([
+                'pages' => Shape::INTEGER, 'score' => Shape::INTEGER_OR_NULL, 'attention' => Shape::INTEGER, 'good' => Shape::INTEGER,
+                'issues' => [['id' => Shape::STRING, 'label' => Shape::STRING, 'pages' => Shape::INTEGER, 'failing' => Shape::INTEGER]],
+                'worst' => [[
+                    'id' => Shape::STRING, 'collection' => Shape::STRING, 'locale' => Shape::STRING, 'title' => Shape::STRING, 'uri' => Shape::STRING_OR_NULL,
+                    'score' => Shape::INTEGER, 'issues' => Shape::INTEGER, 'top' => Shape::STRING_OR_NULL,
+                ]],
+            ]),
             'handler' => function (array $in, AbilityContext $ctx) {
                 $health = $this->app->make(Health::class);
                 $pages = array_values(array_filter($health->pages(), static fn (array $p) => $ctx->system || ($ctx->user?->hasPermission("entries.{$p['collection']}.view") ?? false)));
@@ -361,6 +381,7 @@ final class SeoPlugin extends Plugin
             'permission' => 'admin.access',
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string', 'format' => 'ulid']], 'required' => ['id']],
+            'output' => Shape::of(['markdown' => Shape::STRING]),
             'handler' => fn (array $in) => ['markdown' => $this->app->make(MarkdownTwin::class)->render($this->cms()->entries()->findOrFail($in['id'])->withWorkingCopy())],
         ]);
 
@@ -369,27 +390,30 @@ final class SeoPlugin extends Plugin
             'description' => 'URL redirects (content/redirects.yaml).',
             'permission' => 'seo.manage',
             'annotations' => ['readOnly' => true],
+            'output' => Shape::of([$redirect]),
             'handler' => fn () => $this->app->make(Redirects::class)->all(),
         ]);
 
         $a->register('redirects/create', [
             'label' => 'Create Redirect',
-            'description' => 'Add one redirect to the list: from a path on this site ("/old") to a path or an address ("/new", "https://…"). Refused when `from` already redirects: redirects/save replaces the list.',
+            'description' => 'Add one redirect to the list: from a path on this site ("/old") to a path or an address ("/new", "https://…"). Refused when `from` already redirects: redirects/set replaces the list.',
             'permission' => 'seo.manage',
             'input' => ['type' => 'object', 'properties' => [
                 'from' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000], 'to' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
             ], 'required' => ['from', 'to']],
-            'output' => Shape::of(['from' => Shape::STRING, 'to' => Shape::STRING, 'publishedAt' => Shape::STRING_OR_NULL, 'updatedAt' => Shape::STRING_OR_NULL, 'status' => Shape::INTEGER]),
+            'output' => Shape::of($redirect),
             'handler' => fn (array $in) => $this->app->make(Redirects::class)->add($in['from'], $in['to'], $in['status']),
         ]);
 
-        $a->register('redirects/save', [
-            'label' => 'Save Redirects',
-            'description' => 'Replace the redirect list. Each: {from: "/old", to: "/new" or "https://…", status: 301|302}.',
+        // The list is one value, put in place whole: `save` is for definitions kept by a handle.
+        $a->register('redirects/set', [
+            'label' => 'Set Redirects',
+            'description' => 'Replace the redirect list: what is left out is gone. Returns the list as it is now. Each: {from: "/old", to: "/new" or "https://…", status: 301|302}.',
             'permission' => 'seo.manage',
             'input' => ['type' => 'object', 'properties' => ['redirects' => ['type' => 'array', 'items' => ['type' => 'object', 'properties' => [
                 'from' => ['type' => 'string', 'default' => ''], 'to' => ['type' => 'string', 'default' => ''], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
             ]]]], 'required' => ['redirects']],
+            'output' => Shape::of([$redirect]),
             // Rows left empty are no redirects: a table's new row that was never filled in is dropped, not refused.
             'handler' => fn (array $in) => $this->app->make(Redirects::class)->save(array_values(array_filter($in['redirects'], static fn (array $r) => trim($r['from']) !== '' && trim($r['to']) !== ''))),
         ]);

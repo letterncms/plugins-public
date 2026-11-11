@@ -84,6 +84,18 @@ final class BrevoTest extends TestCase
         return $this->cms()->abilities()->execute('brevo/stats', [], AbilityContext::system());
     }
 
+    public function test_its_abilities_say_what_they_answer_with(): void
+    {
+        $mine = array_filter($this->cms()->abilities()->all(), static fn ($ability) => $ability->package === 'letterncms/brevo');
+        $this->assertSame(['brevo/lists', 'brevo/stats', 'brevo/subscribe'], collect(array_keys($mine))->sort()->values()->all());
+
+        foreach ($mine as $name => $ability) {
+            $this->assertNotNull($ability->output(), "{$name} says what it answers with");
+            // The two reads are named for what they answer with; subscribing is the one act.
+            $this->assertSame($name !== 'brevo/subscribe', $ability->isReadOnly(), $name);
+        }
+    }
+
     public function test_stats_say_when_brevo_is_not_the_transport_or_has_no_key(): void
     {
         Http::fake();

@@ -5,6 +5,7 @@
 ### Added
 
 - German, for everything the plugin says in the admin.
+- `analytics/summary` and `analytics/breakdown` say what they answer with (`output`), for agents, the API and the CLI.
 
 ### Changed
 

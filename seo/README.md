@@ -33,9 +33,9 @@ The Redirects tab beside them edits `content/redirects.yaml`.
 - `seo/markdown`: the Markdown version of a page that AI crawlers receive. Needs `admin.access`.
 - `redirects/list`: the redirects. Needs `seo.manage`.
 - `redirects/create`: adds one redirect. Needs `seo.manage`.
-- `redirects/save`: replaces the redirect list. Needs `seo.manage`.
+- `redirects/set`: puts the whole redirect list in place; what is left out is gone. Needs `seo.manage`.
 
-The permission `seo.manage` (**Manage SEO Settings and Redirects**) comes with the Editor role.
+Each says what it answers with (`output`). The permission `seo.manage` (**Manage SEO Settings and Redirects**) comes with the Editor role.
 
 ## Hooks
 

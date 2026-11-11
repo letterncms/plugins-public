@@ -6,13 +6,16 @@
 
 - **CAPTCHA** in the Forms settings: Cloudflare Turnstile or hCaptcha. With a provider and its two keys, every form shows the provider's check and a submission is accepted only when the provider vouches for it. A visitor who fails is told and can try again. While the provider can't be reached nothing gets through: the visitor reads that it isn't them and to try again in a few minutes, and the site's log says what happened. The secret key is stored encrypted, and the provider's script loads only on pages that show a form.
 - The admin's words for Forms in German.
-- `forms/delete` and `forms/submission-delete` take `dryRun: true` and answer with the form or the submissions they would remove, without removing them.
+- `forms/delete` and `form-submissions/delete` take `dryRun: true` and answer with the form or the submissions they would remove, without removing them.
+- Every Forms ability says what it answers with (`output`), for agents, the API and the CLI. A form’s settings come back in the types they are said to have: an empty address is `null`, a switch is `true` or `false`.
 
 ### Changed
 
 - The Forms settings say less: no notes under the fields, and **Keep Submissions For** left empty reads **Forever**.
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 - With no forms yet, the Forms screen offers **New Form** right where the list would be.
+- **Breaking.** The abilities follow the core’s naming rule, one thing and one verb each: `forms/activity` is `forms/overview`, `forms/configure` is `form-settings/update`, `forms/words` and `forms/translate` are `form-words/get` and `form-words/update`, and submissions are a thing of their own: `form-submissions/list`, `get`, `update`, `delete` and `csv` (were `forms/submissions`, `forms/submission`, `forms/submission-update`, `forms/submission-delete` and `forms/export`). The old names are gone.
+- **Breaking.** `form-submissions/get` only reads: it no longer marks a new submission read. The admin’s dialog does that when it opens one, with `form-submissions/update`.
 
 ## 0.11.0 (2026-11-06)
 

@@ -26,7 +26,7 @@ On the Settings tab of Analytics, kept in `config/analytics.yaml`:
 - `analytics/summary`: page views for the last 7, 30 or 90 days, the period before to compare, and a row per day; in visitors mode also visitors, views per visit, bounce rate and who is on the site now. Needs `analytics.view`.
 - `analytics/breakdown`: views per page or language; in visitors mode also per entry page, source, device, browser or operating system. Needs `analytics.view`.
 
-The permission `analytics.view` (**View Site Analytics**) comes with the Editor role.
+Each says what it answers with (`output`). The permission `analytics.view` (**View Site Analytics**) comes with the Editor role.
 
 ## Hooks
 
