@@ -19,7 +19,8 @@
         "letterncms/consent": "*",
         "letterncms/forms": "*",
         "letterncms/import": "*",
-        "letterncms/seo": "*"
+        "letterncms/seo": "*",
+        "letterncms/webhooks": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "^12.0"
@@ -32,7 +33,8 @@
             "Cms\\Forms\\Tests\\": "forms/tests/",
             "Cms\\Import\\Tests\\": "import/tests/",
             "Cms\\Seo\\Tests\\": "seo/tests/",
-            "Cms\\Tests\\": "vendor/letterncms/cms/tests/"
+            "Cms\\Tests\\": "vendor/letterncms/cms/tests/",
+            "Cms\\Webhooks\\Tests\\": "webhooks/tests/"
         }
     },
     "scripts": {
