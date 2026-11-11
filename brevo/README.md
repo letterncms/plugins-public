@@ -34,7 +34,7 @@ The **Newsletter Signup** block (`brevo/signup`) has its own list, label, button
 - `brevo/lists`: the account's contact lists with id, name and subscribers. Needs `settings.manage`.
 - `brevo/subscribe`: add an address to a list right away, without a confirmation email. Needs `settings.manage`.
 
-Agents read `cms://brevo` for whether a key is set, the default list and whether addresses are confirmed.
+Each says what it answers with (`output`). Agents read `cms://brevo` for whether a key is set, the default list and whether addresses are confirmed.
 
 ## Hooks
 

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- Every Forms ability says what it answers with (`output`), for agents, the API and the CLI. A form’s settings come back in the types they are said to have: an empty address is `null`, a switch is `true` or `false`.
+
+### Changed
+
+- **Breaking.** The abilities follow the core’s naming rule, one thing and one verb each: `forms/activity` is `forms/overview`, `forms/configure` is `form-settings/update`, `forms/words` and `forms/translate` are `form-words/get` and `form-words/update`, and submissions are a thing of their own: `form-submissions/list`, `get`, `update`, `delete` and `csv` (were `forms/submissions`, `forms/submission`, `forms/submission-update`, `forms/submission-delete` and `forms/export`). The old names are gone.
+- **Breaking.** `form-submissions/get` only reads: it no longer marks a new submission read. The admin’s dialog does that when it opens one, with `form-submissions/update`.
+
 ## 0.12.0 (2026-11-11)
 
 ### Added

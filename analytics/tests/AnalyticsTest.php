@@ -141,6 +141,11 @@ final class AnalyticsTest extends TestCase
         $this->assertEqualsCanonicalizing([null, 'GitHub'], array_column($sources['items'], 'key'));
 
         $devices = $this->cms()->abilities()->execute('analytics/breakdown', ['period' => '7d', 'dimension' => 'devices'], $ctx);
+
+        // Visitors mode knows every dimension: each answers in the shape that is said.
+        foreach (\Cms\Analytics\Reports::DIMENSIONS as $dimension) {
+            $this->assertArrayNotHasKey('unavailable', $this->cms()->abilities()->execute('analytics/breakdown', ['period' => '7d', 'dimension' => $dimension], $ctx));
+        }
         $this->assertEqualsCanonicalizing(['desktop', 'mobile'], array_column($devices['items'], 'key'));
         $this->assertEqualsCanonicalizing(['desktop', 'phone'], array_column($devices['items'], 'icon'));
         $this->assertEqualsWithDelta(1, array_sum(array_column($devices['items'], 'share')), 0.001);

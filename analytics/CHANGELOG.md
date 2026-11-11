@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- `analytics/summary` and `analytics/breakdown` say what they answer with (`output`), for agents, the API and the CLI.
+
 ### Changed
 
 - The Analytics screen leads to its settings one way, the **Settings** tab: the line and the button under the lists are gone.

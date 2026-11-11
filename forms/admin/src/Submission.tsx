@@ -19,15 +19,18 @@ const statusLabel = (status: Submission['status']) => ({ new: t('New'), read: t(
  * replied to, archived or marked as spam. Opening a new one marks it read.
  */
 export default function SubmissionDialog({ props, close }: SurfaceComponentProps<{ id: string }>) {
-  const query = useAbility<Submission>('forms/submission', { id: props.id }, { refetchOnWindowFocus: false })
+  const query = useAbility<Submission>('form-submissions/get', { id: props.id }, { refetchOnWindowFocus: false })
   const s = query.data
-  // Read now: the list and the sidebar's count say so.
-  useEffect(() => { if (s) invalidate('forms/submissions', 'forms/list', 'forms/activity') }, [s?.id])
+  // Opened, a new one is read: the list and the sidebar's count say so.
+  useEffect(() => {
+    if (s?.status !== 'new') return
+    void run('form-submissions/update', { ids: [s.id], status: 'read' }).then(() => invalidate('form-submissions/', 'forms/list', 'forms/overview')).catch(() => {})
+  }, [s?.id])
 
   const mark = async (status: Submission['status']) => {
     try {
-      await run('forms/submission-update', { ids: [props.id], status })
-      invalidate('forms/')
+      await run('form-submissions/update', { ids: [props.id], status })
+      invalidate('forms/', 'form-submissions/')
       close?.()
     } catch (e) {
       toast.error(e)

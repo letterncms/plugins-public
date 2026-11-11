@@ -49,9 +49,35 @@ final class RedirectsTest extends TestCase
         $this->assertSame('/new-page', $this->app->make(\Cms\Seo\Redirects::class)->match('/old-page/')['to']);
 
         $table = $this->tab();
-        $this->assertSame(['ui/form', 'redirects/list', 'redirects/save'], [$table['type'], $table['props']['source']['ability'], $table['props']['save']['ability']]);
+        $this->assertSame(['ui/form', 'redirects/list', 'redirects/set'], [$table['type'], $table['props']['source']['ability'], $table['props']['save']['ability']]);
         $this->assertSame(['/old-page'], array_column($this->run_('redirects/list'), 'from'));
         $this->assertSame('redirects/create', $this->redirects()['props']['actions'][0]['ability']);
+    }
+
+    public function test_its_abilities_follow_the_cores_rules_for_names_and_answers(): void
+    {
+        $mine = array_filter($this->cms()->abilities()->all(), static fn ($ability) => $ability->package === 'letterncms/seo');
+        $this->assertSame(['redirects/create', 'redirects/list', 'redirects/set', 'seo/analyze', 'seo/health', 'seo/markdown'], collect(array_keys($mine))->sort()->values()->all());
+
+        foreach ($mine as $name => $ability) {
+            $this->assertNotNull($ability->output(), "{$name} says what it answers with");
+            // A read is annotated as one, and so is the one act that changes nothing.
+            $this->assertSame(! in_array($name, ['redirects/create', 'redirects/set'], true), $ability->isReadOnly(), $name);
+        }
+
+        // Each one runs, so its answer is held against what it says (the test case verifies every output).
+        $page = $this->run_('entries/create', ['collection' => 'pages', 'title' => 'About the Harbour', 'status' => 'published']);
+        $analysis = $this->run_('seo/analyze', ['id' => $page['id']]);
+        $this->assertContains('title', array_column($analysis['checks'], 'id'));
+        $this->assertSame('website', $analysis['meta']['type']);
+        $this->assertSame(1, $this->run_('seo/health')['pages']);
+        $this->assertStringContainsString('About the Harbour', $this->run_('seo/markdown', ['id' => $page['id']])['markdown']);
+
+        // The list is put in place whole: what is left out is gone, and an empty row is no redirect.
+        $this->run_('redirects/create', ['from' => '/a', 'to' => '/b']);
+        $set = $this->run_('redirects/set', ['redirects' => [['from' => '/c', 'to' => 'https://example.com/d', 'status' => 308], ['from' => '', 'to' => '']]]);
+        $this->assertSame([['/c', 'https://example.com/d', 308]], array_map(static fn (array $r) => [$r['from'], $r['to'], $r['status']], $set));
+        $this->assertSame($set, $this->run_('redirects/list'));
     }
 
     public function test_an_address_redirects_once_and_only_to_somewhere(): void
