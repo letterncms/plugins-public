@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### Added
+
+- German, for everything the plugin says in the admin.
+
+### Changed
+
+- **Breaking.** Needs CMS 0.21.
+- The Editor role a site starts with can manage SEO settings and redirects: **Manage SEO Settings and Redirects** comes with it, as the permissions of the other plugins do.
+- The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
+
 ## 0.7.0 (2026-11-05)
 
 ### Changed

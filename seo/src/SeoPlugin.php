@@ -51,7 +51,7 @@ final class SeoPlugin extends Plugin
 
     public function boot(): void
     {
-        $this->cms()->permissions()->register('seo.manage', 'Manage SEO Settings and Redirects', 'Site');
+        $this->cms()->permissions()->register('seo.manage', 'Manage SEO Settings and Redirects', 'Site', roles: ['editor']);
         $this->addSeoField();
         $this->settingsSchema();
         $this->rendering();
