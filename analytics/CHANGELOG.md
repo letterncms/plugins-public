@@ -10,6 +10,7 @@
 
 - **Breaking.** Needs CMS 0.21.
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
+- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ## 0.6.0 (2026-11-05)
 

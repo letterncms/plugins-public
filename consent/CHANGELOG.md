@@ -11,3 +11,7 @@
 - Visitors who send Global Privacy Control aren't asked, and nothing is accepted for them.
 - A site that asks about neither analytics nor marketing shows no banner.
 - The **Consent** widget on the home screen stays empty unless Analytics waits for an answer that visitors are never asked for.
+
+### Changed
+
+- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.

@@ -6,11 +6,13 @@
 
 - **CAPTCHA** in the Forms settings: Cloudflare Turnstile or hCaptcha. With a provider and its two keys, every form shows the provider's check and a submission is accepted only when the provider vouches for it. A visitor who fails is told and can try again. While the provider can't be reached nothing gets through: the visitor reads that it isn't them and to try again in a few minutes, and the site's log says what happened. The secret key is stored encrypted, and the provider's script loads only on pages that show a form.
 - The admin's words for Forms in German.
+- `forms/delete` and `forms/submission-delete` take `dryRun: true` and answer with the form or the submissions they would remove, without removing them.
 
 ### Changed
 
 - **Breaking.** Needs CMS 0.21.
 - The Forms settings say less: no notes under the fields, and **Keep Submissions For** left empty reads **Forever**.
+- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ## 0.11.0 (2026-11-06)
 

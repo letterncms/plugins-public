@@ -24,9 +24,9 @@ final class Client
     /** The key of the email transport (Settings → Email), or the plugin's own when Brevo doesn't send the site's email. */
     public function key(): string
     {
-        $mail = (string) $this->cms->settings('email', 'brevo_api_key', '');
+        $mail = (string) $this->cms->setting('email', 'brevo_api_key', '');
 
-        return $mail !== '' ? $mail : (string) $this->cms->settings('brevo', 'api_key', '');
+        return $mail !== '' ? $mail : (string) $this->cms->setting('brevo', 'api_key', '');
     }
 
     /**

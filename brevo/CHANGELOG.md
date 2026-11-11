@@ -14,6 +14,7 @@
 ### Changed
 
 - **Breaking.** Needs CMS 0.21.
+- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ### Fixed
 

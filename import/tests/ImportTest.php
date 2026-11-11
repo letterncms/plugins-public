@@ -96,6 +96,36 @@ final class ImportTest extends TestCase
         $this->assertFileDoesNotExist(storage_path('app/import-ledger.json'));
     }
 
+    public function test_a_dry_run_names_what_the_import_would_make_and_refuses_what_it_would(): void
+    {
+        $report = $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml', 'dryRun' => true]);
+
+        $this->assertSame(['dryRun', 'ability', 'checked', 'input', 'changes'], array_keys($report));
+        $this->assertSame('full', $report['checked']);
+        $by = static fn (string $type) => array_values(array_filter($report['changes'], static fn (array $c) => $c['type'] === $type));
+        $this->assertSame(['Hello & welcome', 'Classic post', 'About', 'Team'], array_column($by('entry'), 'title'));
+        $this->assertSame(['create'], array_values(array_unique(array_column($by('entry'), 'action'))));
+        $this->assertSame(['https://old.example.com/wp-content/uploads/2024/05/quay.png'], array_column($by('media'), 'url'));
+        $this->assertContains('/2024/05/hello-welcome', array_column($by('redirect'), 'from'));
+
+        $this->assertSame([], $this->entries('posts'));
+        $this->assertSame(0, MediaItem::query()->count());
+        $this->assertSame([], $this->fetched);
+        $this->assertSame([], $this->redirects());
+        $this->assertFileDoesNotExist(storage_path('app/import-ledger.json'));
+
+        try {
+            $this->ability('import/run', ['type' => 'csv', 'path' => 'wordpress.xml', 'collection' => 'nowhere', 'dryRun' => true]);
+            $this->fail('A dry run took a collection that does not exist.');
+        } catch (AbilityException $e) {
+            $this->assertSame('invalid_input', $e->type);
+        }
+
+        // What ran is no longer in a dry run of the same source.
+        $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml']);
+        $this->assertSame([], $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml', 'dryRun' => true])['changes']);
+    }
+
     public function test_wordpress_brings_posts_pages_media_and_redirects(): void
     {
         $report = $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml']);
