@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.13.0 (2026-11-11)
+
 ### Added
 
 - Every Forms ability says what it answers with (`output`), for agents, the API and the CLI. A form’s settings come back in the types they are said to have: an empty address is `null`, a switch is `true` or `false`.
