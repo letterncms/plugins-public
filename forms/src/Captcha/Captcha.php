@@ -16,6 +16,9 @@ interface Captcha
     /** The widget's markup inside the form. Its size is reserved, so nothing moves when it loads. */
     public function widget(string $locale): string;
 
+    /** What a page's content security policy must let in for the widget, by directive (`script-src`, `frame-src` …). */
+    public function sources(): array;
+
     /** The name of the form field the widget puts its token in. */
     public function field(): string;
 

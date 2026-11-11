@@ -16,6 +16,12 @@ final class HCaptcha implements Captcha
         return 'https://js.hcaptcha.com/1/api.js';
     }
 
+    /** As hCaptcha documents it: its scripts, frames, styles and calls come from hcaptcha.com and its subdomains. */
+    public function sources(): array
+    {
+        return array_fill_keys(['script-src', 'frame-src', 'style-src', 'connect-src'], ['https://hcaptcha.com', 'https://*.hcaptcha.com']);
+    }
+
     public function widget(string $locale): string
     {
         return '<div class="cms-form__captcha h-captcha" style="min-height:78px" data-sitekey="'.e($this->siteKey).'" data-hl="'.e($locale).'"></div>';

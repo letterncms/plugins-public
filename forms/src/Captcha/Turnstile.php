@@ -16,6 +16,11 @@ final class Turnstile implements Captcha
         return 'https://challenges.cloudflare.com/turnstile/v0/api.js';
     }
 
+    public function sources(): array
+    {
+        return array_fill_keys(['script-src', 'frame-src', 'connect-src'], ['https://challenges.cloudflare.com']);
+    }
+
     public function widget(string $locale): string
     {
         return '<div class="cms-form__captcha cf-turnstile" style="min-height:65px" data-sitekey="'.e($this->siteKey).'" data-language="'.e($locale).'" data-theme="auto"></div>';

@@ -64,6 +64,26 @@ final class CaptchaTest extends TestCase
         });
     }
 
+    public function test_the_sites_content_security_policy_lets_in_the_provider_and_a_redirect_elsewhere(): void
+    {
+        $policy = fn () => $this->cms()->hooks()->filter('site.policy', ['script-src' => ["'self'"], 'form-action' => ["'self'"]]);
+        $this->assertSame(['script-src' => ["'self'"], 'form-action' => ["'self'"]], $policy(), 'without a CAPTCHA or a redirect, nothing more');
+
+        $this->provider('turnstile');
+        foreach (['script-src', 'frame-src', 'connect-src'] as $directive) {
+            $this->assertContains('https://challenges.cloudflare.com', $policy()[$directive], $directive);
+        }
+
+        $this->provider('hcaptcha');
+        $this->assertContains('https://*.hcaptcha.com', $policy()['frame-src']);
+        $this->assertNotContains('https://challenges.cloudflare.com', $policy()['frame-src']);
+
+        // Sent without JavaScript, a form ends on its Redirect To: another site's address is one the form may lead to.
+        app(FormRepository::class)->save('quote', [...app(FormRepository::class)->find('quote'), 'settings' => ['redirect' => 'https://Thanks.example.com/merci?x=1']]);
+        app(FormRepository::class)->save('call', ['title' => 'Call', 'settings' => ['redirect' => '/thank-you'], 'fields' => []]);
+        $this->assertSame(["'self'", 'https://thanks.example.com'], $policy()['form-action']);
+    }
+
     #[DataProvider('providers')]
     public function test_a_submission_with_a_token_the_provider_vouches_for_is_stored(string $name): void
     {

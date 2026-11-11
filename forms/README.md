@@ -53,6 +53,7 @@ Every ability says what it answers with (`output`). The Editor role starts with 
 | `form.saved` | action | A form was saved or deleted: `(string $handle)`. |
 | `form.submitted` | action | A submission was accepted: `(array $form, array $data, ?Submission $submission)`. |
 | `form.data` | filter | The answers of a valid submission, before they are stored and sent: `(array $data, array $form, Request $request)`. |
+| `site.policy` (core) | filter | Forms adds its CAPTCHA's hosts and the hosts of Redirect To addresses on other sites to the public pages' content security policy. |
 | `fields.options.forms` | filter | The forms a Form block offers. |
 
 Both CAPTCHA providers implement `Cms\Forms\Captcha\Captcha` and ask through `Cms\Forms\Captcha\Client`, which a test binds to a stand-in.

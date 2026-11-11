@@ -168,6 +168,16 @@ final class AnalyticsTest extends TestCase
         $this->assertSame([], $hooks->filter('site.foot', [], (object) ['editor' => true, 'preview' => false]));
     }
 
+    public function test_a_reporting_address_elsewhere_is_in_the_sites_content_security_policy(): void
+    {
+        $policy = fn () => $this->cms()->hooks()->filter('site.policy', ['connect-src' => ["'self'"]]);
+        $this->assertSame(['connect-src' => ["'self'"]], $policy(), 'its own site needs nothing more');
+
+        $this->cms()->settingsRegistry()->save('analytics', ['endpoint' => 'https://Stats.example.com/']);
+        $this->assertSame(["'self'", 'https://stats.example.com'], $policy()['connect-src']);
+        $this->assertSame(["'self'", 'https://stats.example.com'], $policy()['img-src']);
+    }
+
     public function test_old_days_are_forgotten(): void
     {
         $collector = $this->app->make(Collector::class);

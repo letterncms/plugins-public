@@ -31,3 +31,4 @@ Each says what it answers with (`output`). The permission `analytics.view` (**Vi
 ## Hooks
 
 - `analytics.known-path` (filter): `fn (bool $known, string $path): bool`. Return `true` for an address your plugin answers itself, so views of it are counted; pages of the site are known already.
+- Uses the core's `site.policy` filter: a Reporting Address on another host is named in the public pages' content security policy (`connect-src`, `img-src`).
