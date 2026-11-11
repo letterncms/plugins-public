@@ -31,7 +31,7 @@ final class SignupTest extends TestCase
         parent::setUp();
         Http::preventStrayRequests();
         // The list first: with a key, saving asks Brevo which lists there are to choose from.
-        $this->cms()->settingsRegistry()->save('brevo', ['list' => '#7']);
+        $this->cms()->settingsRegistry()->save('brevo', ['list' => '7']);
         $this->cms()->settingsRegistry()->save('brevo', ['api_key' => 'list-key']);
 
         $sent = &$this->sent;
@@ -219,7 +219,9 @@ final class SignupTest extends TestCase
     {
         Http::fake();
         $renderer = app(BlockRenderer::class);
-        $html = $renderer->render([['id' => 'news01', 'type' => 'brevo/signup', 'props' => ['list' => '#12', 'button' => 'Join', 'consent' => 'One email a month.']]]);
+        $html = $renderer->render([['id' => 'news01', 'type' => 'brevo/signup', 'props' => ['list' => '12', 'button' => 'Join', 'consent' => 'One email a month.']]]);
+        // A block placed before 0.7 holds "#<id>", and goes on posting to the same list.
+        $this->assertStringContainsString('name="list" value="12"', $renderer->render([['id' => 'news02', 'type' => 'brevo/signup', 'props' => ['list' => '#12']]]));
 
         $this->assertStringContainsString('action="/api/brevo/subscribe"', $html);
         $this->assertStringContainsString('type="email" name="email"', $html);
@@ -252,11 +254,26 @@ final class SignupTest extends TestCase
         $this->cms()->abilities()->execute('brevo/lists', [], AbilityContext::system());
 
         $this->assertSame(['state' => 'ok', 'lists' => [['id' => 7, 'name' => 'Newsletter', 'subscribers' => 42], ['id' => 12, 'name' => 'Customers', 'subscribers' => 9]]], $lists);
-        $this->assertSame(['#7' => 'Newsletter', '#12' => 'Customers'], $this->cms()->hooks()->filter('fields.options.brevo-lists', []));
+        $this->assertSame([7 => 'Newsletter', 12 => 'Customers'], $this->cms()->hooks()->filter('fields.options.brevo-lists', []));
         Http::assertSentCount(1);
 
-        // The settings offer them, and take one.
-        $this->cms()->settingsRegistry()->save('brevo', ['list' => '#12']);
+        // The settings offer them by id, and take one; a block's select offers the same.
+        $fields = array_column($this->cms()->settingsRegistry()->schemas()['brevo']['fields'], null, 'handle');
+        $this->assertSame([7 => 'Newsletter', 12 => 'Customers'], \Cms\Content\Fields\Blueprint::withOptions($fields['list'])['options']);
+        $this->cms()->settingsRegistry()->save('brevo', ['list' => '12']);
+        $this->assertSame(12, app(Signup::class)->list());
+    }
+
+    public function test_a_list_chosen_as_hash_and_id_before_is_the_id_after_the_upgrade(): void
+    {
+        \Cms\Support\Yaml::write(site_path('config/brevo.yaml'), ['double_opt_in' => false, 'list' => '#12']);
+        $this->cms()->settingsRegistry()->forget('brevo');
+        $this->assertSame(12, app(Signup::class)->list());
+
+        (new \Cms\Brevo\BrevoPlugin($this->app))->upgrade('0.6.0');
+
+        $this->assertSame(['double_opt_in' => false, 'list' => '12'], \Cms\Support\Yaml::read(site_path('config/brevo.yaml')));
+        $this->assertSame('12', $this->cms()->setting('brevo', 'list'));
         $this->assertSame(12, app(Signup::class)->list());
     }
 
@@ -301,7 +318,7 @@ final class SignupTest extends TestCase
         $this->assertNotContains('endpoint', $handles());
 
         // Saved while the field is away, its old value goes with it: never into the settings file.
-        $registry->save('brevo', ['list' => '#12', 'api_key' => 'sneaked-in']);
+        $registry->save('brevo', ['list' => '12', 'api_key' => 'sneaked-in']);
         $this->assertStringNotContainsString('key', (string) file_get_contents($this->site.'/config/brevo.yaml'));
         $this->assertSame('mail-key', app(Client::class)->key());
     }
