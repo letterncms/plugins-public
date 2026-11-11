@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.0 (2026-11-11)
+
 ### Added
 
 - `analytics/summary` and `analytics/breakdown` say what they answer with (`output`), for agents, the API and the CLI.

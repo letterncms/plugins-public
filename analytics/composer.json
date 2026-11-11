@@ -2,7 +2,7 @@
     "name": "letterncms/analytics",
     "description": "Site analytics on your own server: page views per day by default, with visitors, sources and devices as an option.",
     "type": "cms-plugin",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
