@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-11)
+
 ### Added
 
 - A cookie banner on the published site, in the site's own colours, buttons and switches: **Accept All** and **Only Necessary** weigh the same, and **Choose** opens a choice between analytics and marketing. It appears over the page without moving anything, and works on built pages. On a phone it takes at most half the screen, with buttons as wide as the panel.
