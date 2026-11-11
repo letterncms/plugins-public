@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- A number has one name everywhere: the lists' column is **Page Views**, like the number above the chart and on the home screen. On a phone a row says what it counts: “4,048 Page Views”.
+- **What to Count** says what switching back costs: visitor data is deleted.
+- The home-screen widget's empty state is its title, without a sentence under it.
+
 ## 0.8.0 (2026-11-11)
 
 ### Added

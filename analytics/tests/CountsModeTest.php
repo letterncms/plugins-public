@@ -253,7 +253,7 @@ final class CountsModeTest extends TestCase
         $fields = $this->cms()->settingsRegistry()->schemas()['analytics']['fields'];
 
         // One note, for the one choice that deletes something. The rest is said by labels and placeholders.
-        $this->assertSame([], array_filter(array_column($fields, 'instructions', 'handle')));
+        $this->assertSame(['mode' => 'Switching back to page views deletes visitor data.'], array_filter(array_column($fields, 'instructions', 'handle')));
         $this->assertSame(['exclude' => '/drafts/*', 'retention_days' => 'Forever', 'endpoint' => 'https://cms.example.com'], array_filter(array_column($fields, 'placeholder', 'handle')));
     }
 

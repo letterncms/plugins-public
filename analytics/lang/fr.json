@@ -1,5 +1,9 @@
 {
   "{count} on the site now": "{count} sur le site en ce moment",
+  "{count} Page View": "{count} page vue",
+  "{count} Page Views": "{count} pages vues",
+  "{count} Visitor": "{count} visiteur",
+  "{count} Visitors": "{count} visiteurs",
   "/drafts/*": "/drafts/*",
   "30 Days": "30 jours",
   "7 Days": "7 jours",
@@ -48,6 +52,7 @@
   "Site analytics on your own server: page views per day by default, with visitors, sources and devices as an option.": "Statistiques du site sur votre propre serveur : pages vues par jour par défaut, avec visiteurs, sources et appareils en option.",
   "Source": "Source",
   "Sources": "Sources",
+  "Switching back to page views deletes visitor data.": "Revenir aux pages vues supprime les données des visiteurs.",
   "System": "Système",
   "Tablet": "Tablette",
   "The period’s visitors, views, views per visit and bounce rate, each switching the chart, with who is on the site now.": "Visiteurs, vues, vues par visite et taux de rebond de la période, chacun avec son graphique, et qui est sur le site en ce moment.",
@@ -57,14 +62,12 @@
   "Type": "Type",
   "View Analytics": "Voir les statistiques",
   "View Site Analytics": "Voir les statistiques du site",
-  "Views": "Vues",
   "Views per Visit": "Pages par visite",
   "Visitor counting on the published site.": "Comptage des visiteurs sur le site publié.",
   "Visitors": "Visiteurs",
   "Visitors active in the last five minutes": "Visiteurs actifs ces cinq dernières minutes",
   "Visitors per Day": "Visiteurs par jour",
   "Visitors, Sources and Devices": "Visiteurs, sources et appareils",
-  "Visits appear here as people open your published site.": "Les visites apparaissent ici dès que des personnes ouvrent votre site publié.",
   "Wait for Consent": "Attendre le consentement",
   "What to Count": "Ce qu’il faut compter"
 }
