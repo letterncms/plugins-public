@@ -314,7 +314,7 @@ final class SeoPlugin extends Plugin
             Route::get('/.well-known/security.txt', fn () => response($this->app->make(SiteFiles::class)->securityTxt() ?? abort(404), 200, ['Content-Type' => 'text/plain; charset=utf-8']));
             Route::get('/{path}.md', function (string $path) {
                 abort_unless($this->cms()->setting('seo', 'markdown_twins', true), 404);
-                $entry = $this->cms()->entries()->findByUri($path === 'index' ? '/' : '/'.$path);
+                $entry = $this->app->make(MarkdownTwin::class)->at($path === 'index' ? '/' : '/'.$path);
                 abort_if(! $entry || ! $entry->isLive() || ! empty($entry->data['seo']['noindex']) || $this->cms()->entries()->gate()->isGated($entry), 404);
 
                 return response($this->app->make(MarkdownTwin::class)->render($entry), 200, ['Content-Type' => 'text/markdown; charset=utf-8']);

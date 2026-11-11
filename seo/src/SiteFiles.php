@@ -89,10 +89,23 @@ final class SiteFiles
                 .'</url>';
         }
 
-        // Addresses a plugin answers itself, for the default language's sitemap.
-        if ($locale === null || $locale === $this->cms->defaultLocale()) {
-            foreach ((array) $this->cms->hooks()->filter('seo.sitemap', []) as $url) {
-                $xml[] = '<url><loc>'.e((string) $this->meta->absolute((string) $url['uri'])).'</loc>'.(($url['updated'] ?? null) ? '<lastmod>'.e((string) $url['updated']).'</lastmod>' : '').'</url>';
+        // Addresses the core or a plugin answers itself: in the sitemap of the language they say (`locale`),
+        // and in the default language's when they say none.
+        foreach ((array) $this->cms->hooks()->filter('seo.sitemap', [], $locale) as $url) {
+            // One that stands for an entry (a term's archive is the term at another address): left out when the
+            // entry is kept out of search, and with the addresses of its other languages, as a page has them.
+            $page = ($url['entry'] ?? null) instanceof Entry ? clone $url['entry'] : null;
+
+            if ($page && ! empty($page->data['seo']['noindex'])) {
+                continue;
+            }
+
+            $page && $page->uri = (string) $url['uri'];
+
+            if ($locale === null || ($url['locale'] ?? $this->cms->defaultLocale()) === $locale) {
+                $xml[] = '<url><loc>'.e((string) $this->meta->absolute((string) $url['uri'])).'</loc>'.(($url['updated'] ?? null) ? '<lastmod>'.e((string) $url['updated']).'</lastmod>' : '')
+                    .($page ? implode('', array_map(fn ($alt) => '<xhtml:link rel="alternate" hreflang="'.e($alt['locale']).'" href="'.e((string) $this->meta->absolute($alt['uri'])).'"/>', $this->cms->hooks()->filter('seo.alternates', [], $page))) : '')
+                    .'</url>';
             }
         }
 
