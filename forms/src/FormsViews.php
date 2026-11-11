@@ -78,14 +78,14 @@ final class FormsViews
         $tabs = [
             ['type' => 'ui/tab', 'props' => ['id' => 'fields', 'label' => __('Fields')], 'children' => [['type' => 'forms/builder', 'props' => $input]]],
             ['type' => 'ui/tab', 'props' => ['id' => 'options', 'label' => __('Settings')], 'children' => $manage
-                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'forms/get', 'input' => $input], 'valuesAt' => 'settings', 'fields' => self::settingsFields(), 'save' => ['ability' => 'forms/configure', 'input' => $input, 'as' => 'settings']]]]
+                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'forms/get', 'input' => $input], 'valuesAt' => 'settings', 'fields' => self::settingsFields(), 'save' => ['ability' => 'form-settings/update', 'input' => $input, 'as' => 'settings']]]]
                 : self::readOnly(self::settingsFields(), $form['settings'])],
         ];
 
         if (count($this->cms->locales()) > 1) {
             $tabs[] = ['type' => 'ui/tab', 'props' => ['id' => 'languages', 'label' => __('Languages')], 'children' => $manage
                 // Fields and values both from the ability: the placeholders are the form's own words, not the admin's to translate.
-                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'forms/words', 'input' => $input], 'save' => ['ability' => 'forms/translate', 'input' => $input, 'as' => 'words']]]]
+                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'form-words/get', 'input' => $input], 'save' => ['ability' => 'form-words/update', 'input' => $input, 'as' => 'words']]]]
                 : self::readOnly($this->wordFields($form), self::words($form['locales']))];
         }
 
@@ -107,11 +107,11 @@ final class FormsViews
     {
         // A field's label is the form's own word, shown as it was written.
         $columns = array_map(static fn (array $f) => ['key' => 'data.'.$f['name'], 'label' => strip_tags((string) ($f['props']['label'] ?? $f['name']))], array_slice(array_values(array_filter(FormFields::extract($form['fields']), static fn ($f) => $f['type'] !== 'hidden')), 0, 3));
-        $mark = static fn (string $label, string $status) => ['label' => $label, 'ability' => 'forms/submission-update', 'input' => ['ids' => '{ids}', 'status' => $status]];
+        $mark = static fn (string $label, string $status) => ['label' => $label, 'ability' => 'form-submissions/update', 'input' => ['ids' => '{ids}', 'status' => $status]];
 
         return ['type' => 'ui/records', 'props' => [
             'id' => 'submissions', 'label' => __('Submissions'),
-            'source' => ['ability' => 'forms/submissions', 'input' => ['form' => $form['handle']]],
+            'source' => ['ability' => 'form-submissions/list', 'input' => ['form' => $form['handle']]],
             'search' => ['param' => 'search', 'placeholder' => __('Search…')],
             'filters' => [['param' => 'status', 'label' => __('Show'), 'all' => __('Inbox'), 'options' => self::options(['new' => __('Unread'), 'archived' => __('Archived'), 'spam' => __('Spam')])]],
             'paged' => ['perPage' => 100],
@@ -126,7 +126,7 @@ final class FormsViews
                 $mark(__('Archive'), 'archived'),
                 $mark(__('Spam'), 'spam'),
                 // How many, said without a plural to get wrong.
-                ['label' => __('Delete'), 'ability' => 'forms/submission-delete', 'input' => ['ids' => '{ids}'],
+                ['label' => __('Delete'), 'ability' => 'form-submissions/delete', 'input' => ['ids' => '{ids}'],
                     'confirm' => ['title' => __('Delete the selected submissions?'), 'text' => __('{ids.length} selected. This cannot be undone.'), 'confirm' => __('Delete'), 'danger' => true]],
             ],
             'empty' => ['icon' => 'inbox', 'title' => __('No submissions')],

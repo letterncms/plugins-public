@@ -42,7 +42,7 @@ function Builder({ form }: { form: Form }) {
       const stored = await run<Form>('forms/save', { handle: form.handle, fields: fields.current })
       saved.current = stored.fields
       setDirty(false)
-      invalidate('forms/')
+      invalidate('forms/', 'form-words/', 'form-submissions/')
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {

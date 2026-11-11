@@ -5,10 +5,12 @@
 ### Added
 
 - `redirects/create` adds one redirect without replacing the list, for the admin, agents, the API and the CLI.
+- Every SEO ability says what it answers with (`output`), for agents, the API and the CLI.
 
 ### Changed
 
 - **New Redirect** is in the top bar of the Redirects tab and asks for the redirect in a dialog. With none yet the tab says **No redirects yet**; the table shows once there is one, and its own button adds a row (**Add Redirect**).
+- **Breaking.** `redirects/save` is `redirects/set`: it puts the whole list in place, as `set` does everywhere in the core. The old name is gone.
 
 ## 0.8.0 (2026-11-11)
 

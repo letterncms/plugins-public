@@ -121,7 +121,7 @@ final class FormRepository
         }
 
         $fields = $this->document->normalize((array) ($form['fields'] ?? []));
-        $settings = array_intersect_key(array_replace(self::DEFAULT_SETTINGS, (array) ($form['settings'] ?? [])), self::DEFAULT_SETTINGS);
+        $settings = self::settings(array_intersect_key(array_replace(self::DEFAULT_SETTINGS, (array) ($form['settings'] ?? [])), self::DEFAULT_SETTINGS));
         $settings['notify'] = array_values(array_filter((array) $settings['notify'], static fn ($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
         $settings['min_seconds'] = max(0, min(60, (int) $settings['min_seconds']));
 
@@ -208,6 +208,22 @@ final class FormRepository
         return $out === [] ? [] : ['locales' => $out];
     }
 
+    /** Settings in the types they are said to have: a field left empty is "" or null, a switch is yes or no. */
+    private static function settings(array $settings): array
+    {
+        foreach ($settings as $key => $value) {
+            $settings[$key] = match (true) {
+                in_array($key, ['redirect', 'webhook'], true) => is_string($value) && $value !== '' ? $value : null,
+                is_bool(self::DEFAULT_SETTINGS[$key] ?? null) => (bool) $value,
+                is_int(self::DEFAULT_SETTINGS[$key] ?? null) => (int) $value,
+                is_array(self::DEFAULT_SETTINGS[$key] ?? null) => array_values(array_filter((array) $value, 'is_string')),
+                default => is_scalar($value) ? (string) $value : '',
+            };
+        }
+
+        return $settings;
+    }
+
     private function shape(string $handle, array $data): array
     {
         return [
@@ -215,7 +231,7 @@ final class FormRepository
             ...RecordTimestamps::api($data),
             'title' => (string) ($data['title'] ?? $handle),
             'fields' => array_values((array) ($data['fields'] ?? [])),
-            'settings' => array_replace(self::DEFAULT_SETTINGS, (array) ($data['settings'] ?? [])),
+            'settings' => self::settings(array_replace(self::DEFAULT_SETTINGS, (array) ($data['settings'] ?? []))),
             'locales' => (array) ($data['locales'] ?? []),
         ];
     }
