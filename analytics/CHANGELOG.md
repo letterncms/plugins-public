@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- German, for everything the plugin says in the admin.
+
+### Changed
+
+- **Breaking.** Needs CMS 0.21.
+- The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
+
 ## 0.6.0 (2026-11-05)
 
 ### Changed
