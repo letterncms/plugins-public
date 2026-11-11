@@ -30,7 +30,7 @@ final class FormFields
         $defs = [
             'text' => [__('Short Text'), __('One line of text'), 'text', [$placeholder, ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 200], ['handle' => 'autocomplete', 'type' => 'select', 'label' => 'Autofill', 'options' => ['off' => __('Off'), 'name' => __('Name'), 'given-name' => __('First name'), 'family-name' => __('Last name'), 'organization' => __('Company'), 'street-address' => __('Street address'), 'postal-code' => __('Postal code'), 'address-level2' => __('City'), 'country-name' => __('Country')]]]],
             'email' => [__('Email'), __('An email address'), 'mail', [$placeholder]],
-            'tel' => [__('Phone'), __('A phone number'), 'phone', [$placeholder]],
+            'tel' => [__('Phone||number'), __('A phone number'), 'phone', [$placeholder]],
             'url' => [__('Website'), __('A web address'), 'link', [$placeholder]],
             'number' => [__('Number'), __('A number'), 'number', [$placeholder, ['handle' => 'min', 'type' => 'number', 'label' => 'Minimum'], ['handle' => 'max', 'type' => 'number', 'label' => 'Maximum']]],
             'date' => [__('Date'), __('A date'), 'calendar', []],

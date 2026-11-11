@@ -162,7 +162,7 @@
   "Or Redirect To": "Ou rediriger vers",
   "Other Allowed Websites": "Autres sites autorisés",
   "Page": "Page",
-  "Phone": "Téléphone",
+  "Phone||number": "Téléphone",
   "Placeholder": "Texte indicatif",
   "Please check the highlighted fields and try again.": "Vérifiez les champs en surbrillance et réessayez.",
   "Please confirm to continue.": "Veuillez confirmer pour continuer.",
