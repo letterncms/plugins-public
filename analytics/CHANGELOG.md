@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 (2026-11-11)
+
 ### Added
 
 - German, for everything the plugin says in the admin.
