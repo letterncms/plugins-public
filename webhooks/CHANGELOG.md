@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-11)
+
 ### Added
 
 - Webhooks: tell other services when an entry is saved, published, unpublished or deleted, a file is uploaded, changed or deleted, an account changes, or the site is published. Each webhook has a name and chooses its events under **Settings → Webhooks**. Needs CMS 0.22.
