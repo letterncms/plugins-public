@@ -18,6 +18,7 @@
         "letterncms/brevo": "*",
         "letterncms/consent": "*",
         "letterncms/forms": "*",
+        "letterncms/import": "*",
         "letterncms/seo": "*"
     },
     "require-dev": {
@@ -28,6 +29,7 @@
             "Cms\\Analytics\\Tests\\": "analytics/tests/",
             "Cms\\Consent\\Tests\\": "consent/tests/",
             "Cms\\Forms\\Tests\\": "forms/tests/",
+            "Cms\\Import\\Tests\\": "import/tests/",
             "Cms\\Seo\\Tests\\": "seo/tests/",
             "Cms\\Tests\\": "vendor/letterncms/cms/tests/"
         }

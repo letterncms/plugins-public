@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+	xmlns:excerpt="http://wordpress.org/export/1.2/excerpt/"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:wp="http://wordpress.org/export/1.2/">
+<channel>
+	<title>Old Harbour</title>
+	<link>https://old.example.com</link>
+	<wp:wxr_version>1.2</wp:wxr_version>
+	<wp:base_site_url>https://old.example.com</wp:base_site_url>
+	<item>
+		<title>Hello &amp; welcome</title>
+		<link>https://old.example.com/2024/05/hello-welcome/</link>
+		<dc:creator><![CDATA[anna]]></dc:creator>
+		<content:encoded><![CDATA[<!-- wp:paragraph -->
+<p>We are <strong>open</strong> again. Read <a href="https://old.example.com/about/">about us</a>.</p>
+<!-- /wp:paragraph -->
+<!-- wp:heading -->
+<h2>Opening hours</h2>
+<!-- /wp:heading -->
+<ul><li>Monday</li><li>Tuesday</li></ul>
+<figure class="wp-block-image"><img src="https://old.example.com/wp-content/uploads/2024/05/quay-300x200.png" alt="The quay"/><figcaption>At dawn</figcaption></figure>
+<script>alert(1)</script>]]></content:encoded>
+		<excerpt:encoded><![CDATA[We are open again.]]></excerpt:encoded>
+		<wp:post_id>11</wp:post_id>
+		<wp:post_date_gmt>2024-05-02 08:30:00</wp:post_date_gmt>
+		<wp:post_name>hello-welcome</wp:post_name>
+		<wp:status>publish</wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:post_type>post</wp:post_type>
+		<category domain="post_tag" nicename="news"><![CDATA[News]]></category>
+		<category domain="category" nicename="harbour"><![CDATA[Harbour]]></category>
+		<wp:postmeta><wp:meta_key>_thumbnail_id</wp:meta_key><wp:meta_value>21</wp:meta_value></wp:postmeta>
+	</item>
+	<item>
+		<title>Classic post</title>
+		<link>https://old.example.com/?p=12</link>
+		<content:encoded><![CDATA[First paragraph
+with a line break.
+
+Second paragraph with a [gallery ids="1,2"].]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>12</wp:post_id>
+		<wp:post_date_gmt>0000-00-00 00:00:00</wp:post_date_gmt>
+		<wp:post_name></wp:post_name>
+		<wp:status>draft</wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:post_type>post</wp:post_type>
+	</item>
+	<item>
+		<title>Team</title>
+		<link>https://old.example.com/about/team/</link>
+		<content:encoded><![CDATA[<p>Who we are.</p>]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>32</wp:post_id>
+		<wp:post_date_gmt>2023-01-10 10:00:00</wp:post_date_gmt>
+		<wp:post_name>team</wp:post_name>
+		<wp:status>publish</wp:status>
+		<wp:post_parent>31</wp:post_parent>
+		<wp:post_type>page</wp:post_type>
+	</item>
+	<item>
+		<title>About</title>
+		<link>https://old.example.com/about/</link>
+		<content:encoded><![CDATA[<p>A small harbour.</p>]]></content:encoded>
+		<excerpt:encoded><![CDATA[]]></excerpt:encoded>
+		<wp:post_id>31</wp:post_id>
+		<wp:post_date_gmt>2023-01-09 10:00:00</wp:post_date_gmt>
+		<wp:post_name>about</wp:post_name>
+		<wp:status>publish</wp:status>
+		<wp:post_parent>0</wp:post_parent>
+		<wp:post_type>page</wp:post_type>
+	</item>
+	<item>
+		<title>quay</title>
+		<link>https://old.example.com/quay/</link>
+		<wp:post_id>21</wp:post_id>
+		<wp:post_name>quay</wp:post_name>
+		<wp:status>inherit</wp:status>
+		<wp:post_parent>11</wp:post_parent>
+		<wp:post_type>attachment</wp:post_type>
+		<wp:attachment_url>https://old.example.com/wp-content/uploads/2024/05/quay.png</wp:attachment_url>
+		<wp:postmeta><wp:meta_key>_wp_attachment_image_alt</wp:meta_key><wp:meta_value><![CDATA[The quay at dawn]]></wp:meta_value></wp:postmeta>
+	</item>
+	<item>
+		<title>unused</title>
+		<wp:post_id>22</wp:post_id>
+		<wp:status>inherit</wp:status>
+		<wp:post_type>attachment</wp:post_type>
+		<wp:attachment_url>https://old.example.com/wp-content/uploads/2024/05/unused.png</wp:attachment_url>
+	</item>
+	<item>
+		<title>A product</title>
+		<wp:post_id>40</wp:post_id>
+		<wp:status>publish</wp:status>
+		<wp:post_type>product</wp:post_type>
+	</item>
+	<item>
+		<title>Binned</title>
+		<wp:post_id>41</wp:post_id>
+		<wp:status>trash</wp:status>
+		<wp:post_type>post</wp:post_type>
+	</item>
+</channel>
+</rss>
