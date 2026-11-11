@@ -52,6 +52,11 @@ final class BrevoPlugin extends Plugin
 
         $this->lists();
 
+        // What the Audit Log calls each change, once it has happened.
+        $this->cms()->hooks()->addFilter('audit.past', static fn (array $past): array => $past + [
+            'brevo/subscribe' => __('Subscribed to Brevo List'),
+        ]);
+
         $this->cms()->admin()->widget('brevo-stats', ['label' => 'Brevo', 'description' => __('Delivery, opens, clicks and bounces of the email Brevo sent this week.'), 'icon' => 'brevo', 'column' => 'main', 'order' => 65, 'permission' => 'settings.manage']);
         $this->adminModule();
     }

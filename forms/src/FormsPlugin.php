@@ -40,6 +40,17 @@ final class FormsPlugin extends Plugin
         $this->settingsSchema();
         $this->abilities();
 
+        // What the Audit Log calls each change, once it has happened.
+        $this->cms()->hooks()->addFilter('audit.past', static fn (array $past): array => $past + [
+            'forms/create' => __('Created Form'),
+            'forms/save' => __('Saved Form'),
+            'forms/delete' => __('Deleted Form'),
+            'form-settings/update' => __('Updated Form Settings'),
+            'form-words/update' => __('Updated Form Wording'),
+            'form-submissions/update' => __('Updated Form Submissions'),
+            'form-submissions/delete' => __('Deleted Form Submissions'),
+        ]);
+
         // The pages showing a form recorded it while they were built: only those are built again, when the site builds on its own.
         $this->cms()->hooks()->on('form.saved', function (string $handle) {
             if ($this->cms()->isActive('letterncms/site') && $this->cms()->setting('site', 'auto_build', true)) {

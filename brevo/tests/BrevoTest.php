@@ -142,4 +142,16 @@ final class BrevoTest extends TestCase
         $this->cms()->settingsRegistry()->save('email', ['transport' => 'brevo', 'brevo_api_key' => 'test-key']);
         $this->assertStringNotContainsString('test-key', (string) file_get_contents($this->site.'/config/email.yaml'));
     }
+
+    public function test_every_change_has_a_past_tense_label_for_the_audit_log(): void
+    {
+        $past = $this->cms()->hooks()->filter('audit.past', []);
+        $changes = array_filter($this->cms()->abilities()->all(), static fn ($ability) => $ability->package === 'letterncms/brevo' && ! $ability->isReadOnly());
+
+        $this->assertNotSame([], $changes);
+
+        foreach ($changes as $name => $ability) {
+            $this->assertIsString($past[$name] ?? null, "{$name} has no past-tense label: add it to the audit.past filter.");
+        }
+    }
 }

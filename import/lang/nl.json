@@ -20,6 +20,7 @@
   "Name the file or folder to import.": "Geef het bestand of de map op om te importeren.",
   "No column holds the title. Name one “title”, or map one to it.": "Geen kolom bevat de titel. Noem er één “title”, of wijs er één aan toe.",
   "Preview Import": "Voorbeeld van import",
+  "Ran Import": "Import uitgevoerd",
   "Row :line has no title and was left out.": "Rij :line heeft geen titel en is overgeslagen.",
   "Row :line repeats “:key” from row :first and was left out.": "Rij :line herhaalt “:key” uit rij :first en is overgeslagen.",
   "Run Import": "Import uitvoeren",
