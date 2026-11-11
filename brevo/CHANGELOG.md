@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+### Added
+
+- **Newsletter lists.** The **Newsletter Signup** block adds visitors to one of your Brevo lists: an email field and a button that look like every other form on the site and work without a script. Choose the default list under Settings → Brevo, or a list per block.
+- **Double opt-in**, on by default: the site mails a link that is good for two days. It opens a page in the site's design whose button confirms, so a mail scanner that follows links subscribes nobody, and only a confirmed address reaches Brevo. The email is written in the language of the page, or says what you set. One address is mailed at most three times an hour.
+- Lists work with the key under Settings → Email. Settings → Brevo asks for a key only while there is none there.
+- A site hosted elsewhere sends signups to the **Submission Address** set under Forms.
+- The abilities `brevo/lists` and `brevo/subscribe`, the `brevo.subscribed` action and the `cms://brevo` context for agents.
+- German, for everything the plugin says.
+
+### Changed
+
+- **Breaking.** Needs CMS 0.21.
+
+### Fixed
+
+- The README no longer says to buy the plugin: it is free, under the MIT license.
+
 ## 0.4.0 (2026-11-04)
 
 ### Changed
