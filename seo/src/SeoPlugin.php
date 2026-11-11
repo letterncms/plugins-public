@@ -34,21 +34,21 @@ final class SeoPlugin extends Plugin
 
     /**
      * Redirects are a tab of the SEO settings: one table, saved from the save bar like the settings beside it.
-     * New Redirect is in the bar; with none yet, the tab says so.
+     * New Redirect is in the bar; with none yet, the tab says so and offers it in the table's place.
      */
     private function redirectsTab(): void
     {
-        // The one way to make a redirect, once: in the bar while the tab is on view, also while there are none.
+        // The one way to make a redirect: in the bar while the tab is on view, and in the table's place while there are none.
         $new = ['label' => __('New Redirect'), 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'redirects/create', 'then' => 'refresh',
             'input' => ['from' => '{values.from}', 'to' => '{values.to}', 'status' => '{values.status}'],
             'form' => ['title' => __('New Redirect'), 'confirm' => __('Create Redirect'), 'values' => ['status' => 301], 'fields' => self::redirectFields(autofocus: true)]];
 
         $this->cms()->hooks()->addFilter('view.settings', fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'seo' || ! $user->hasPermission('seo.manage') ? $view : SettingsModule::withTab($view, [
             'type' => 'ui/tab', 'props' => ['id' => 'redirects', 'label' => __('Redirects'), 'actions' => [$new]], 'children' => [$this->app->make(Redirects::class)->all() === []
-                ? ['type' => 'ui/empty', 'props' => ['icon' => 'arrow-right', 'title' => __('No redirects yet')]]
+                ? ['type' => 'ui/empty', 'props' => ['icon' => 'arrow-right', 'title' => __('No redirects yet'), 'action' => array_diff_key($new, ['variant' => true])]]
                 : ['type' => 'ui/form', 'props' => [
                     'source' => ['ability' => 'redirects/list'], 'into' => 'redirects', 'width' => 'wide',
-                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('Add Redirect'), 'fields' => self::redirectFields()]],
+                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => false, 'fields' => self::redirectFields()]],
                     'save' => ['ability' => 'redirects/set', 'as' => '*'],
                 ]],
             ],
