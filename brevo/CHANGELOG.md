@@ -6,6 +6,10 @@
 
 - The Audit Log names a signup an agent made in the past tense: **Subscribed to Brevo List**.
 
+### Changed
+
+- **Breaking.** Needs the core 0.24 or newer. A list is chosen by its id, in the settings and in the signup block, where it was `#<id>`: the core now keeps option values that are numbers. Updating rewrites a default list saved as `#<id>`, and a signup block placed before goes on posting to its list.
+
 ### Fixed
 
 - When Brevo doesn't answer, the home-screen widget says so as an error with **Try Again**, not as an empty state.
