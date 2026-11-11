@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-11-11)
+
 ### Added
 
 - `brevo/stats`, `brevo/lists` and `brevo/subscribe` say what they answer with (`output`), for agents, the API and the CLI.

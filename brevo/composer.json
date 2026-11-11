@@ -2,7 +2,7 @@
     "name": "letterncms/brevo",
     "description": "Send email through Brevo’s transactional API and let visitors join your newsletter lists, with double opt-in.",
     "type": "cms-plugin",
-    "version": "0.5.0",
+    "version": "0.6.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
