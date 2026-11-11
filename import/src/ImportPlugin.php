@@ -30,7 +30,7 @@ final class ImportPlugin extends Plugin
         $this->cms()->permissions()->register('import.run', 'Import Content', 'Import', roles: ['admin']);
         $this->abilities();
 
-        // The home-screen widget every plugin has (PackageManager::problems). It is not on anyone's home screen unless they add it,
+        // The home-screen widget. It is not on anyone's home screen unless they add it,
         // and with nothing imported and nothing waiting it draws nothing.
         $this->cms()->admin()->widget('import-status', ['label' => 'Import', 'description' => __('What has been imported so far, and the files waiting in the import folder.'), 'icon' => 'download', 'column' => 'side', 'order' => 87, 'permission' => 'import.run',
             'view' => function () {
