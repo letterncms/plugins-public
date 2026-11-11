@@ -11,7 +11,7 @@ interface Activity {
 
 /** Home-screen widget: how many submissions came in, and the latest ones. */
 export default function WidgetSubmissions() {
-  const activity = useAbility<Activity>('forms/activity', { limit: 4 }, { refetchInterval: 60_000 })
+  const activity = useAbility<Activity>('forms/overview', { limit: 4 }, { refetchInterval: 60_000 })
   const a = activity.data
   const week = a ? sum(a.days.slice(7)) : 0
   const before = a ? sum(a.days.slice(0, 7)) : 0

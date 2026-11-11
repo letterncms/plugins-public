@@ -11,13 +11,14 @@ use Cms\Content\Collections\Collection;
 use Cms\Content\Entries\Entry;
 use Cms\Modules\Settings\SettingsModule;
 use Cms\Packages\Plugin;
+use Cms\Support\Schema\Shape;
 use Cms\Users\User;
 
 final class SeoPlugin extends Plugin
 {
     public const array FIELDS = [
-        ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120, 'instructions' => 'Defaults to the page title.'],
-        ['handle' => 'description', 'type' => 'textarea', 'label' => 'Meta Description', 'max' => 320, 'instructions' => '70–160 characters. Defaults to the first paragraph.'],
+        ['handle' => 'title', 'type' => 'text', 'label' => 'SEO Title', 'max' => 120],
+        ['handle' => 'description', 'type' => 'textarea', 'label' => 'Meta Description', 'max' => 320],
         ['handle' => 'image', 'type' => 'media', 'label' => 'Social Image', 'max' => 1],
         ['handle' => 'canonical', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'Canonical URL', 'placeholder' => 'This Page'],
         ['handle' => 'schema', 'type' => 'select', 'label' => 'Page Type', 'options' => ['WebPage' => 'Web Page', 'Article' => 'Article', 'AboutPage' => 'About Page', 'ContactPage' => 'Contact Page', 'CollectionPage' => 'Collection Page', 'FAQPage' => 'FAQ Page', 'ProfilePage' => 'Profile Page']],
@@ -31,22 +32,37 @@ final class SeoPlugin extends Plugin
         }
     }
 
-    /** Redirects are a tab of the SEO settings: one table, saved from the save bar like the settings beside it. */
+    /**
+     * Redirects are a tab of the SEO settings: one table, saved from the save bar like the settings beside it.
+     * New Redirect is in the bar; with none yet, the tab says so.
+     */
     private function redirectsTab(): void
     {
-        $this->cms()->hooks()->addFilter('view.settings', static fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'seo' || ! $user->hasPermission('seo.manage') ? $view : SettingsModule::withTab($view, [
-            'type' => 'ui/tab', 'props' => ['id' => 'redirects', 'label' => __('Redirects')], 'children' => [
-                ['type' => 'ui/form', 'props' => [
+        // The one way to make a redirect, once: in the bar while the tab is on view, also while there are none.
+        $new = ['label' => __('New Redirect'), 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'redirects/create', 'then' => 'refresh',
+            'input' => ['from' => '{values.from}', 'to' => '{values.to}', 'status' => '{values.status}'],
+            'form' => ['title' => __('New Redirect'), 'confirm' => __('Create Redirect'), 'values' => ['status' => 301], 'fields' => self::redirectFields(autofocus: true)]];
+
+        $this->cms()->hooks()->addFilter('view.settings', fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'seo' || ! $user->hasPermission('seo.manage') ? $view : SettingsModule::withTab($view, [
+            'type' => 'ui/tab', 'props' => ['id' => 'redirects', 'label' => __('Redirects'), 'actions' => [$new]], 'children' => [$this->app->make(Redirects::class)->all() === []
+                ? ['type' => 'ui/empty', 'props' => ['icon' => 'arrow-right', 'title' => __('No redirects yet')]]
+                : ['type' => 'ui/form', 'props' => [
                     'source' => ['ability' => 'redirects/list'], 'into' => 'redirects', 'width' => 'wide',
-                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('New Redirect'), 'empty' => __('No redirects'), 'fields' => [
-                        ['handle' => 'from', 'type' => 'text', 'label' => __('From'), 'mono' => true, 'placeholder' => '/old-url'],
-                        ['handle' => 'to', 'type' => 'text', 'label' => __('To'), 'mono' => true, 'placeholder' => __('/new-url or https://…')],
-                        ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('301 Permanent'), '302' => __('302 Temporary')]],
-                    ]]],
-                    'save' => ['ability' => 'redirects/save', 'as' => '*'],
+                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('Add Redirect'), 'fields' => self::redirectFields()]],
+                    'save' => ['ability' => 'redirects/set', 'as' => '*'],
                 ]],
             ],
         ]));
+    }
+
+    /** One redirect, as a row of the table and as the dialog that makes the first. */
+    private static function redirectFields(bool $autofocus = false): array
+    {
+        return [
+            ['handle' => 'from', 'type' => 'text', 'label' => __('From'), 'mono' => true, 'placeholder' => '/old-url', ...($autofocus ? ['required' => true, 'autofocus' => true] : [])],
+            ['handle' => 'to', 'type' => 'text', 'label' => __('To'), 'mono' => true, 'placeholder' => __('/new-url or https://…'), ...($autofocus ? ['required' => true] : [])],
+            ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('301 Permanent'), '302' => __('302 Temporary')]],
+        ];
     }
 
     public function boot(): void
@@ -101,18 +117,18 @@ final class SeoPlugin extends Plugin
         $crawlers = SiteFiles::AI_CRAWLERS;
 
         $this->cms()->settingsRegistry()->register('seo', fields: [
-            ['handle' => 'title_format', 'width' => 'half', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'instructions' => 'Use {title} and {site}.'],
-            ['handle' => 'home_title', 'width' => 'half', 'type' => 'text', 'label' => 'Home Page Title', 'instructions' => 'Defaults to the site name.'],
+            ['handle' => 'title_format', 'width' => 'half', 'type' => 'text', 'label' => 'Title Format', 'default' => '{title} · {site}', 'placeholder' => '{title} · {site}'],
+            ['handle' => 'home_title', 'width' => 'half', 'type' => 'text', 'label' => 'Home Page Title'],
             ['handle' => 'default_image', 'type' => 'media', 'label' => 'Default Social Image', 'max' => 1],
-            ['handle' => 'org_type', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
-            ['handle' => 'org_name', 'section' => 'Who You Are', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
-            ['handle' => 'org_logo', 'section' => 'Who You Are', 'type' => 'media', 'label' => 'Logo', 'max' => 1],
-            ['handle' => 'same_as', 'section' => 'Who You Are', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://…', 'instructions' => 'Like LinkedIn or GitHub.'],
-            ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)', 'instructions' => 'Who you are and what you offer.'],
-            ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'instructions' => 'At the page’s address with .md, like /about.md.', 'default' => true],
+            ['handle' => 'org_type', 'section' => 'Organization', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
+            ['handle' => 'org_name', 'section' => 'Organization', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
+            ['handle' => 'org_logo', 'section' => 'Organization', 'type' => 'media', 'label' => 'Logo', 'max' => 1],
+            ['handle' => 'same_as', 'section' => 'Organization', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://linkedin.com/company/…'],
+            ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)'],
+            ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'default' => true],
             ['handle' => 'blocked_crawlers', 'section' => 'AI Crawlers', 'type' => 'select', 'label' => 'Block These AI Crawlers', 'multiple' => true, 'options' => array_combine(array_keys($crawlers), array_map(static fn ($label, $agent) => "{$agent} — {$label}", $crawlers, array_keys($crawlers))), 'instructions' => 'Blocked search crawlers can’t cite you.'],
-            ['handle' => 'security_contact', 'section' => 'Indexing and Security', 'type' => 'text', 'label' => 'Security Contact', 'instructions' => 'Where people report vulnerabilities.'],
-            ['handle' => 'discourage_indexing', 'section' => 'Indexing and Security', 'type' => 'toggle', 'label' => 'Discourage All Indexing', 'instructions' => 'For staging sites.'],
+            ['handle' => 'security_contact', 'section' => 'Indexing and Security', 'type' => 'text', 'label' => 'Security Contact', 'placeholder' => 'security@example.com'],
+            ['handle' => 'discourage_indexing', 'section' => 'Indexing and Security', 'type' => 'toggle', 'label' => 'Discourage All Indexing'],
         ], icon: 'seo', description: __('Titles, social cards, structured data, sitemap and AI crawlers.'), permission: 'seo.manage', order: 20);
     }
 
@@ -313,12 +329,24 @@ final class SeoPlugin extends Plugin
     {
         $a = $this->cms()->abilities();
 
+        // What they answer with.
+        $redirect = ['from' => Shape::STRING, 'to' => Shape::STRING, 'publishedAt' => Shape::STRING_OR_NULL, 'updatedAt' => Shape::STRING_OR_NULL, 'status' => Shape::enum(301, 302, 307, 308)];
+
+        // An act that changes nothing, like the core's content/search: it works the checks out for the entry as it is now, draft included.
         $a->register('seo/analyze', [
             'label' => 'Check SEO',
             'description' => 'On-page checks for search engines and AI answers (title, description, headings, alt text, answer-first, questions, links) with a score.',
             'permission' => fn ($user, array $in) => ($e = $this->cms()->entries()->find((string) $in['id'])) && $user?->hasPermission("entries.{$e->collection}.view"),
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string', 'format' => 'ulid']], 'required' => ['id']],
+            'output' => Shape::of([
+                'score' => Shape::INTEGER,
+                'checks' => [['id' => Shape::STRING, 'status' => Shape::enum('pass', 'warn', 'fail'), 'label' => Shape::STRING, 'message' => Shape::STRING]],
+                'meta' => [
+                    'title' => Shape::STRING, 'description' => Shape::STRING, 'image' => Shape::STRING_OR_NULL, 'canonical' => Shape::STRING, 'robots' => Shape::STRING,
+                    'type' => Shape::enum('article', 'website'), 'schema' => Shape::STRING, 'published' => Shape::STRING_OR_NULL, 'modified' => Shape::STRING_OR_NULL,
+                ],
+            ]),
             'handler' => fn (array $in) => $this->app->make(Analyzer::class)->analyze($this->cms()->entries()->findOrFail($in['id'])),
         ]);
 
@@ -328,6 +356,14 @@ final class SeoPlugin extends Plugin
             'permission' => 'admin.access',
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => ['limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 20, 'default' => 5]]],
+            'output' => Shape::of([
+                'pages' => Shape::INTEGER, 'score' => Shape::INTEGER_OR_NULL, 'attention' => Shape::INTEGER, 'good' => Shape::INTEGER,
+                'issues' => [['id' => Shape::STRING, 'label' => Shape::STRING, 'pages' => Shape::INTEGER, 'failing' => Shape::INTEGER]],
+                'worst' => [[
+                    'id' => Shape::STRING, 'collection' => Shape::STRING, 'locale' => Shape::STRING, 'title' => Shape::STRING, 'uri' => Shape::STRING_OR_NULL,
+                    'score' => Shape::INTEGER, 'issues' => Shape::INTEGER, 'top' => Shape::STRING_OR_NULL,
+                ]],
+            ]),
             'handler' => function (array $in, AbilityContext $ctx) {
                 $health = $this->app->make(Health::class);
                 $pages = array_values(array_filter($health->pages(), static fn (array $p) => $ctx->system || ($ctx->user?->hasPermission("entries.{$p['collection']}.view") ?? false)));
@@ -347,6 +383,7 @@ final class SeoPlugin extends Plugin
             'permission' => 'admin.access',
             'annotations' => ['readOnly' => true],
             'input' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string', 'format' => 'ulid']], 'required' => ['id']],
+            'output' => Shape::of(['markdown' => Shape::STRING]),
             'handler' => fn (array $in) => ['markdown' => $this->app->make(MarkdownTwin::class)->render($this->cms()->entries()->findOrFail($in['id'])->withWorkingCopy())],
         ]);
 
@@ -355,16 +392,30 @@ final class SeoPlugin extends Plugin
             'description' => 'URL redirects (content/redirects.yaml).',
             'permission' => 'seo.manage',
             'annotations' => ['readOnly' => true],
+            'output' => Shape::of([$redirect]),
             'handler' => fn () => $this->app->make(Redirects::class)->all(),
         ]);
 
-        $a->register('redirects/save', [
-            'label' => 'Save Redirects',
-            'description' => 'Replace the redirect list. Each: {from: "/old", to: "/new" or "https://…", status: 301|302}.',
+        $a->register('redirects/create', [
+            'label' => 'Create Redirect',
+            'description' => 'Add one redirect to the list: from a path on this site ("/old") to a path or an address ("/new", "https://…"). Refused when `from` already redirects: redirects/set replaces the list.',
+            'permission' => 'seo.manage',
+            'input' => ['type' => 'object', 'properties' => [
+                'from' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000], 'to' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
+            ], 'required' => ['from', 'to']],
+            'output' => Shape::of($redirect),
+            'handler' => fn (array $in) => $this->app->make(Redirects::class)->add($in['from'], $in['to'], $in['status']),
+        ]);
+
+        // The list is one value, put in place whole: `save` is for definitions kept by a handle.
+        $a->register('redirects/set', [
+            'label' => 'Set Redirects',
+            'description' => 'Replace the redirect list: what is left out is gone. Returns the list as it is now. Each: {from: "/old", to: "/new" or "https://…", status: 301|302}.',
             'permission' => 'seo.manage',
             'input' => ['type' => 'object', 'properties' => ['redirects' => ['type' => 'array', 'items' => ['type' => 'object', 'properties' => [
                 'from' => ['type' => 'string', 'default' => ''], 'to' => ['type' => 'string', 'default' => ''], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
             ]]]], 'required' => ['redirects']],
+            'output' => Shape::of([$redirect]),
             // Rows left empty are no redirects: a table's new row that was never filled in is dropped, not refused.
             'handler' => fn (array $in) => $this->app->make(Redirects::class)->save(array_values(array_filter($in['redirects'], static fn (array $r) => trim($r['from']) !== '' && trim($r['to']) !== ''))),
         ]);

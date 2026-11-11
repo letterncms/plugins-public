@@ -16,6 +16,7 @@ use Cms\Brevo\Http\SignupController;
 use Cms\Modules\Blocks\BlockRegistry;
 use Cms\Modules\Email\Transports;
 use Cms\Packages\Plugin;
+use Cms\Support\Schema\Shape;
 use Throwable;
 
 /** A mail provider plugin: built exactly like a third-party one would be. */
@@ -28,7 +29,7 @@ final class BrevoPlugin extends Plugin
 
         $this->cms()->whenAvailable(Transports::class, static function (Transports $transports): void {
             $transports->register('brevo', 'Brevo', [
-                ['handle' => 'brevo_api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true, 'instructions' => 'From Brevo → SMTP & API → API keys.'],
+                ['handle' => 'brevo_api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true],
             ], static fn (array $settings) => new BrevoTransport((string) ($settings['brevo_api_key'] ?? '')));
         });
     }
@@ -40,6 +41,12 @@ final class BrevoPlugin extends Plugin
             'description' => 'Transactional email totals from Brevo for the last 7 days: requests, delivered, unique opens and clicks, bounces, blocked and spam reports. state is "ok", "inactive" (Brevo is not the mail transport), "no-key" or "error" (with a message). Cached for 10 minutes.',
             'permission' => 'settings.manage',
             'annotations' => ['readOnly' => true],
+            // By its state: the numbers when Brevo answered, a message when it did not, nothing more when there is nothing to ask.
+            'output' => Shape::either(
+                ['state' => Shape::enum('ok'), 'days' => Shape::INTEGER, ...array_fill_keys(['requests', 'delivered', 'opens', 'clicks', 'hardBounces', 'softBounces', 'blocked', 'spamReports', 'invalid', 'unsubscribed'], Shape::INTEGER), 'fetchedAt' => Shape::STRING],
+                ['state' => Shape::enum('error'), 'message' => Shape::STRING],
+                ['state' => Shape::enum('inactive', 'no-key')],
+            ),
             'handler' => fn () => $this->stats(),
         ]);
 
@@ -57,10 +64,10 @@ final class BrevoPlugin extends Plugin
         $this->cms()->settingsRegistry()->register('brevo', fields: [
             ['handle' => 'api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true],
             ['handle' => 'list', 'type' => 'select', 'label' => 'Default List', 'options' => [], 'dynamic' => 'brevo-lists'],
-            ['handle' => 'double_opt_in', 'type' => 'toggle', 'label' => 'Confirm Addresses by Email', 'default' => true],
-            ['handle' => 'confirmation_subject', 'type' => 'text', 'label' => 'Confirmation Subject', 'placeholder' => 'Confirm your subscription', 'if' => ['double_opt_in' => true]],
-            ['handle' => 'confirmation_message', 'type' => 'textarea', 'label' => 'Confirmation Message', 'rows' => 3, 'if' => ['double_opt_in' => true]],
-            ['handle' => 'confirmed_redirect', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'After Confirming, Go To', 'placeholder' => 'A Thank-You Page', 'if' => ['double_opt_in' => true]],
+            ['handle' => 'double_opt_in', 'section' => 'Confirmation', 'type' => 'toggle', 'label' => 'Confirm Addresses by Email', 'default' => true],
+            ['handle' => 'confirmation_subject', 'section' => 'Confirmation', 'type' => 'text', 'label' => 'Confirmation Subject', 'placeholder' => 'Confirm your subscription', 'if' => ['double_opt_in' => true]],
+            ['handle' => 'confirmation_message', 'section' => 'Confirmation', 'type' => 'textarea', 'label' => 'Confirmation Message', 'rows' => 3, 'if' => ['double_opt_in' => true]],
+            ['handle' => 'confirmed_redirect', 'section' => 'Confirmation', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'After Confirming, Go To', 'placeholder' => '/thank-you', 'if' => ['double_opt_in' => true]],
         ], icon: 'brevo', description: __('Newsletter lists and how people join them.'), order: 60);
 
         // One key is enough: with Brevo's key under Settings → Email, this page doesn't ask for another, and keeps none.
@@ -101,6 +108,7 @@ final class BrevoPlugin extends Plugin
             'description' => 'The contact lists of the Brevo account, each with id, name and subscribers. state is "ok", "no-key" or "error" (with a message). Cached for 10 minutes.',
             'permission' => 'settings.manage',
             'annotations' => ['readOnly' => true],
+            'output' => Shape::of(['state' => Shape::enum('ok', 'no-key', 'error'), 'lists' => [['id' => Shape::INTEGER, 'name' => Shape::STRING, 'subscribers' => Shape::INTEGER]], 'message?' => Shape::STRING]),
             'handler' => static fn () => $client()->lists(),
         ]);
 
@@ -110,6 +118,7 @@ final class BrevoPlugin extends Plugin
             'permission' => 'settings.manage',
             'annotations' => ['idempotent' => true, 'openWorld' => true],
             'input' => ['type' => 'object', 'properties' => ['email' => ['type' => 'string', 'format' => 'email', 'maxLength' => 254], 'list' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['email']],
+            'output' => Shape::of(['email' => Shape::STRING, 'list' => Shape::INTEGER]),
             'handler' => function (array $in) use ($client) {
                 $list = $this->app->make(Signup::class)->list($in['list'] ?? null) ?? throw AbilityException::invalid(__('Choose a list to add people to.'));
 

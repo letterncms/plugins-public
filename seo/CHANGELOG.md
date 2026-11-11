@@ -2,16 +2,30 @@
 
 ## Unreleased
 
+## 0.9.0 (2026-11-11)
+
+### Added
+
+- `redirects/create` adds one redirect without replacing the list, for the admin, agents, the API and the CLI.
+- Every SEO ability says what it answers with (`output`), for agents, the API and the CLI.
+
+### Changed
+
+- **New Redirect** is in the top bar of the Redirects tab and asks for the redirect in a dialog. With none yet the tab says **No redirects yet**; the table shows once there is one, and its own button adds a row (**Add Redirect**).
+- **Breaking.** `redirects/save` is `redirects/set`: it puts the whole list in place, as `set` does everywhere in the core. The old name is gone.
+- The SEO settings and the SEO panel say less: the notes under the fields are gone but one, that blocked search crawlers can’t cite you; placeholders show the shape instead. **Who You Are** is **Organization**.
+
+## 0.8.0 (2026-11-11)
+
 ### Added
 
 - German, for everything the plugin says in the admin.
 
 ### Changed
 
-- **Breaking.** Needs CMS 0.21.
 - The Editor role a site starts with can manage SEO settings and redirects: **Manage SEO Settings and Redirects** comes with it, as the permissions of the other plugins do.
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
-- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ## 0.7.0 (2026-11-05)
 

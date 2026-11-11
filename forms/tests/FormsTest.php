@@ -204,7 +204,7 @@ final class FormsTest extends TestCase
         Submission::query()->create(['form' => 'quote', 'data' => ['name' => 'Bot'], 'status' => 'spam']);
 
         $this->actingAs($this->admin());
-        $data = $this->postJson('/api/admin/abilities/forms/activity', [])->assertOk()->json('data');
+        $data = $this->postJson('/api/admin/abilities/forms/overview', [])->assertOk()->json('data');
 
         $this->assertSame(1, $data['forms']);
         $this->assertSame(1, $data['new']);
@@ -223,6 +223,10 @@ final class FormsTest extends TestCase
     public function test_the_forms_places_are_views(): void
     {
         $this->assertSame('ui/records', $this->place('forms')['children'][0]['children'][0]['children'][0]['type']);
+        // The one way to make a form is the tab's action in the bar: the empty list is a title, not a second button.
+        $list = $this->place('forms')['children'][0]['children'][0];
+        $this->assertSame('forms/create', $list['props']['actions'][0]['ability']);
+        $this->assertSame(['icon' => 'form', 'title' => 'No forms yet'], $list['children'][0]['props']['empty']);
         $tabs = array_column(array_column($this->place('form', ['handle' => 'quote'])['children'][0]['children'], 'props'), 'id');
         $this->assertSame(count($this->cms()->locales()) > 1 ? ['fields', 'options', 'languages', 'submissions'] : ['fields', 'options', 'submissions'], $tabs);
         $this->assertSame('ui/empty', $this->place('form', ['handle' => 'gone'])['children'][0]['type']);
@@ -263,8 +267,8 @@ final class FormsTest extends TestCase
         $this->assertSame('quote-2', $form['handle']);
         $this->assertCount(3, $form['fields']);
 
-        $this->assertSame('Sent!', $run('forms/configure', ['handle' => 'quote', 'settings' => ['submit' => 'Sent!']])['submit']);
-        $this->assertSame(['de:s:submit' => 'Senden'], $run('forms/translate', ['handle' => 'quote', 'words' => ['de:s:submit' => 'Senden', 'de:f:name:label' => '']]));
+        $this->assertSame('Sent!', $run('form-settings/update', ['handle' => 'quote', 'settings' => ['submit' => 'Sent!']])['submit']);
+        $this->assertSame(['de:s:submit' => 'Senden'], $run('form-words/update', ['handle' => 'quote', 'words' => ['de:s:submit' => 'Senden', 'de:f:name:label' => '']]));
         $run('forms/save', ['handle' => 'quote', 'title' => 'Quotes']);
 
         $quote = app(FormRepository::class)->find('quote');
@@ -286,21 +290,63 @@ final class FormsTest extends TestCase
         $this->assertSame([], $dry('forms/delete', ['handle' => 'nothing'])['changes']);
         $this->assertNotNull(app(FormRepository::class)->find('quote'));
 
-        $report = $dry('forms/submission-delete', ['ids' => [strtoupper((string) $s->id), 'no-such-id']]);
+        $report = $dry('form-submissions/delete', ['ids' => [strtoupper((string) $s->id), 'no-such-id']]);
         $this->assertSame([['action' => 'delete', 'type' => 'submission', 'id' => $s->id, 'form' => 'quote', 'removes' => ['files' => false]]], $report['changes']);
         $this->assertSame(1, Submission::query()->count());
     }
 
-    public function test_opening_a_submission_reads_it_and_the_export_downloads(): void
+    public function test_a_submission_is_read_without_changing_it_and_the_export_downloads(): void
     {
         $s = Submission::query()->create(['form' => 'quote', 'data' => ['name' => 'Ada', 'email' => 'ada@example.com'], 'status' => 'new']);
         $this->actingAs($this->admin());
 
-        $this->postJson('/api/admin/abilities/forms/submission', ['id' => $s->id])->assertOk()->assertJsonPath('data.labels.email', 'Email');
+        // A read changes nothing; the dialog that opens it marks it read, as anyone can.
+        $this->postJson('/api/admin/abilities/form-submissions/get', ['id' => $s->id])->assertOk()->assertJsonPath('data.labels.email', 'Email')->assertJsonPath('data.status', 'new');
+        $this->assertSame('new', $s->fresh()->status);
+        $this->postJson('/api/admin/abilities/form-submissions/update', ['ids' => [$s->id], 'status' => 'read'])->assertOk()->assertJsonPath('data.updated', 1);
         $this->assertSame('read', $s->fresh()->status);
 
         $csv = $this->get('/api/admin/forms/quote/export')->assertOk()->assertHeader('Content-Disposition')->getContent();
         $this->assertStringContainsString('Ada,ada@example.com', $csv);
+    }
+
+    public function test_its_abilities_follow_the_cores_rules_for_names_and_answers(): void
+    {
+        $mine = array_filter($this->cms()->abilities()->all(), static fn ($ability) => $ability->package === 'letterncms/forms');
+        $this->assertSame([
+            'form-settings/update', 'form-submissions/csv', 'form-submissions/delete', 'form-submissions/get', 'form-submissions/list', 'form-submissions/update',
+            'form-words/get', 'form-words/update',
+            'forms/create', 'forms/delete', 'forms/get', 'forms/list', 'forms/overview', 'forms/save',
+        ], collect(array_keys($mine))->sort()->values()->all());
+
+        foreach ($mine as $name => $ability) {
+            $this->assertNotNull($ability->output(), "{$name} says what it answers with");
+            // A read is named and annotated as one.
+            $this->assertSame(in_array(explode('/', $name)[1], ['list', 'get', 'overview', 'csv'], true), $ability->isReadOnly(), $name);
+        }
+
+        // Each one runs, so its answer is held against what it says (the test case verifies every output).
+        $run = fn (string $ability, array $input = []) => $this->cms()->abilities()->execute($ability, $input, AbilityContext::forUser($this->admin(), 'admin'));
+        $s = Submission::query()->create(['form' => 'quote', 'data' => ['name' => 'Ada', 'tags' => ['a', 'b']], 'files' => [['field' => 'cv', 'name' => 'cv.pdf', 'size' => 12, 'mime' => 'application/pdf', 'path' => 'x']], 'meta' => ['page' => 'http://localhost/contact', 'locale' => null, 'ip_hash' => 'x'], 'status' => 'new']);
+
+        $this->assertSame(['quote'], array_column($run('forms/list'), 'handle'));
+        $this->assertSame([1, 1], [$run('forms/overview')['new'], count($run('forms/overview')['latest'])]);
+        $this->assertSame('quote', $run('forms/get', ['handle' => 'quote'])['handle']);
+        $this->assertSame('bookings', $run('forms/create', ['title' => 'Bookings'])['handle']);
+        $this->assertSame('Reservations', $run('forms/save', ['handle' => 'bookings', 'title' => 'Reservations'])['title']);
+        // Settings come back in the types they are said to have, whatever a form sent.
+        $settings = $run('form-settings/update', ['handle' => 'bookings', 'settings' => ['redirect' => '', 'webhook' => null, 'enabled' => 0, 'submit' => null, 'min_seconds' => '5', 'notify' => ['ada@example.com', 'nobody']]]);
+        $this->assertSame([null, null, false, '', 5, ['ada@example.com']], [$settings['redirect'], $settings['webhook'], $settings['enabled'], $settings['submit'], $settings['min_seconds'], $settings['notify']]);
+        $this->assertContains('de:s:submit', array_column($run('form-words/get', ['handle' => 'bookings'])['fields'], 'handle'));
+        $this->assertEquals((object) ['de:s:submit' => 'Buchen'], $run('form-words/update', ['handle' => 'bookings', 'words' => ['de:s:submit' => 'Buchen']]));
+        $this->assertEquals((object) ['de:s:submit' => 'Buchen'], $run('form-words/get', ['handle' => 'bookings'])['values']);
+        $this->assertSame(['deleted' => 'bookings'], $run('forms/delete', ['handle' => 'bookings']));
+
+        $this->assertSame([$s->id], array_column($run('form-submissions/list', ['form' => 'quote'])['items'], 'id'));
+        $this->assertSame(['page' => 'http://localhost/contact', 'locale' => null], $run('form-submissions/get', ['id' => $s->id])['meta']);
+        $this->assertSame(['updated' => 1], $run('form-submissions/update', ['ids' => [$s->id], 'status' => 'archived']));
+        $this->assertStringContainsString('Ada', $run('form-submissions/csv', ['form' => 'quote'])['csv']);
+        $this->assertSame(['deleted' => 1], $run('form-submissions/delete', ['ids' => [$s->id]]));
     }
 
     public function test_a_new_form_is_answered_in_the_workspace_with_a_way_to_it_and_back(): void

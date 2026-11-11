@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## 0.13.0 (2026-11-11)
+
+### Added
+
+- Every Forms ability says what it answers with (`output`), for agents, the API and the CLI. A form’s settings come back in the types they are said to have: an empty address is `null`, a switch is `true` or `false`.
+
+### Changed
+
+- In German, a form’s handle is a “Handle” as everywhere else in the admin (“Ungültiger Formular-Handle.”), and **None** reads “Keine”, the core’s word for it.
+- **Breaking.** The abilities follow the core’s naming rule, one thing and one verb each: `forms/activity` is `forms/overview`, `forms/configure` is `form-settings/update`, `forms/words` and `forms/translate` are `form-words/get` and `form-words/update`, and submissions are a thing of their own: `form-submissions/list`, `get`, `update`, `delete` and `csv` (were `forms/submissions`, `forms/submission`, `forms/submission-update`, `forms/submission-delete` and `forms/export`). The old names are gone.
+- **Breaking.** `form-submissions/get` only reads: it no longer marks a new submission read. The admin’s dialog does that when it opens one, with `form-submissions/update`.
+- A form’s settings and a field’s name show their shape as a placeholder instead of a note. The New Form dialog has no sentence and its button says **Create Form**; the submissions’ search field says **Search Submissions**.
+
+## 0.12.0 (2026-11-11)
+
 ### Added
 
 - **CAPTCHA** in the Forms settings: Cloudflare Turnstile or hCaptcha. With a provider and its two keys, every form shows the provider's check and a submission is accepted only when the provider vouches for it. A visitor who fails is told and can try again. While the provider can't be reached nothing gets through: the visitor reads that it isn't them and to try again in a few minutes, and the site's log says what happened. The secret key is stored encrypted, and the provider's script loads only on pages that show a form.
@@ -10,9 +25,8 @@
 
 ### Changed
 
-- **Breaking.** Needs CMS 0.21.
 - The Forms settings say less: no notes under the fields, and **Keep Submissions For** left empty reads **Forever**.
-- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ## 0.11.0 (2026-11-06)
 

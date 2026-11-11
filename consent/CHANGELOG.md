@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-11)
+
 ### Added
 
 - A cookie banner on the published site, in the site's own colours, buttons and switches: **Accept All** and **Only Necessary** weigh the same, and **Choose** opens a choice between analytics and marketing. It appears over the page without moving anything, and works on built pages. On a phone it takes at most half the screen, with buttons as wide as the panel.
@@ -14,4 +16,4 @@
 
 ### Changed
 
-- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.

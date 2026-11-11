@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-11-11)
+
+### Added
+
+- `brevo/stats`, `brevo/lists` and `brevo/subscribe` say what they answer with (`output`), for agents, the API and the CLI.
+
+### Changed
+
+- **Confirm Addresses by Email** and the three fields that belong to it are one group, **Confirmation**, and the page to go to afterwards shows a path, `/thank-you`. The note under the Brevo key in Settings → Email is gone.
+
+### Fixed
+
+- In German, **Button Label** reads “Beschriftung der Schaltfläche”, as in Forms: with both plugins on, the admin showed one wording or the other.
+
+## 0.5.0 (2026-11-11)
+
 ### Added
 
 - **Newsletter lists.** The **Newsletter Signup** block adds visitors to one of your Brevo lists: an email field and a button that look like every other form on the site and work without a script. Choose the default list under Settings → Brevo, or a list per block.
@@ -13,8 +29,7 @@
 
 ### Changed
 
-- **Breaking.** Needs CMS 0.21.
-- **Breaking.** Needs the CMS release after 0.21.0: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ### Fixed
 

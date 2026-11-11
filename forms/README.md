@@ -30,21 +30,21 @@ Each form has settings of its own on its Settings tab: what the button and the s
 | Ability | Permission | What it does |
 |---|---|---|
 | `forms/list` | `forms.view` | Forms with their field counts and new submissions. |
-| `forms/activity` | `forms.view` | Unread submissions, submissions per day for two weeks, and the latest ones. |
+| `forms/overview` | `forms.view` | The number of forms, unread submissions, submissions per day for two weeks, and the latest ones. |
 | `forms/get` | `forms.view` | One form: its fields and settings. |
 | `forms/create` | `forms.manage` | A new form with name, email and message fields. |
 | `forms/save` | `forms.manage` | Create or update a form. What is left out stays. |
-| `forms/configure` | `forms.manage` | Change some of a form's settings. |
-| `forms/words` | `forms.view` | What a form says in the site's other languages. |
-| `forms/translate` | `forms.manage` | Store what a form says in other languages. |
+| `form-settings/update` | `forms.manage` | Change some of a form's settings. |
+| `form-words/get` | `forms.view` | What a form says in the site's other languages. |
+| `form-words/update` | `forms.manage` | Store what a form says in other languages. |
 | `forms/delete` | `forms.manage` | Delete a form. Its submissions are kept. With `dryRun: true` it only names the form. |
-| `forms/submissions` | `forms.view` | Submissions of a form, newest first. |
-| `forms/submission` | `forms.view` | One submission. A new one is marked read. |
-| `forms/submission-update` | `forms.view` | Mark submissions as new, read, spam or archived. |
-| `forms/submission-delete` | `forms.manage` | Delete submissions and their files. With `dryRun: true` it only lists them. |
-| `forms/export` | `forms.view` | All submissions of a form as CSV. |
+| `form-submissions/list` | `forms.view` | Submissions of a form, newest first. |
+| `form-submissions/get` | `forms.view` | One submission, with its form's field labels. Reading it leaves it unread. |
+| `form-submissions/update` | `forms.view` | Mark submissions as new, read, spam or archived. |
+| `form-submissions/delete` | `forms.manage` | Delete submissions and their files. With `dryRun: true` it only lists them. |
+| `form-submissions/csv` | `forms.view` | All submissions of a form as CSV. |
 
-The Editor role starts with `forms.view` and `forms.manage`.
+Every ability says what it answers with (`output`). The Editor role starts with `forms.view` and `forms.manage`.
 
 ## Hooks
 

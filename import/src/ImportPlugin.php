@@ -6,6 +6,7 @@ namespace Cms\Import;
 
 use Cms\Abilities\AbilityContext;
 use Cms\Packages\Plugin;
+use Cms\Support\Schema\Shape;
 
 /**
  * Brings a site over from somewhere else: a WordPress export, a CSV file or a folder of Markdown.
@@ -29,7 +30,7 @@ final class ImportPlugin extends Plugin
         $this->cms()->permissions()->register('import.run', 'Import Content', 'Import', roles: ['admin']);
         $this->abilities();
 
-        // The home-screen widget every plugin has (PackageManager::problems). It is not on anyone's home screen unless they add it,
+        // The home-screen widget. It is not on anyone's home screen unless they add it,
         // and with nothing imported and nothing waiting it draws nothing.
         $this->cms()->admin()->widget('import-status', ['label' => 'Import', 'description' => __('What has been imported so far, and the files waiting in the import folder.'), 'icon' => 'download', 'column' => 'side', 'order' => 87, 'permission' => 'import.run',
             'view' => function () {
@@ -77,11 +78,27 @@ final class ImportPlugin extends Plugin
             return $report;
         };
 
+        // What a preview and a run answer with: the same report, the run's with what it made.
+        $report = Shape::of([
+            'dryRun' => Shape::BOOLEAN, 'type' => Shape::enum(...Importer::TYPES),
+            'summary' => ['create' => Shape::INTEGER, 'update' => Shape::INTEGER, 'skip' => Shape::INTEGER, 'failed' => Shape::INTEGER, 'media' => Shape::INTEGER, 'redirects' => Shape::INTEGER, 'warnings' => Shape::INTEGER],
+            'redirectsWritten' => Shape::BOOLEAN,
+            'warnings' => [Shape::STRING],
+            'items' => [[
+                'key' => Shape::STRING, 'collection' => Shape::STRING, 'title' => Shape::STRING, 'action' => Shape::enum('create', 'update', 'skip', 'failed'), 'status' => Shape::STRING,
+                'id' => Shape::STRING_OR_NULL, 'uri' => Shape::STRING_OR_NULL, 'warnings' => [Shape::STRING], 'repaired?' => Shape::INTEGER, 'error?' => Shape::STRING,
+            ]],
+            'media' => [['url' => Shape::STRING, 'action' => Shape::enum('download', 'skip', 'failed'), 'id?' => Shape::STRING, 'to?' => Shape::STRING, 'error?' => Shape::STRING]],
+            'redirects' => [['from' => Shape::STRING, 'to' => Shape::STRING_OR_NULL, 'action' => Shape::STRING]],
+            'truncated?' => ['items?' => Shape::INTEGER, 'media?' => Shape::INTEGER, 'redirects?' => Shape::INTEGER],
+        ]);
+
         $a->register('import/sources', [
             'label' => 'List Import Sources',
             'description' => 'The files and folders in storage/app/import/ that can be imported, each with the type it looks like: a WordPress export (.xml), a CSV file, or a folder of Markdown.',
             'permission' => 'import.run',
             'annotations' => ['readOnly' => true],
+            'output' => Shape::of(['folder' => Shape::STRING, 'sources' => [['path' => Shape::STRING, 'type' => Shape::enum(...Importer::TYPES), 'size' => Shape::INTEGER_OR_NULL]]]),
             'handler' => fn () => ['folder' => 'storage/app/import', 'sources' => $importer()->sources()],
         ]);
 
@@ -91,6 +108,7 @@ final class ImportPlugin extends Plugin
             'permission' => 'import.run',
             'annotations' => ['readOnly' => true],
             'input' => $input,
+            'output' => $report,
             'handler' => fn (array $in) => $short($importer()->plan($in)),
         ]);
 
@@ -111,6 +129,7 @@ final class ImportPlugin extends Plugin
                     ...array_map(static fn (array $r) => ['action' => 'create', 'type' => 'redirect', 'from' => $r['from'], 'to' => $r['to']], $plan['redirectsWritten'] ? $wanted($plan['redirects'], ['add']) : []),
                 ];
             },
+            'output' => $report,
             'handler' => fn (array $in, AbilityContext $context) => $short($importer()->run($in, $context->user)),
         ]);
     }

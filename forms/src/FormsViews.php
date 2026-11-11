@@ -32,14 +32,15 @@ final class FormsViews
 
     private function list(): array
     {
+        // The one way to make a form, once: in the header, also while the list is empty.
+        $new = ['label' => __('New Form'), 'name' => 'new-form', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'forms/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/forms/{result.handle}',
+            'form' => ['title' => __('New Form'), 'confirm' => __('Create Form'), 'fields' => [
+                ['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Quote Request'), 'required' => true, 'autofocus' => true],
+            ]]];
+
         return ['type' => 'ui/page', 'props' => ['title' => __('Forms'), 'icon' => 'form'], 'children' => [
             ['type' => 'ui/tabs', 'children' => [
-                ['type' => 'ui/tab', 'props' => ['id' => 'forms', 'label' => __('Forms'), 'actions' => [
-                    ['label' => __('New Form'), 'name' => 'new-form', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'forms/create', 'input' => ['title' => '{values.title}'], 'then' => 'open', 'to' => '/forms/{result.handle}',
-                        'form' => ['title' => __('New Form'), 'text' => __('Starts with name, email and message.'), 'confirm' => __('Create'), 'fields' => [
-                            ['handle' => 'title', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Quote Request'), 'required' => true, 'autofocus' => true],
-                        ]]],
-                ]], 'children' => [
+                ['type' => 'ui/tab', 'props' => ['id' => 'forms', 'label' => __('Forms'), 'actions' => [$new]], 'children' => [
                     ['type' => 'ui/records', 'props' => [
                         'id' => 'forms', 'label' => __('Forms'), 'key' => 'handle',
                         'source' => ['ability' => 'forms/list'],
@@ -77,14 +78,14 @@ final class FormsViews
         $tabs = [
             ['type' => 'ui/tab', 'props' => ['id' => 'fields', 'label' => __('Fields')], 'children' => [['type' => 'forms/builder', 'props' => $input]]],
             ['type' => 'ui/tab', 'props' => ['id' => 'options', 'label' => __('Settings')], 'children' => $manage
-                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'forms/get', 'input' => $input], 'valuesAt' => 'settings', 'fields' => self::settingsFields(), 'save' => ['ability' => 'forms/configure', 'input' => $input, 'as' => 'settings']]]]
+                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'forms/get', 'input' => $input], 'valuesAt' => 'settings', 'fields' => self::settingsFields(), 'save' => ['ability' => 'form-settings/update', 'input' => $input, 'as' => 'settings']]]]
                 : self::readOnly(self::settingsFields(), $form['settings'])],
         ];
 
         if (count($this->cms->locales()) > 1) {
             $tabs[] = ['type' => 'ui/tab', 'props' => ['id' => 'languages', 'label' => __('Languages')], 'children' => $manage
                 // Fields and values both from the ability: the placeholders are the form's own words, not the admin's to translate.
-                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'forms/words', 'input' => $input], 'save' => ['ability' => 'forms/translate', 'input' => $input, 'as' => 'words']]]]
+                ? [['type' => 'ui/form', 'props' => ['source' => ['ability' => 'form-words/get', 'input' => $input], 'save' => ['ability' => 'form-words/update', 'input' => $input, 'as' => 'words']]]]
                 : self::readOnly($this->wordFields($form), self::words($form['locales']))];
         }
 
@@ -106,12 +107,12 @@ final class FormsViews
     {
         // A field's label is the form's own word, shown as it was written.
         $columns = array_map(static fn (array $f) => ['key' => 'data.'.$f['name'], 'label' => strip_tags((string) ($f['props']['label'] ?? $f['name']))], array_slice(array_values(array_filter(FormFields::extract($form['fields']), static fn ($f) => $f['type'] !== 'hidden')), 0, 3));
-        $mark = static fn (string $label, string $status) => ['label' => $label, 'ability' => 'forms/submission-update', 'input' => ['ids' => '{ids}', 'status' => $status]];
+        $mark = static fn (string $label, string $status) => ['label' => $label, 'ability' => 'form-submissions/update', 'input' => ['ids' => '{ids}', 'status' => $status]];
 
         return ['type' => 'ui/records', 'props' => [
             'id' => 'submissions', 'label' => __('Submissions'),
-            'source' => ['ability' => 'forms/submissions', 'input' => ['form' => $form['handle']]],
-            'search' => ['param' => 'search', 'placeholder' => __('Search…')],
+            'source' => ['ability' => 'form-submissions/list', 'input' => ['form' => $form['handle']]],
+            'search' => ['param' => 'search', 'placeholder' => __('Search Submissions')],
             'filters' => [['param' => 'status', 'label' => __('Show'), 'all' => __('Inbox'), 'options' => self::options(['new' => __('Unread'), 'archived' => __('Archived'), 'spam' => __('Spam')])]],
             'paged' => ['perPage' => 100],
             'columns' => [
@@ -125,7 +126,7 @@ final class FormsViews
                 $mark(__('Archive'), 'archived'),
                 $mark(__('Spam'), 'spam'),
                 // How many, said without a plural to get wrong.
-                ['label' => __('Delete'), 'ability' => 'forms/submission-delete', 'input' => ['ids' => '{ids}'],
+                ['label' => __('Delete'), 'ability' => 'form-submissions/delete', 'input' => ['ids' => '{ids}'],
                     'confirm' => ['title' => __('Delete the selected submissions?'), 'text' => __('{ids.length} selected. This cannot be undone.'), 'confirm' => __('Delete'), 'danger' => true]],
             ],
             'empty' => ['icon' => 'inbox', 'title' => __('No submissions')],
@@ -167,18 +168,18 @@ final class FormsViews
             ['handle' => 'enabled', 'type' => 'toggle', 'label' => __('Accept Submissions')],
             ['handle' => 'submit', 'type' => 'text', 'label' => __('Button Label')],
             ['handle' => 'success', 'type' => 'textarea', 'label' => __('Success Message'), 'rows' => 2],
-            ['handle' => 'redirect', 'type' => 'url', 'component' => 'link', 'label' => __('Or Redirect To'), 'placeholder' => __('A Thank-You Page')],
+            ['handle' => 'redirect', 'type' => 'url', 'component' => 'link', 'label' => __('Or Redirect To'), 'placeholder' => '/thank-you'],
             ['handle' => 'notify', 'type' => 'tags', 'label' => __('Email Submissions To'), 'placeholder' => 'name@example.com', 'section' => __('Email')],
             // Literal braces: the subject's own placeholders, not the view's.
-            ['handle' => 'subject', 'type' => 'text', 'label' => __('Email Subject'), 'instructions' => __('Use {{form}} or any {{field_name}}.'), 'section' => __('Email')],
-            ['handle' => 'reply_to_field', 'type' => 'text', 'label' => __('Reply-to Field'), 'instructions' => __('The field that holds the sender’s email.'), 'section' => __('Email')],
+            ['handle' => 'subject', 'type' => 'text', 'label' => __('Email Subject'), 'placeholder' => 'New submission: {{form}}', 'section' => __('Email')],
+            ['handle' => 'reply_to_field', 'type' => 'text', 'label' => __('Reply-to Field'), 'placeholder' => 'email', 'mono' => true, 'section' => __('Email')],
             ['handle' => 'confirmation', 'type' => 'toggle', 'label' => __('Send the Person a Confirmation Email'), 'section' => __('Email')],
             ['handle' => 'confirmation_subject', 'type' => 'text', 'label' => __('Confirmation Subject'), 'if' => ['confirmation' => true], 'section' => __('Email')],
             ['handle' => 'confirmation_message', 'type' => 'richtext', 'label' => __('Confirmation Message'), 'if' => ['confirmation' => true], 'section' => __('Email')],
             ['handle' => 'store', 'type' => 'toggle', 'label' => __('Keep Submissions in {brand}'), 'section' => __('Submissions')],
             ['handle' => 'honeypot', 'type' => 'toggle', 'label' => __('Hidden Spam Trap'), 'section' => __('Submissions')],
             ['handle' => 'min_seconds', 'type' => 'number', 'label' => __('Minimum Seconds to Fill In'), 'min' => 0, 'max' => 60, 'section' => __('Submissions')],
-            ['handle' => 'webhook', 'type' => 'url', 'label' => __('Webhook'), 'instructions' => __('Each submission is POSTed as JSON to this https:// URL (Zapier, Make, n8n, your CRM).'), 'section' => __('Submissions')],
+            ['handle' => 'webhook', 'type' => 'url', 'label' => __('Webhook'), 'placeholder' => 'https://example.com/hook', 'section' => __('Submissions')],
         ];
     }
 

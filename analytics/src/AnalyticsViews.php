@@ -37,16 +37,16 @@ final class AnalyticsViews
 
         if (! $this->reports->tracked()) {
             return $this->reports->enabled()
-                ? [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('No visits yet'), 'text' => __('Visits appear here as people open your published site.')]]]
-                : [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('Analytics is off'), 'text' => __('Turn it on to see who visits your site.'), 'action' => [...$settings, 'variant' => 'primary']]]];
+                ? [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('No visits yet')]]]
+                : [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('Analytics is off'), 'action' => [...$settings, 'variant' => 'primary']]]];
         }
 
         $counting = $this->reports->counting();
         // Short at a glance (1.2K), the whole number on hover.
-        $count = [...($counting ? ['key' => 'views', 'label' => __('Views')] : ['key' => 'visitors', 'label' => __('Visitors')]), 'width' => '76px', 'align' => 'end', 'format' => 'compact'];
-        $share = ['key' => 'share', 'label' => __('Share'), 'width' => '112px', 'format' => 'share'];
-        // The name gives way first, so the bar and the number stay in a half-width list.
-        $name = ['width' => 'minmax(120px,1fr)'];
+        $count = [...($counting ? ['key' => 'views', 'label' => __('Views')] : ['key' => 'visitors', 'label' => __('Visitors')]), 'width' => '64px', 'align' => 'end', 'format' => 'compact'];
+        $share = ['key' => 'share', 'label' => __('Share'), 'width' => '96px', 'format' => 'share'];
+        // The name gives way first, down to nothing, so the bar and the number stay in a half-width list and on a phone.
+        $name = ['width' => 'minmax(0,1fr)'];
         $pages = fn (string $dimension, string $title) => $this->list($title, $dimension, [
             ['key' => 'label', 'label' => __('Page'), 'muted' => 'path', ...$name],
             $share,
@@ -68,10 +68,6 @@ final class AnalyticsViews
                     $share,
                 ], filters: [['param' => 'dimension', 'label' => __('Show'), 'all' => __('Type'), 'options' => self::options(['browsers' => __('Browser'), 'os' => __('System')])]]),
             ]],
-            ...($counting ? [
-                ['type' => 'ui/text', 'props' => ['text' => __('Counting page views only: nothing is read from the browser or kept about visitors.'), 'muted' => true]],
-                ['type' => 'ui/actions', 'can' => 'settings.manage', 'props' => ['items' => [[...$settings, 'label' => __('Change what is counted'), 'variant' => 'ghost']]]],
-            ] : []),
         ];
     }
 
