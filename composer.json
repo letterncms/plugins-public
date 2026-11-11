@@ -16,6 +16,7 @@
         "letterncms/cms": "dev-main as 0.21.0",
         "letterncms/analytics": "*",
         "letterncms/brevo": "*",
+        "letterncms/consent": "*",
         "letterncms/forms": "*",
         "letterncms/seo": "*"
     },
@@ -25,6 +26,7 @@
     "autoload-dev": {
         "psr-4": {
             "Cms\\Analytics\\Tests\\": "analytics/tests/",
+            "Cms\\Consent\\Tests\\": "consent/tests/",
             "Cms\\Forms\\Tests\\": "forms/tests/",
             "Cms\\Seo\\Tests\\": "seo/tests/",
             "Cms\\Tests\\": "vendor/letterncms/cms/tests/"
