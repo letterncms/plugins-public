@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-11-11)
+
 ### Added
 
 - **Newsletter lists.** The **Newsletter Signup** block adds visitors to one of your Brevo lists: an email field and a button that look like every other form on the site and work without a script. Choose the default list under Settings → Brevo, or a list per block.
