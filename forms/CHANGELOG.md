@@ -8,6 +8,7 @@
 
 ### Changed
 
+- In German, a form’s handle is a “Handle” as everywhere else in the admin (“Ungültiger Formular-Handle.”), and **None** reads “Keine”, the core’s word for it.
 - **Breaking.** The abilities follow the core’s naming rule, one thing and one verb each: `forms/activity` is `forms/overview`, `forms/configure` is `form-settings/update`, `forms/words` and `forms/translate` are `form-words/get` and `form-words/update`, and submissions are a thing of their own: `form-submissions/list`, `get`, `update`, `delete` and `csv` (were `forms/submissions`, `forms/submission`, `forms/submission-update`, `forms/submission-delete` and `forms/export`). The old names are gone.
 - **Breaking.** `form-submissions/get` only reads: it no longer marks a new submission read. The admin’s dialog does that when it opens one, with `form-submissions/update`.
 - A form’s settings and a field’s name show their shape as a placeholder instead of a note. The New Form dialog has no sentence and its button says **Create Form**; the submissions’ search field says **Search Submissions**.
