@@ -8,6 +8,7 @@
 
 ### Changed
 
+- In German, the **Views** column reads “Ansichten”: the core uses the same English word for a list’s saved views, and the admin reads one dictionary for every package, so the word has one translation. **Page Views** stays “Seitenaufrufe”.
 - The Analytics screen leads to its settings one way, the **Settings** tab: the line and the button under the lists are gone.
 - The Analytics settings say less: no notes under the fields. **Keep Visits For** left empty reads **Forever**.
 - The overview shows its numbers as plain figures, and with visitors the figures themselves choose which one the chart draws: press one, and a line over it marks it. With page views alone there is one figure and no tab bar, and the line saying what the change is compared with is a tooltip on the figure. The lists fit a phone: the page's name gives way before the bar and the number.
