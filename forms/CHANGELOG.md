@@ -8,6 +8,7 @@
 
 ### Changed
 
+- **Breaking.** Needs the core 0.24 or newer: the **Phone** field type says which phone it means (`Phone||number`), a key older cores show as written.
 - The first tab of the Forms screen is **All Forms**, so it no longer repeats the screen's name. With no forms yet, **New Form** is offered where the list would be.
 - On a phone, a form's row says what its numbers count: “6 Fields”, “128 Submissions”, “3 Unread”.
 - A dropdown's empty option reads **Choose** unless you give it other words, and the Form block's list reads **Choose** like every other select.
@@ -16,6 +17,7 @@
 ### Fixed
 
 - In the form builder, a field's name and a hidden value are real buttons: they take the keyboard, show focus and are large enough to tap.
+- In German, the **Phone** field stays "Telefon" where the core now says "Smartphone" for a phone's screen, a slider's **Starts At** is its "Startwert", and **None** reads "Ohne", which fits whatever it stands beside.
 
 ## 0.13.0 (2026-11-11)
 
