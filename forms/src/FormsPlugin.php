@@ -41,7 +41,7 @@ final class FormsPlugin extends Plugin
 
         // The pages showing a form recorded it while they were built: only those are built again, when the site builds on its own.
         $this->cms()->hooks()->on('form.saved', function (string $handle) {
-            if ($this->cms()->isActive('letterncms/site') && $this->cms()->settings('site', 'auto_build', true)) {
+            if ($this->cms()->isActive('letterncms/site') && $this->cms()->setting('site', 'auto_build', true)) {
                 $this->app->make(SiteBuilder::class)->queueForDependency('form:'.$handle, __('A form changed'));
             }
         });
@@ -305,6 +305,10 @@ final class FormsPlugin extends Plugin
             'permission' => 'forms.manage',
             'annotations' => ['destructive' => true],
             'input' => ['type' => 'object', 'properties' => ['handle' => ['type' => 'string']], 'required' => ['handle']],
+            // Deleting never refuses: a form that is not there is nothing to remove.
+            'dryRun' => fn (array $in): array => ($form = $forms()->find($in['handle'])) === null ? [] : [
+                ['action' => 'delete', 'type' => 'form', 'handle' => $form['handle'], 'title' => $form['title'], 'keeps' => ['submissions' => Submission::query()->where('form', $form['handle'])->count()]],
+            ],
             'handler' => function (array $in) use ($forms) {
                 $forms()->delete($in['handle']);
 
@@ -365,14 +369,18 @@ final class FormsPlugin extends Plugin
             'handler' => fn (array $in) => ['updated' => Submission::query()->whereIn('id', array_map('strtolower', $in['ids']))->update(['status' => $in['status'], 'updated_at' => now()])],
         ]);
 
+        $doomed = static fn (array $in) => Submission::query()->whereIn('id', array_map('strtolower', $in['ids']))->get();
+
         $a->register('forms/submission-delete', [
             'label' => 'Delete Submissions',
             'description' => 'Permanently delete submissions and their files.',
             'permission' => 'forms.manage',
             'annotations' => ['destructive' => true],
             'input' => ['type' => 'object', 'properties' => ['ids' => ['type' => 'array', 'items' => ['type' => 'string'], 'maxItems' => 500]], 'required' => ['ids']],
-            'handler' => function (array $in) {
-                $subs = Submission::query()->whereIn('id', array_map('strtolower', $in['ids']))->get();
+            // Ids that match nothing are passed over, in the real run too.
+            'dryRun' => fn (array $in): array => $doomed($in)->map(static fn (Submission $s) => ['action' => 'delete', 'type' => 'submission', 'id' => $s->id, 'form' => $s->form, 'removes' => ['files' => is_dir(storage_path('app/forms/'.$s->id))]])->all(),
+            'handler' => function (array $in) use ($doomed) {
+                $subs = $doomed($in);
 
                 foreach ($subs as $s) {
                     \Cms\Support\Files::deleteDirectory(storage_path('app/forms/'.$s->id));
@@ -399,7 +407,7 @@ final class FormsPlugin extends Plugin
 
         // Retention: prune old submissions now and then.
         $this->app->terminating(function () {
-            $days = (int) $this->cms()->settings('forms', 'retention_days', 0);
+            $days = (int) $this->cms()->setting('forms', 'retention_days', 0);
 
             if ($days > 0 && random_int(1, 50) === 1) {
                 try {

@@ -142,7 +142,7 @@ final class SiteFiles
     public function llms(): string
     {
         $site = (string) config('app.name');
-        $description = (string) ($this->meta->settings('llms_summary') ?: $this->cms->settings('site', 'description') ?: '');
+        $description = (string) ($this->meta->settings('llms_summary') ?: $this->cms->setting('site', 'description') ?: '');
         $lines = ["# {$site}", ''];
 
         if ($description !== '') {

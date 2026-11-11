@@ -64,7 +64,7 @@ final class BrevoPlugin extends Plugin
         ], icon: 'brevo', description: __('Newsletter lists and how people join them.'), order: 60);
 
         // One key is enough: with Brevo's key under Settings → Email, this page doesn't ask for another, and keeps none.
-        $mailKey = fn (): bool => (string) $this->cms()->settings('email', 'brevo_api_key', '') !== '';
+        $mailKey = fn (): bool => (string) $this->cms()->setting('email', 'brevo_api_key', '') !== '';
         $this->cms()->hooks()->addFilter('settings.fields', static fn (array $fields, string $namespace) => $namespace === 'brevo' && $mailKey()
             ? array_values(array_filter($fields, static fn ($field) => ($field['handle'] ?? null) !== 'api_key'))
             : $fields);
@@ -83,7 +83,7 @@ final class BrevoPlugin extends Plugin
         });
 
         // What a built page carries (the list, the wording) changes with these.
-        $this->cms()->hooks()->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'brevo:'.(int) $this->app->make(Signup::class)->list().':'.(int) $this->settings('double_opt_in', true).':'.$this->app->make(Signup::class)->base()]);
+        $this->cms()->hooks()->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'brevo:'.(int) $this->app->make(Signup::class)->list().':'.(int) $this->setting('double_opt_in', true).':'.$this->app->make(Signup::class)->base()]);
 
         if ($this->cms()->isActive('letterncms/blocks')) {
             $this->app->make(BlockRegistry::class)->register(SignupBlock::definition());
@@ -135,11 +135,11 @@ final class BrevoPlugin extends Plugin
     /** @return array<string, mixed> */
     private function stats(): array
     {
-        if ($this->cms()->settings('email', 'transport', 'log') !== 'brevo') {
+        if ($this->cms()->setting('email', 'transport', 'log') !== 'brevo') {
             return ['state' => 'inactive'];
         }
 
-        $key = (string) $this->cms()->settings('email', 'brevo_api_key', '');
+        $key = (string) $this->cms()->setting('email', 'brevo_api_key', '');
 
         if ($key === '') {
             return ['state' => 'no-key'];

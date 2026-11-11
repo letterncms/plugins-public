@@ -48,7 +48,7 @@ final class Feeds
         $collection = $this->cms->collections()->find($handle);
         $feed = (array) ($collection?->get('feed') ?: []);
         $limit = max(1, min(100, (int) ($feed['limit'] ?? 20)));
-        $site = (string) $this->cms->settings('site', 'name', '');
+        $site = (string) $this->cms->setting('site', 'name', '');
         $title = (string) ($feed['title'] ?? ($site !== '' ? $collection->title.' · '.$site : $collection->title));
         $path = array_search(['collection' => $handle, 'locale' => $locale], array_map(static fn ($f) => ['collection' => $f['collection'], 'locale' => $f['locale']], $this->all()), true);
         $x = static fn (?string $value) => htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES, 'UTF-8');

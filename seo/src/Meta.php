@@ -15,7 +15,7 @@ final class Meta
 
     public function settings(?string $key = null, mixed $default = null): mixed
     {
-        return $this->cms->settings('seo', $key, $default);
+        return $this->cms->setting('seo', $key, $default);
     }
 
     /** A link as search engines and feeds want it: a path on this site made absolute, a full URL as it is. */
@@ -85,7 +85,7 @@ final class Meta
         }
 
         if ($text === '') {
-            $text = (string) ($this->cms->settings('site', 'description') ?? '');
+            $text = (string) ($this->cms->setting('site', 'description') ?? '');
         }
 
         return mb_strimwidth(trim(preg_replace('/\s+/', ' ', $text) ?? ''), 0, 160, '…');

@@ -35,7 +35,7 @@ None.
 |---|---|---|
 | `import/sources` | Lists what is in `storage/app/import/`, with the type each looks like. | `import.run` |
 | `import/preview` | Says what an import would do, per record, file and redirect, without doing it. | `import.run` |
-| `import/run` | Runs the import and answers with the same report. | `import.run` |
+| `import/run` | Runs the import and answers with the same report. With `dryRun: true` it writes nothing and lists the entries, files and redirects it would make. | `import.run` |
 
 `import.run` (**Import Content**) is for admins until a site's roles give it to someone else.
 

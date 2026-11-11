@@ -100,6 +100,17 @@ final class ImportPlugin extends Plugin
             'permission' => 'import.run',
             'annotations' => ['idempotent' => true, 'confirm' => true],
             'input' => $input,
+            // The plan is the run without its writes: it refuses the same source and names every entry, file and redirect.
+            'dryRun' => static function (array $in) use ($importer): array {
+                $plan = $importer()->plan($in);
+                $wanted = static fn (array $rows, array $actions) => array_values(array_filter($rows, static fn (array $row) => in_array($row['action'], $actions, true)));
+
+                return [
+                    ...array_map(static fn (array $i) => ['action' => $i['action'], 'type' => 'entry', 'collection' => $i['collection'], 'id' => $i['id'], 'title' => $i['title'], 'status' => $i['status']], $wanted($plan['items'], ['create', 'update'])),
+                    ...array_map(static fn (array $m) => ['action' => 'create', 'type' => 'media', 'url' => $m['url']], $wanted($plan['media'], ['download'])),
+                    ...array_map(static fn (array $r) => ['action' => 'create', 'type' => 'redirect', 'from' => $r['from'], 'to' => $r['to']], $plan['redirectsWritten'] ? $wanted($plan['redirects'], ['add']) : []),
+                ];
+            },
             'handler' => fn (array $in, AbilityContext $context) => $short($importer()->run($in, $context->user)),
         ]);
     }

@@ -8,9 +8,9 @@
 
 ### Changed
 
-- **Breaking.** Needs CMS 0.21.
 - The Editor role a site starts with can manage SEO settings and redirects: **Manage SEO Settings and Redirects** comes with it, as the permissions of the other plugins do.
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
+- **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 
 ## 0.7.0 (2026-11-05)
 
