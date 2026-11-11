@@ -119,7 +119,7 @@ final class FormsPlugin extends Plugin
             'keywords' => ['contact', 'form', 'signup', 'newsletter', 'quote'],
             'styles' => ['spacing', 'size', 'background', 'border'],
             // With no forms yet, its list says so and offers to make one.
-            'fields' => [['handle' => 'form', 'type' => 'select', 'label' => 'Form', 'placeholder' => 'Choose a Form', 'options' => [], 'dynamic' => 'forms', 'required' => true,
+            'fields' => [['handle' => 'form', 'type' => 'select', 'label' => 'Form', 'options' => [], 'dynamic' => 'forms', 'required' => true,
                 'empty' => 'No forms yet', 'action' => ['label' => 'New Form', 'icon' => 'plus', 'to' => '/forms?do=new-form']]],
             'render' => FieldView::form(...),
         ]);

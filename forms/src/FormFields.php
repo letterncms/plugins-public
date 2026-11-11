@@ -35,7 +35,7 @@ final class FormFields
             'number' => [__('Number'), __('A number'), 'number', [$placeholder, ['handle' => 'min', 'type' => 'number', 'label' => 'Minimum'], ['handle' => 'max', 'type' => 'number', 'label' => 'Maximum']]],
             'date' => [__('Date'), __('A date'), 'calendar', []],
             'textarea' => [__('Long Text'), __('Several lines of text'), 'paragraph', [$placeholder, ['handle' => 'rows', 'type' => 'number', 'label' => 'Rows', 'default' => 5], ['handle' => 'max', 'type' => 'number', 'label' => 'Max Length', 'default' => 5000]]],
-            'select' => [__('Dropdown'), __('One option from a list'), 'select', [$options, ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Empty Option', 'default' => 'Choose…']]],
+            'select' => [__('Dropdown'), __('One option from a list'), 'select', [$options, ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Empty Option', 'default' => 'Choose']]],
             'radio' => [__('Choice'), __('One option, all in view'), 'radio', [$options, $look]],
             'checkboxes' => [__('Checkboxes'), __('Any number of options'), 'checkbox', [$options, $look]],
             'checkbox' => [__('Checkbox'), __('A single yes or no'), 'checkbox', [['handle' => 'look', 'type' => 'select', 'label' => 'Show As', 'display' => 'segmented', 'options' => ['checkbox' => __('Checkbox'), 'switch' => __('Switch')], 'default' => 'checkbox']]],

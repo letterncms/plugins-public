@@ -1,6 +1,6 @@
 import { blockViews, useEditorContext, type BlockNode } from '@letterncms/blocks'
 import { t, type FieldDef } from '@letterncms/sdk'
-import { Fields, Icon, cn } from '@letterncms/ui'
+import { Button, Fields, Icon, cn } from '@letterncms/ui'
 
 const label = (): FieldDef => ({ handle: 'label', type: 'text', component: 'forms-label', label: t('Label') })
 
@@ -15,9 +15,9 @@ function FieldView({ node, onSettings }: { node: BlockNode; onSettings: (id: str
 
   if (kind === 'hidden') {
     return (
-      <button type="button" onClick={() => onSettings(node.id)} className="flex h-8 items-center gap-2 rounded-md border border-dashed border-border px-3 text-xs text-faint">
-        <Icon name="eye-off" size={13} /> {t('Hidden')} <span className="font-mono">{p.name || t('unnamed')}</span> = {p.value || '""'}
-      </button>
+      <Button variant="ghost" size="md" icon="eye-off" onClick={() => onSettings(node.id)} className="border border-dashed border-border text-xs! font-normal! text-faint!">
+        {t('Hidden')} <span className="font-mono">{p.name || t('unnamed')}</span> = {p.value || '""'}
+      </Button>
     )
   }
 
@@ -27,15 +27,15 @@ function FieldView({ node, onSettings }: { node: BlockNode; onSettings: (id: str
         <div className="flex items-center gap-2">
           <Fields bare className="min-w-0 flex-1" fields={[{ ...label(), display: 'heading', placeholder: t('Label') }]} values={p} onChange={(_, v) => store.updateProps(node.id, { label: v })} />
           {p.required && <span className="text-xs text-faint">{t('Required')}</span>}
-          <button type="button" onClick={() => onSettings(node.id)} className="rounded-xs px-1 font-mono text-2xs text-faint hover:bg-hover hover:text-text" title={t('Field Settings')}>
+          <Button variant="ghost" size="xs" onClick={() => onSettings(node.id)} title={t('Field Settings')} className="px-1! font-mono text-2xs! font-normal! text-faint! hover:text-text!">
             {p.name || t('name?')}
-          </button>
+          </Button>
         </div>
       )}
       {kind === 'textarea' ? (
         <div className={cn(box, 'h-20 py-2')}>{p.placeholder}</div>
       ) : kind === 'select' ? (
-        <div className={cn(box, 'flex h-9 items-center justify-between')}>{p.placeholder || t('Choose…')}<Icon name="chevron-down" size={13} /></div>
+        <div className={cn(box, 'flex h-9 items-center justify-between')}>{p.placeholder || t('Choose')}<Icon name="chevron-down" size={13} /></div>
       ) : kind === 'radio' || kind === 'checkboxes' ? (
         <div className="space-y-1">
           {options.map((o, i) => (

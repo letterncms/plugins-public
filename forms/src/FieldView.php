@@ -47,7 +47,7 @@ final class FieldView
 
         $control = match ($kind) {
             'textarea' => '<label class="cms-label" for="'.$e($id).'">'.$label.'</label><textarea class="cms-input" id="'.$e($id).'" name="'.$e($name).'" rows="'.(int) ($b['rows'] ?? 5).'" maxlength="'.(int) ($b['max'] ?? 5000).'" placeholder="'.$e($b['placeholder'] ?? '').'"'.$req.$describe.'></textarea>',
-            'select' => '<label class="cms-label" for="'.$e($id).'">'.$label.'</label><select class="cms-input" id="'.$e($id).'" name="'.$e($name).'"'.$req.$describe.'><option value="">'.$e($b['placeholder'] ?? 'Choose…').'</option>'
+            'select' => '<label class="cms-label" for="'.$e($id).'">'.$label.'</label><select class="cms-input" id="'.$e($id).'" name="'.$e($name).'"'.$req.$describe.'><option value="">'.$e($b['placeholder'] ?? 'Choose').'</option>'
                 .implode('', array_map(static fn ($v, $t) => '<option value="'.e((string) $v).'">'.e((string) $t).'</option>', array_keys($options()), $options())).'</select>',
             'radio', 'checkboxes' => self::choices($kind, $b, $name, $label, $required, $describe, $options()),
             'checkbox' => '<label class="cms-choice"><input type="checkbox"'.(($b['look'] ?? 'checkbox') === 'switch' ? ' class="cms-switch" role="switch"' : ' class="cms-check"').' name="'.$e($name).'" value="yes"'.$req.$describe.'><span>'.$label.'</span></label>',

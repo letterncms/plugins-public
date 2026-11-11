@@ -1,6 +1,6 @@
 import { EditorProvider, EditorStore, WriteEditor, useCatalog, type BlockNode } from '@letterncms/blocks'
-import { can, invalidate, run, t, useAbility, type SurfaceComponentProps } from '@letterncms/sdk'
-import { EmptyState, SaveBar, Spinner } from '@letterncms/ui'
+import { can, invalidate, run, useAbility, type SurfaceComponentProps } from '@letterncms/sdk'
+import { NotFoundState, SaveBar, Spinner } from '@letterncms/ui'
 import { useMemo, useRef, useState } from 'react'
 
 interface Form {
@@ -18,7 +18,7 @@ const ALLOWED_TOP = ['paragraph', 'heading', 'columns', 'divider', 'callout']
 export default function FormBuilder({ props }: SurfaceComponentProps<{ handle: string }>) {
   const form = useAbility<Form>('forms/get', { handle: props.handle }, { refetchOnWindowFocus: false })
   if (form.isLoading) return <div className="grid place-items-center py-10 text-faint"><Spinner /></div>
-  if (!form.data) return <EmptyState icon="form" title={t('Form not found')} />
+  if (!form.data) return <NotFoundState icon="form" />
   return <Builder key={form.data.handle} form={form.data} />
 }
 
@@ -63,7 +63,6 @@ function Builder({ form }: { form: Form }) {
       <EditorProvider key={version} value={{ store, types, catalog, entryId: null, fieldHandle: 'fields', allowed, getValues: () => ({}), title: form.title }}>
         <WriteEditor />
       </EditorProvider>
-      <p className="mt-2 text-xs text-faint">{t('Type / to add fields. Use Columns to put fields side by side.')}</p>
       {manage && <SaveBar dirty={dirty} saving={busy} error={error} onSave={() => void save()} onDiscard={discard} />}
     </div>
   )
