@@ -223,6 +223,10 @@ final class FormsTest extends TestCase
     public function test_the_forms_places_are_views(): void
     {
         $this->assertSame('ui/records', $this->place('forms')['children'][0]['children'][0]['children'][0]['type']);
+        // The one way to make a form is the tab's action in the bar: the empty list is a title, not a second button.
+        $list = $this->place('forms')['children'][0]['children'][0];
+        $this->assertSame('forms/create', $list['props']['actions'][0]['ability']);
+        $this->assertSame(['icon' => 'form', 'title' => 'No forms yet'], $list['children'][0]['props']['empty']);
         $tabs = array_column(array_column($this->place('form', ['handle' => 'quote'])['children'][0]['children'], 'props'), 'id');
         $this->assertSame(count($this->cms()->locales()) > 1 ? ['fields', 'options', 'languages', 'submissions'] : ['fields', 'options', 'submissions'], $tabs);
         $this->assertSame('ui/empty', $this->place('form', ['handle' => 'gone'])['children'][0]['type']);

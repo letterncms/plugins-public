@@ -68,10 +68,6 @@ final class AnalyticsViews
                     $share,
                 ], filters: [['param' => 'dimension', 'label' => __('Show'), 'all' => __('Type'), 'options' => self::options(['browsers' => __('Browser'), 'os' => __('System')])]]),
             ]],
-            ...($counting ? [
-                ['type' => 'ui/text', 'props' => ['text' => __('Counting page views only: nothing is read from the browser or kept about visitors.'), 'muted' => true]],
-                ['type' => 'ui/actions', 'can' => 'settings.manage', 'props' => ['items' => [[...$settings, 'label' => __('Change what is counted'), 'variant' => 'ghost']]]],
-            ] : []),
         ];
     }
 
