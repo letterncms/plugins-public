@@ -11,6 +11,7 @@ use Cms\Content\Collections\Collection;
 use Cms\Content\Entries\Entry;
 use Cms\Modules\Settings\SettingsModule;
 use Cms\Packages\Plugin;
+use Cms\Support\Schema\Shape;
 use Cms\Users\User;
 
 final class SeoPlugin extends Plugin
@@ -31,22 +32,37 @@ final class SeoPlugin extends Plugin
         }
     }
 
-    /** Redirects are a tab of the SEO settings: one table, saved from the save bar like the settings beside it. */
+    /**
+     * Redirects are a tab of the SEO settings: one table, saved from the save bar like the settings beside it.
+     * New Redirect is in the bar; with none yet, the tab says so.
+     */
     private function redirectsTab(): void
     {
-        $this->cms()->hooks()->addFilter('view.settings', static fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'seo' || ! $user->hasPermission('seo.manage') ? $view : SettingsModule::withTab($view, [
-            'type' => 'ui/tab', 'props' => ['id' => 'redirects', 'label' => __('Redirects')], 'children' => [
-                ['type' => 'ui/form', 'props' => [
+        // The one way to make a redirect, once: in the bar while the tab is on view, also while there are none.
+        $new = ['label' => __('New Redirect'), 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'redirects/create', 'then' => 'refresh',
+            'input' => ['from' => '{values.from}', 'to' => '{values.to}', 'status' => '{values.status}'],
+            'form' => ['title' => __('New Redirect'), 'confirm' => __('Create Redirect'), 'values' => ['status' => 301], 'fields' => self::redirectFields(autofocus: true)]];
+
+        $this->cms()->hooks()->addFilter('view.settings', fn (array $view, User $user, array $params) => ($params['namespace'] ?? '') !== 'seo' || ! $user->hasPermission('seo.manage') ? $view : SettingsModule::withTab($view, [
+            'type' => 'ui/tab', 'props' => ['id' => 'redirects', 'label' => __('Redirects'), 'actions' => [$new]], 'children' => [$this->app->make(Redirects::class)->all() === []
+                ? ['type' => 'ui/empty', 'props' => ['icon' => 'arrow-right', 'title' => __('No redirects yet')]]
+                : ['type' => 'ui/form', 'props' => [
                     'source' => ['ability' => 'redirects/list'], 'into' => 'redirects', 'width' => 'wide',
-                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('New Redirect'), 'empty' => __('No redirects'), 'fields' => [
-                        ['handle' => 'from', 'type' => 'text', 'label' => __('From'), 'mono' => true, 'placeholder' => '/old-url'],
-                        ['handle' => 'to', 'type' => 'text', 'label' => __('To'), 'mono' => true, 'placeholder' => __('/new-url or https://…')],
-                        ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('301 Permanent'), '302' => __('302 Temporary')]],
-                    ]]],
+                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => __('Add Redirect'), 'fields' => self::redirectFields()]],
                     'save' => ['ability' => 'redirects/save', 'as' => '*'],
                 ]],
             ],
         ]));
+    }
+
+    /** One redirect, as a row of the table and as the dialog that makes the first. */
+    private static function redirectFields(bool $autofocus = false): array
+    {
+        return [
+            ['handle' => 'from', 'type' => 'text', 'label' => __('From'), 'mono' => true, 'placeholder' => '/old-url', ...($autofocus ? ['required' => true, 'autofocus' => true] : [])],
+            ['handle' => 'to', 'type' => 'text', 'label' => __('To'), 'mono' => true, 'placeholder' => __('/new-url or https://…'), ...($autofocus ? ['required' => true] : [])],
+            ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('301 Permanent'), '302' => __('302 Temporary')]],
+        ];
     }
 
     public function boot(): void
@@ -356,6 +372,17 @@ final class SeoPlugin extends Plugin
             'permission' => 'seo.manage',
             'annotations' => ['readOnly' => true],
             'handler' => fn () => $this->app->make(Redirects::class)->all(),
+        ]);
+
+        $a->register('redirects/create', [
+            'label' => 'Create Redirect',
+            'description' => 'Add one redirect to the list: from a path on this site ("/old") to a path or an address ("/new", "https://…"). Refused when `from` already redirects: redirects/save replaces the list.',
+            'permission' => 'seo.manage',
+            'input' => ['type' => 'object', 'properties' => [
+                'from' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000], 'to' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000], 'status' => ['type' => 'integer', 'enum' => [301, 302, 307, 308], 'default' => 301],
+            ], 'required' => ['from', 'to']],
+            'output' => Shape::of(['from' => Shape::STRING, 'to' => Shape::STRING, 'publishedAt' => Shape::STRING_OR_NULL, 'updatedAt' => Shape::STRING_OR_NULL, 'status' => Shape::INTEGER]),
+            'handler' => fn (array $in) => $this->app->make(Redirects::class)->add($in['from'], $in['to'], $in['status']),
         ]);
 
         $a->register('redirects/save', [

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The Analytics screen leads to its settings one way, the **Settings** tab: the line and the button under the lists are gone.
+
 ## 0.7.0 (2026-11-11)
 
 ### Added

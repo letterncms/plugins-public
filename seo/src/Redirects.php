@@ -77,6 +77,20 @@ final class Redirects
         return $this->all();
     }
 
+    /** One more redirect. An address that already leads somewhere is refused: change it in the list. */
+    public function add(string $from, string $to, int $status = 301): array
+    {
+        $from = '/'.trim($from, '/');
+
+        if ($this->match($from) !== null) {
+            throw AbilityException::conflict(__(':from already redirects.', ['from' => $from]));
+        }
+
+        $this->save([...$this->all(), ['from' => $from, 'to' => $to, 'status' => $status]]);
+
+        return $this->match($from) ?? throw AbilityException::invalid(__('Invalid redirect :from → :to.', ['from' => $from, 'to' => trim($to)]));
+    }
+
     /** Called when a live entry moves: old URL → new URL; chains are collapsed. */
     public function moved(string $from, string $to): void
     {

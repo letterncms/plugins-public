@@ -238,6 +238,8 @@ final class CountsModeTest extends TestCase
         DB::table('analytics_pages')->insert(['day' => now()->toDateString(), 'path' => '/pricing', 'views' => 3]);
         $this->assertStringContainsString('analytics/overview', $view());
         $this->assertStringNotContainsString('"sources"', $view());
+        // Its settings are its Settings tab: the overview has no second door to them.
+        $this->assertStringNotContainsString('tab=settings', $view());
         $this->assertEquals(1, $this->cms()->abilities()->execute('analytics/breakdown', ['dimension' => 'pages'], AbilityContext::system())['items'][0]['share']);
     }
 }
