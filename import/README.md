@@ -10,6 +10,18 @@ From Plugins → Store in the admin, or:
 composer require letterncms/import
 ```
 
+### In the admin
+
+**Settings → Import** is the whole of it on one screen:
+
+1. **Upload File** takes a WordPress export (`.xml`, up to 20 MB), a CSV file (up to 50 MB) or a zip of Markdown files, which is unpacked into a folder. A file is checked by what it holds, gets a safe name of its own, and goes to `storage/app/import/`; files put there by hand are listed too.
+2. The file's page shows what importing it would do, before anything is written: how many entries would be created, updated or left unchanged, which would replace an entry that is already there with the same slug, the files it would fetch and the redirects it would add.
+3. **Options** says where the entries go and, for a CSV, what each column is: the title, the slug, the date, a field of the collection, or left out.
+4. **Start Import** runs it a few seconds at a time and shows how far it is. Reloading or closing the page loses nothing; on PHP-FPM and LiteSpeed it carries on with the page closed, elsewhere it carries on when the page is opened again. **Cancel Import** stops it, and what it made stays.
+5. **History** keeps the report of every import: what was created, updated, left unchanged or failed, with the way to each entry.
+
+### On the command line
+
 Put the file or folder in `storage/app/import/`, look at what it would do, then run it:
 
 ```bash
@@ -35,7 +47,19 @@ None.
 |---|---|---|
 | `import/sources` | Lists what is in `storage/app/import/`, with the type each looks like. | `import.run` |
 | `import/preview` | Says what an import would do, per record, file and redirect, without doing it. | `import.run` |
-| `import/run` | Runs the import and answers with the same report. With `dryRun: true` it writes nothing and lists the entries, files and redirects it would make. | `import.run` |
+| `import/run` | Runs the import in one go and answers with the same report. With `dryRun: true` it writes nothing and lists the entries, files and redirects it would make. | `import.run` |
+| `import-sources/get` | One source with what was chosen for it, and the columns of a CSV. | `import.run` |
+| `import-sources/update` | Chooses where a source's entries go and what each CSV column is. | `import.run` |
+| `import-sources/preview` | What importing a source would do with what was chosen for it, a page at a time: entries, files or redirects. | `import.run` |
+| `import-sources/delete` | Removes a file or folder from the import folder, not while it is being imported. A dry run says how many files go. | `import.run` |
+| `import-runs/start` | Starts importing a source a few seconds at a time. A dry run lists what it would make. | `import.run` |
+| `import-runs/step` | Imports for a few seconds more and says how the import stands. What failed in an earlier turn is not tried again; the Audit Log keeps only the turn that finishes the import. | `import.run` |
+| `import-runs/cancel` | Stops an import that is running. | `import.run` |
+| `import-runs/list` | The imports that were started, newest first, a page at a time. | `import.run` |
+| `import-runs/get` | One import: how far it is and a page of what it did. | `import.run` |
+| `import-runs/delete` | Forgets a finished import's report. | `import.run` |
+
+Files are uploaded with `POST /api/admin/import/upload` (multipart, field `file`), signed in to the admin.
 
 `import.run` (**Import Content**) is for admins until a site's roles give it to someone else.
 

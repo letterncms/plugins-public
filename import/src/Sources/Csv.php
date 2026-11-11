@@ -19,6 +19,37 @@ final class Csv
 
     private const array OWN = ['title', 'slug', 'status', 'date', 'body', 'redirect_from'];
 
+    /** What a column can be besides a field of the collection. */
+    public const array OWN_COLUMNS = self::OWN;
+
+    /** What a column is taken for when nothing maps it: its name, the way read() reads it. */
+    public static function guess(string $column): string
+    {
+        $t = strtolower(str_replace([' ', '-'], '_', $column));
+
+        return in_array($t, ['published_at', 'published', 'post_date'], true) ? 'date' : ($t === 'content' ? 'body' : $t);
+    }
+
+    /** @return list<string> The names in the header row, for mapping them before anything is read. */
+    public static function columns(string $file): array
+    {
+        $handle = fopen($file, 'rb');
+        $first = (string) fgets($handle);
+        rewind($handle);
+
+        if (str_starts_with($first, "\xEF\xBB\xBF")) {
+            fseek($handle, 3);
+            $first = substr($first, 3);
+        }
+
+        $counts = array_map(static fn (string $d) => substr_count($first, $d), ['comma' => ',', 'semicolon' => ';', 'tab' => "\t"]);
+        arsort($counts);
+        $header = array_map(static fn ($h) => trim((string) $h), fgetcsv($handle, null, ['comma' => ',', 'semicolon' => ';', 'tab' => "\t"][array_key_first($counts)], '"', '') ?: []);
+        fclose($handle);
+
+        return array_values(array_filter($header, static fn (string $h) => $h !== ''));
+    }
+
     /**
      * @param  array<string, string>  $map  column => field handle, or one of OWN; '' leaves a column out
      * @return array{records: list<Record>, media: array<string, array>, warnings: list<string>}
