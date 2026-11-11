@@ -458,4 +458,12 @@ final class ImportTest extends TestCase
         $this->assertSame(['Entries Imported' => 4, 'Files Imported' => 1, 'Sources Waiting' => count($this->ability('import/sources')['sources'])], array_column(array_column($widget()['children'], 'props'), 'value', 'label'));
         $this->assertSame([], $this->cms()->packages()->problems(), 'Every plugin registers a home-screen widget.');
     }
+
+    public function test_every_ability_says_what_it_answers_with(): void
+    {
+        // The test case checks each answer against its schema as the other tests run: a report that drifts from it fails there.
+        foreach (['import/sources', 'import/preview', 'import/run'] as $name) {
+            $this->assertNotNull($this->cms()->abilities()->get($name)->output(), $name);
+        }
+    }
 }
