@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The button of the **New Webhook** dialog says **Create Webhook**, as every dialog that makes something names what it makes.
+
 ## 0.2.0 (2026-11-11)
 
 ### Added
