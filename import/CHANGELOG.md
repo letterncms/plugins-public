@@ -5,6 +5,15 @@
 ### Added
 
 - The Audit Log names an import in the past tense: **Ran Import**.
+- **Import** has a screen of its own, under **Settings → Import**. Upload a WordPress export, a CSV file or a zip of Markdown files, and see what importing it would do before anything is written: what would be created, updated or left unchanged, which entries it would replace, the files it would fetch and the redirects it would add.
+- **Options** says where the entries go and, for a CSV, what each column is.
+- **Start Import** shows how far the import is and can be canceled. It runs a few seconds at a time, so reloading or closing the page loses nothing.
+- **History** keeps the report of every import, with the way to each entry it made.
+- Agents and the API do the same with `import-sources/get`, `update`, `preview` and `delete`, and `import-runs/start`, `step`, `cancel`, `list`, `get` and `delete`.
+
+### Changed
+
+- `import/sources` and an upload give each source an `id`, and a report says whether it is `complete`, how many `records` the source has, and which entries are a `collision` with one already there.
 
 ## 0.2.0 (2026-11-11)
 

@@ -49,7 +49,7 @@ final class Importer
         return storage_path('app/import');
     }
 
-    /** @return list<array{path: string, type: string, size: int|null}> What is in the folder, and what each looks like. */
+    /** @return list<array{id: string, path: string, type: string, size: int|null}> What is in the folder, and what each looks like. */
     public function sources(): array
     {
         $out = [];
@@ -59,11 +59,23 @@ final class Importer
             $type = is_dir($path) ? 'markdown' : (['xml' => 'wordpress', 'csv' => 'csv', 'tsv' => 'csv'][$extension] ?? null);
 
             if ($type !== null && ! is_link($path)) {
-                $out[] = ['path' => basename($path), 'type' => $type, 'size' => is_dir($path) ? null : (int) filesize($path)];
+                $out[] = ['id' => self::id(basename($path)), 'path' => basename($path), 'type' => $type, 'size' => is_dir($path) ? null : (int) filesize($path)];
             }
         }
 
         return $out;
+    }
+
+    /** A source's name as an address can carry it: a file's name has a dot and may have a space, an address segment should not. */
+    public static function id(string $path): string
+    {
+        return rtrim(strtr(base64_encode($path), '+/', '-_'), '=');
+    }
+
+    /** The name an id stands for, or '' when it is none. */
+    public static function path(string $id): string
+    {
+        return preg_match('/^[A-Za-z0-9_-]+$/', $id) ? (string) base64_decode(strtr($id, '-_', '+/'), true) : '';
     }
 
     /**
@@ -108,27 +120,43 @@ final class Importer
         return $this->process($in, null, $anywhere, dry: true);
     }
 
-    /** @param  callable(array): void|null  $progress  Called with each item as it is done. */
-    public function run(array $in, ?User $user = null, bool $anywhere = false, ?callable $progress = null): array
+    /**
+     * @param  callable(array): void|null  $progress  Called with each item as it is done.
+     * @param  float|null  $until  When to stop (microtime): the report then says `complete: false`, and running
+     *                             again carries on, because what was done is skipped as unchanged.
+     * @param  list<string>  $failed  Files (by address) and records (by key) an earlier turn of the same import could
+     *                              not bring in: not tried again, and so a turn always gets further.
+     */
+    public function run(array $in, ?User $user = null, bool $anywhere = false, ?callable $progress = null, ?float $until = null, array $failed = []): array
     {
         @set_time_limit(0);
 
         try {
-            return $this->process($in, $user, $anywhere, dry: false, progress: $progress);
+            return $this->process($in, $user, $anywhere, dry: false, progress: $progress, until: $until, failed: $failed);
         } finally {
             // Once per run, also when it stopped halfway: what was made is remembered.
             $this->ledger->flush();
         }
     }
 
-    private function process(array $in, ?User $user, bool $anywhere, bool $dry, ?callable $progress = null): array
+    private function process(array $in, ?User $user, bool $anywhere, bool $dry, ?callable $progress = null, ?float $until = null, array $failed = []): array
     {
+        $failed = array_fill_keys($failed, true);
+        // A turn always does something new before it looks at the clock, so every turn gets further:
+        // what an earlier turn did is passed over and does not count.
+        $worked = 0;
+        $late = static function () use ($dry, $until, &$worked): bool {
+            return ! $dry && $until !== null && $worked > 0 && microtime(true) >= $until;
+        };
+        $complete = true;
+        $total = 0;
         $type = (string) ($in['type'] ?? '');
         $in = self::names($in);
         $path = $this->resolve((string) ($in['path'] ?? ''), $anywhere);
         $source = $this->read($type, $path, $in, $anywhere);
         $locale = (string) ($in['locale'] ?? $this->cms->defaultLocale());
         $warnings = $source['warnings'];
+        $total = count($source['records']);
 
         // Files first: the text that shows them needs their new addresses.
         $wantMedia = (bool) ($in['media'] ?? true) && $source['media'] !== [];
@@ -144,7 +172,18 @@ final class Importer
         }
 
         foreach ($wantMedia && $library ? $source['media'] : [] as $file) {
-            $media[] = $done = $this->file($file, $user, $dry);
+            // Out of time among the files: the entries wait for the next turn, when these are in the library.
+            if ($late()) {
+                $complete = false;
+                $source['records'] = [];
+
+                break;
+            }
+
+            // A file this import could not fetch before is not asked for again, and a failure is no progress:
+            // a turn that only fails moves on to the entries rather than trying the same addresses forever.
+            $media[] = $done = isset($failed[$file['url']]) ? ['url' => $file['url'], 'action' => 'failed', 'error' => __('It could not be fetched earlier in this import.')] : $this->file($file, $user, $dry);
+            $worked += in_array($done['action'], ['skip', 'failed'], true) ? 0 : 1;
 
             if (isset($done['id'], $done['to'])) {
                 $urls[$file['url']] = $done['to'];
@@ -162,14 +201,26 @@ final class Importer
         $left = [];
 
         foreach ($source['records'] as $record) {
+            if ($late()) {
+                $complete = false;
+
+                break;
+            }
+
             $collection = $this->cms->collections()->find($record->collection);
             $missing = array_values(array_filter(self::shows($record, $files), static fn (string $url) => ! isset($urls[$url]) && ! isset($coming[$url])));
             $prepared = $this->prepare($record, $collection, $locale, $in, $urls, $ids, $left, $missing);
             $item = ['key' => $record->key, 'collection' => $record->collection, 'title' => $record->title, 'action' => $prepared['action'], 'status' => $prepared['status'], 'id' => $prepared['id'], 'uri' => $prepared['uri'], 'warnings' => $prepared['warnings'],
+                // An entry that was here before, with the same slug, and that this source never made: the import takes it over.
+                ...($prepared['collision'] ? ['collision' => true] : []),
                 // Files an earlier run could not fetch, put in now.
                 ...($prepared['repaired'] > 0 ? ['repaired' => $prepared['repaired']] : [])];
 
-            if (! $dry && $prepared['action'] !== 'skip') {
+            if (! $dry && $prepared['action'] !== 'skip' && isset($failed[$record->key])) {
+                // It failed earlier in this import: said again, not tried again.
+                $item['action'] = 'failed';
+                $item['error'] = __('It could not be imported earlier in this import.');
+            } elseif (! $dry && $prepared['action'] !== 'skip') {
                 try {
                     $entry = $this->apply($record, $collection, $prepared, $locale, $made, $user);
                     $item['id'] = $entry->id;
@@ -190,6 +241,7 @@ final class Importer
             }
 
             $items[] = $item;
+            $worked += in_array($item['action'], ['skip', 'failed'], true) ? 0 : 1;
             $progress !== null && $progress($item);
         }
 
@@ -202,6 +254,9 @@ final class Importer
 
         return [
             'dryRun' => $dry,
+            // False when a run stopped at its time limit: run it again and it carries on.
+            'complete' => $complete,
+            'records' => $total,
             'type' => $type,
             'summary' => [
                 'create' => $count($items, 'create'), 'update' => $count($items, 'update'), 'skip' => $count($items, 'skip'), 'failed' => $count($items, 'failed'),
@@ -338,7 +393,7 @@ final class Importer
             }
         }
 
-        return ['action' => $action, 'status' => $status, 'id' => $existing?->id, 'uri' => $existing?->uri, 'data' => $data, 'hash' => $hash, 'warnings' => $warnings, 'repaired' => $action === 'update' ? $repaired : 0];
+        return ['action' => $action, 'status' => $status, 'id' => $existing?->id, 'uri' => $existing?->uri, 'data' => $data, 'hash' => $hash, 'warnings' => $warnings, 'repaired' => $action === 'update' ? $repaired : 0, 'collision' => $known === null && $bySlug !== null];
     }
 
     /**
@@ -409,6 +464,14 @@ final class Importer
             ...($publish && $record->at !== null ? ['at' => $record->at] : []),
             ...($collection->isTree() && $parent !== null && $this->cms->entries()->find($parent)?->collection === $collection->handle ? ['parentId' => $parent] : []),
         ], $user);
+    }
+
+    /** The field of a collection a name from a source goes to when nothing maps it: its handle, or null when none takes it. */
+    public function fieldFor(string $collection, string $name): ?string
+    {
+        $found = $this->cms->collections()->find($collection);
+
+        return $found === null ? null : $this->field($found, $name, [])?->handle;
     }
 
     /** The field a name goes to: as mapped, by its own name, or by what the collection calls the same thing. */
