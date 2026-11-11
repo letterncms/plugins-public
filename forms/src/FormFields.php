@@ -14,7 +14,7 @@ final class FormFields
     {
         $common = [
             ['handle' => 'label', 'type' => 'text', 'label' => 'Label', 'required' => true],
-            ['handle' => 'name', 'type' => 'text', 'label' => 'Field Name', 'instructions' => 'Key in submissions and emails, like company_name.', 'pattern' => '^[a-z][a-z0-9_]{0,40}$'],
+            ['handle' => 'name', 'type' => 'text', 'label' => 'Field Name', 'placeholder' => 'company_name', 'mono' => true, 'pattern' => '^[a-z][a-z0-9_]{0,40}$'],
             ['handle' => 'required', 'type' => 'toggle', 'label' => 'Required'],
             ['handle' => 'help', 'type' => 'text', 'label' => 'Help Text'],
         ];

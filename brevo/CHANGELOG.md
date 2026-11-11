@@ -15,6 +15,7 @@
 ### Changed
 
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
+- **Confirm Addresses by Email** and the three fields that belong to it are one group, **Confirmation**, and the page to go to afterwards shows a path, `/thank-you`. The note under the Brevo key in Settings → Email is gone.
 
 ### Fixed
 

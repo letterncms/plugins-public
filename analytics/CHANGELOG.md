@@ -12,6 +12,12 @@
 - The README says what the plugin does, how to install it, and lists its settings, abilities and hooks.
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 - The Analytics screen leads to its settings one way, the **Settings** tab: the line and the button under the lists are gone, and an empty screen is a title with at most one action.
+- The Analytics settings say less: one note is left, that switching back to page views deletes visitor data. **Keep Visits For** left empty reads **Forever**.
+- The overview shows its numbers as plain figures, and with visitors a switch over the chart chooses which one it draws. With page views alone there is one figure and no tab bar, and the line saying what the change is compared with is a tooltip on the figure.
+
+### Fixed
+
+- The chart’s axis counts in whole numbers: one page view is no longer drawn against 0.5.
 
 ## 0.6.0 (2026-11-05)
 

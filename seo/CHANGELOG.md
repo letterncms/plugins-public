@@ -15,6 +15,7 @@
 - **Breaking.** Needs CMS 0.22: the plugin calls the core by its new names (`setting()`), which an older CMS does not have.
 - With no redirects yet, the Redirects tab says so and offers **New Redirect**; the table shows once there is one.
 - **Breaking.** `redirects/save` is `redirects/set`: it puts the whole list in place, as `set` does everywhere in the core. The old name is gone.
+- The SEO settings and the SEO panel say less: the notes under the fields are gone but one, that blocked search crawlers can’t cite you; placeholders show the shape instead. **Who You Are** is **Organization**.
 
 ## 0.7.0 (2026-11-05)
 

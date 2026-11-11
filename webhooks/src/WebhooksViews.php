@@ -29,7 +29,7 @@ final class WebhooksViews
         // The one way to make a webhook, in the header and in the list while it is empty. Its events are chosen on its own page, where there is room for them.
         $new = ['label' => __('New Webhook'), 'name' => 'new-webhook', 'icon' => 'plus', 'variant' => 'primary', 'ability' => 'webhooks/create',
             'input' => ['url' => '{values.url}', 'name' => '{values.name}'], 'then' => 'open', 'to' => '/webhooks/{result.id}?tab=settings',
-            'form' => ['title' => __('New Webhook'), 'confirm' => __('Create'), 'fields' => [
+            'form' => ['title' => __('New Webhook'), 'confirm' => __('Create Webhook'), 'fields' => [
                 ['handle' => 'url', 'type' => 'url', 'label' => __('Address'), 'placeholder' => 'https://example.com/hook', 'required' => true, 'autofocus' => true],
                 ['handle' => 'name', 'type' => 'text', 'label' => __('Name'), 'placeholder' => __('Optional')],
             ]]];

@@ -29,7 +29,7 @@ final class BrevoPlugin extends Plugin
 
         $this->cms()->whenAvailable(Transports::class, static function (Transports $transports): void {
             $transports->register('brevo', 'Brevo', [
-                ['handle' => 'brevo_api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true, 'instructions' => 'From Brevo → SMTP & API → API keys.'],
+                ['handle' => 'brevo_api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true],
             ], static fn (array $settings) => new BrevoTransport((string) ($settings['brevo_api_key'] ?? '')));
         });
     }
@@ -64,10 +64,10 @@ final class BrevoPlugin extends Plugin
         $this->cms()->settingsRegistry()->register('brevo', fields: [
             ['handle' => 'api_key', 'type' => 'text', 'label' => 'Brevo API Key', 'secret' => true],
             ['handle' => 'list', 'type' => 'select', 'label' => 'Default List', 'options' => [], 'dynamic' => 'brevo-lists'],
-            ['handle' => 'double_opt_in', 'type' => 'toggle', 'label' => 'Confirm Addresses by Email', 'default' => true],
-            ['handle' => 'confirmation_subject', 'type' => 'text', 'label' => 'Confirmation Subject', 'placeholder' => 'Confirm your subscription', 'if' => ['double_opt_in' => true]],
-            ['handle' => 'confirmation_message', 'type' => 'textarea', 'label' => 'Confirmation Message', 'rows' => 3, 'if' => ['double_opt_in' => true]],
-            ['handle' => 'confirmed_redirect', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'After Confirming, Go To', 'placeholder' => 'A Thank-You Page', 'if' => ['double_opt_in' => true]],
+            ['handle' => 'double_opt_in', 'section' => 'Confirmation', 'type' => 'toggle', 'label' => 'Confirm Addresses by Email', 'default' => true],
+            ['handle' => 'confirmation_subject', 'section' => 'Confirmation', 'type' => 'text', 'label' => 'Confirmation Subject', 'placeholder' => 'Confirm your subscription', 'if' => ['double_opt_in' => true]],
+            ['handle' => 'confirmation_message', 'section' => 'Confirmation', 'type' => 'textarea', 'label' => 'Confirmation Message', 'rows' => 3, 'if' => ['double_opt_in' => true]],
+            ['handle' => 'confirmed_redirect', 'section' => 'Confirmation', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'After Confirming, Go To', 'placeholder' => '/thank-you', 'if' => ['double_opt_in' => true]],
         ], icon: 'brevo', description: __('Newsletter lists and how people join them.'), order: 60);
 
         // One key is enough: with Brevo's key under Settings → Email, this page doesn't ask for another, and keeps none.

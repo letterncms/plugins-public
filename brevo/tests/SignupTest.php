@@ -235,6 +235,15 @@ final class SignupTest extends TestCase
         $this->assertStringNotContainsString('<form', $renderer->render([['id' => 'news03', 'type' => 'brevo/signup', 'props' => []]]));
     }
 
+    public function test_the_settings_have_no_notes_and_group_what_confirming_needs(): void
+    {
+        $fields = array_column($this->cms()->settingsRegistry()->schemas()['brevo']['fields'], null, 'handle');
+
+        $this->assertSame([], array_filter(array_column($fields, 'instructions')));
+        $this->assertSame(['double_opt_in', 'confirmation_subject', 'confirmation_message', 'confirmed_redirect'], array_keys(array_filter($fields, static fn (array $f) => ($f['section'] ?? null) === 'Confirmation')));
+        $this->assertSame('/thank-you', $fields['confirmed_redirect']['placeholder']);
+    }
+
     public function test_lists_come_from_brevo_and_are_cached(): void
     {
         Http::fake(['api.brevo.com/v3/contacts/lists*' => Http::response(['lists' => [['id' => 7, 'name' => 'Newsletter', 'uniqueSubscribers' => 42], ['id' => 12, 'name' => 'Customers', 'totalSubscribers' => 9]], 'count' => 2])]);

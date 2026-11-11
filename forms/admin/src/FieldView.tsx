@@ -40,13 +40,13 @@ function FieldView({ node, onSettings }: { node: BlockNode; onSettings: (id: str
         <div className="space-y-1">
           {options.map((o, i) => (
             <div key={i} className="flex items-center gap-2 text-sm text-muted">
-              <span className={cn('size-3.5 border border-border-strong', kind === 'radio' ? 'rounded-full' : 'rounded-[3px]')} /> {o}
+              <span className={cn('size-3.5 border border-border-strong', kind === 'radio' ? 'rounded-full' : 'rounded-xs')} /> {o}
             </div>
           ))}
         </div>
       ) : kind === 'checkbox' || kind === 'consent' ? (
         <div className="flex items-start gap-2 text-sm">
-          <span className="mt-0.5 size-3.5 shrink-0 rounded-[3px] border border-border-strong" />
+          <span className="mt-0.5 size-3.5 shrink-0 rounded-xs border border-border-strong" />
           {kind === 'consent' ? (
             <span className="text-muted" dangerouslySetInnerHTML={{ __html: String(p.text ?? '') }} />
           ) : (
