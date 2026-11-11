@@ -20,8 +20,8 @@ Under Settings → Consent (`config/consent.yaml`).
 | `analytics` | Ask about analytics. On by default. |
 | `marketing` | Ask about marketing. Off by default. |
 | `reopen` | Show the **Cookie Settings** button once a visitor has answered. On by default. |
-| `title_<language>`, `text_<language>` | The banner's title and text, once per language of the site (`title_en`, `title_pt_br`). Left empty, the banner says its own words in that language, fitted to what it asks about; the empty field shows them. |
-| `policy_<language>` | The privacy policy the banner links to: a page of the site or an address. |
+| `title`, `text` | The banner's title and text, a value per language of the site (`title: {en: …, pt_br: …}`). Left empty, the banner says its own words in that language, fitted to what it asks about; the empty field shows them. |
+| `policy` | The privacy policy the banner links to, per language: a page of the site or an address. |
 
 With neither analytics nor marketing asked about, pages carry no banner at all. Asking about another category asks every visitor again.
 

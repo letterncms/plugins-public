@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Cms\Consent;
 
 use Cms\Admin\Translations;
-use Cms\Modules\Languages\Languages;
 use Cms\Packages\Plugin;
+use Cms\Support\Yaml;
 
 /**
  * Asks visitors which cookies they accept, on the published site. The page is the same for
@@ -75,8 +75,7 @@ final class ConsentPlugin extends Plugin
     /** @return array{title: string, text: string, policy: string} What the banner says in a language: the settings' words, or the plugin's own. */
     private function copy(string $locale): array
     {
-        $key = self::key($locale);
-        $own = fn (string $field) => trim((string) $this->setting("{$field}_{$key}", ''));
+        $own = fn (string $field) => trim((string) $this->cms()->settingsRegistry()->localized(self::SETTINGS, $field, $locale, ''));
         $default = self::defaults($this->offered());
 
         return [
@@ -104,10 +103,27 @@ final class ConsentPlugin extends Plugin
         ];
     }
 
-    /** A language code as part of a setting's handle: pt-BR is pt_br. */
-    public static function key(string $locale): string
+    /**
+     * Before 0.10 the banner's words were a field per language (`title_de`, `text_pt_br`): they are one value per
+     * language now (`title: {de: …}`). The words saved before move there; nothing else in the file changes.
+     */
+    public function upgrade(string $fromVersion): void
     {
-        return strtolower((string) preg_replace('/[^A-Za-z0-9]+/', '_', $locale));
+        $file = site_path('config/'.self::SETTINGS.'.yaml');
+        $stored = Yaml::read($file);
+        $moved = $stored;
+
+        foreach ($stored as $handle => $value) {
+            if (is_string($handle) && preg_match('/^(title|text|policy)_([a-z0-9_]+)$/', $handle, $m) === 1) {
+                $moved[$m[1]] = [...(is_array($moved[$m[1]] ?? null) ? $moved[$m[1]] : []), $m[2] => $value];
+                unset($moved[$handle]);
+            }
+        }
+
+        if ($moved !== $stored) {
+            Yaml::write($file, $moved);
+            $this->cms()->settingsRegistry()->forget(self::SETTINGS);
+        }
     }
 
     private function settingsSchema(): void
@@ -119,14 +135,10 @@ final class ConsentPlugin extends Plugin
             ['handle' => 'reopen', 'type' => 'toggle', 'label' => 'Show Cookie Settings Button', 'default' => true, 'if' => ['enabled' => true]],
         ];
 
-        // The banner's words, once per language of the site. Left empty, it says the plugin's own.
-        foreach ($this->cms()->locales() as $locale) {
-            $key = self::key($locale);
-            $section = Languages::name($locale);
-            $fields[] = ['handle' => "title_{$key}", 'type' => 'text', 'label' => 'Title', 'max' => 80, 'section' => $section, 'if' => ['enabled' => true]];
-            $fields[] = ['handle' => "text_{$key}", 'type' => 'textarea', 'label' => 'Text', 'max' => 600, 'rows' => 3, 'section' => $section, 'if' => ['enabled' => true]];
-            $fields[] = ['handle' => "policy_{$key}", 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'Privacy Policy', 'section' => $section, 'if' => ['enabled' => true]];
-        }
+        // The banner's words, one value per language of the site (`localizable`). Left empty, it says the plugin's own.
+        $fields[] = ['handle' => 'title', 'type' => 'text', 'label' => 'Title', 'max' => 80, 'localizable' => true, 'if' => ['enabled' => true]];
+        $fields[] = ['handle' => 'text', 'type' => 'textarea', 'label' => 'Text', 'max' => 600, 'rows' => 3, 'localizable' => true, 'if' => ['enabled' => true]];
+        $fields[] = ['handle' => 'policy', 'type' => 'url', 'component' => 'link', 'files' => false, 'label' => 'Privacy Policy', 'localizable' => true, 'if' => ['enabled' => true]];
 
         // What the banner says while a field is empty is what the field shows, in the banner's language. Added when the
         // fields are read, not here: translating into another language before every plugin has booted would leave theirs out.
@@ -143,7 +155,7 @@ final class ConsentPlugin extends Plugin
             foreach ($this->cms()->locales() as $locale) {
                 foreach (self::defaults($this->offered(), $locale) as $field => $text) {
                     // The admin would put a placeholder into its own language; a zero-width space keeps these in the banner's.
-                    $words[$field.'_'.self::key($locale)] = $text."\u{200B}";
+                    $words[$field][$locale] = $text."\u{200B}";
                 }
             }
 

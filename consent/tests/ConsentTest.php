@@ -110,7 +110,7 @@ final class ConsentTest extends TestCase
         $this->assertStringContainsString('<span>Alle akzeptieren</span>', $german);
         $this->assertStringContainsString('Nur notwendige', $german);
 
-        $this->save(['title_de' => 'Kekse & Co.', 'text_de' => "Wir fragen,\nbevor wir zählen.", 'policy_de' => '/de/datenschutz', 'title_en' => 'Biscuits']);
+        $this->save(['title' => ['de' => 'Kekse & Co.', 'en' => 'Biscuits'], 'text' => ['de' => "Wir fragen,\nbevor wir zählen."], 'policy' => ['de' => '/de/datenschutz']]);
 
         $german = $this->foot('de');
         $this->assertStringContainsString('>Kekse &amp; Co.</h2>', $german);
@@ -126,7 +126,7 @@ final class ConsentTest extends TestCase
     {
         // The link picker's field refuses it; a config file edited by hand still makes no link.
         try {
-            $this->save(['policy_en' => 'javascript:alert(1)']);
+            $this->save(['policy' => ['en' => 'javascript:alert(1)']]);
             $this->fail('Saved a script as the privacy policy.');
         } catch (\Cms\Abilities\AbilityException) {
             $this->addToAssertionCount(1);
@@ -175,20 +175,36 @@ final class ConsentTest extends TestCase
     {
         $fields = array_column($this->cms()->settingsRegistry()->schemas()['consent']['fields'], null, 'handle');
 
-        foreach (['enabled', 'analytics', 'marketing', 'reopen', 'title_en', 'text_en', 'policy_en', 'title_de', 'text_de', 'policy_de'] as $handle) {
-            $this->assertArrayHasKey($handle, $fields);
+        $this->assertSame(['enabled', 'analytics', 'marketing', 'reopen', 'title', 'text', 'policy'], array_keys($fields));
+
+        foreach (['title', 'text', 'policy'] as $handle) {
+            $this->assertSame(['en', 'de'], array_column($fields[$handle]['fields'], 'handle'));
+            $this->assertSame(['English', 'Deutsch'], array_column($fields[$handle]['fields'], 'label'));
         }
 
-        $this->assertSame('English', $fields['title_en']['section']);
-        $this->assertSame('Deutsch', $fields['title_de']['section']);
+        $title = array_column($fields['title']['fields'], null, 'handle');
+        $text = array_column($fields['text']['fields'], null, 'handle');
+        $policy = array_column($fields['policy']['fields'], null, 'handle');
 
         // An empty field shows what the banner says without it, in the banner's language, whatever the admin's.
-        $this->assertSame("Cookies\u{200B}", $fields['title_en']['placeholder']);
-        $this->assertSame("We’d like to use cookies to see how this site is used. You decide.\u{200B}", $fields['text_en']['placeholder']);
-        $this->assertStringStartsWith('Wir möchten Cookies verwenden', $fields['text_de']['placeholder']);
-        $this->assertSame(['url', 'link'], [$fields['policy_de']['type'], $fields['policy_de']['component']]);
+        $this->assertSame("Cookies\u{200B}", $title['en']['placeholder']);
+        $this->assertSame("We’d like to use cookies to see how this site is used. You decide.\u{200B}", $text['en']['placeholder']);
+        $this->assertStringStartsWith('Wir möchten Cookies verwenden', $text['de']['placeholder']);
+        $this->assertSame(['url', 'link'], [$policy['de']['type'], $policy['de']['component']]);
         $this->assertSame('Show Cookie Settings Button', $fields['reopen']['label']);
         $this->assertSame([], array_filter(array_column($fields, 'instructions')), 'No helper sentences.');
+    }
+
+    public function test_words_saved_as_a_field_per_language_move_into_one_value_per_language(): void
+    {
+        \Cms\Support\Yaml::write(site_path('config/consent.yaml'), ['enabled' => true, 'title_de' => 'Kekse', 'text_de' => 'Wir fragen.', 'title_en' => 'Biscuits', 'policy_pt_br' => '/privacidade']);
+        $this->cms()->settingsRegistry()->forget('consent');
+
+        (new \Cms\Consent\ConsentPlugin($this->app))->upgrade('0.9.0');
+
+        $this->assertSame(['enabled' => true, 'title' => ['de' => 'Kekse', 'en' => 'Biscuits'], 'text' => ['de' => 'Wir fragen.'], 'policy' => ['pt_br' => '/privacidade']], \Cms\Support\Yaml::read(site_path('config/consent.yaml')));
+        $this->assertStringContainsString('>Kekse</h2>', $this->foot('de'));
+        $this->assertStringContainsString('>Biscuits</h2>', $this->foot('en'));
     }
 
     public function test_it_stays_off_the_builder_previews_and_a_site_that_turned_it_off(): void
@@ -208,7 +224,7 @@ final class ConsentTest extends TestCase
         $signature = fn () => $this->cms()->hooks()->filter('site.build.signature', [])['consent'];
         $before = $signature();
 
-        $this->save(['title_en' => 'Biscuits']);
+        $this->save(['title' => ['en' => 'Biscuits']]);
 
         $this->assertNotSame($before, $signature());
     }
