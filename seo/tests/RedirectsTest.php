@@ -33,16 +33,17 @@ final class RedirectsTest extends TestCase
         return array_values(array_filter($tabs, static fn (array $tab) => $tab['props']['id'] === 'redirects'))[0];
     }
 
-    public function test_new_redirect_is_in_the_bar_once_and_the_tab_is_empty_and_then_the_table(): void
+    public function test_new_redirect_is_in_the_bar_and_the_tab_is_empty_and_then_the_table(): void
     {
         // The one way to make a redirect is the tab's action in the bar, with or without redirects.
         $action = $this->redirects()['props']['actions'][0];
         $this->assertSame(['New Redirect', 'redirects/create', 'Create Redirect'], [$action['label'], $action['ability'], $action['form']['confirm']]);
 
-        // With none yet: a title, and no second button.
+        // With none yet: a title and that one action, in the table's place.
         $empty = $this->tab();
         $this->assertSame(['ui/empty', 'No redirects yet'], [$empty['type'], $empty['props']['title']]);
-        $this->assertArrayNotHasKey('action', $empty['props']);
+        $this->assertSame(['New Redirect', 'redirects/create'], [$empty['props']['action']['label'], $empty['props']['action']['ability']]);
+        $this->assertArrayNotHasKey('variant', $empty['props']['action']);
 
         $made = $this->run_('redirects/create', ['from' => 'old-page/', 'to' => '/new-page']);
         $this->assertSame(['/old-page', '/new-page', 301], [$made['from'], $made['to'], $made['status']]);

@@ -1,5 +1,5 @@
 import { t, useAbility, useManifest, type Entry, type FieldDef } from '@letterncms/sdk'
-import { Button, Dialog, Fields, Icon, QueryError, Spinner, cn, fieldControlId } from '@letterncms/ui'
+import { Button, Dialog, Fields, Icon, QueryError, Select, Spinner, cn, fieldControlId } from '@letterncms/ui'
 import { useEffect, useState, type ReactNode } from 'react'
 
 interface Analysis {
@@ -37,6 +37,14 @@ export function SeoPanel({ entry, collection, values, title, setValue, editable,
   const checks = analysis.data?.checks ?? []
   const open = checks.filter((c) => c.status !== 'pass')
   const fields = ((field?.fields as FieldDef[]) ?? [])
+  const scoreRow = (
+    <>
+      <span className="min-w-0 flex-1 truncate">{t('Score')}</span>
+      {analysis.data && <span className="shrink-0 font-normal text-muted">{open.length ? t('{count} to improve', { count: open.length }) : t('All checks pass')}</span>}
+      {analysis.isLoading && <Spinner size={14} />}
+      {analysis.data && <Score value={analysis.data.score} />}
+    </>
+  )
 
   return (
     <div>
@@ -45,16 +53,32 @@ export function SeoPanel({ entry, collection, values, title, setValue, editable,
         <section className="border-b border-border px-4 py-3">
           {fields.map((f) => (
             <Row key={f.handle} field={f} error={errors[`seo.${f.handle}`]}>
-              <Fields
-                bare
-                context={{ path: [field.handle], entry: entry ?? undefined, collection: entry?.collection }}
-                disabled={!editable}
-                errors={errors}
-                // What a field falls back to shows as its placeholder, so it needs no explaining.
-                fields={[{ ...f, instructions: undefined, width: 'full', size: 'sm', rows: f.type === 'textarea' ? 3 : f.rows, placeholder: (f.handle === 'title' ? title || analysis.data?.meta.title : f.handle === 'description' ? analysis.data?.meta.description : undefined) || f.placeholder }]}
-                values={seo}
-                onChange={(h, v) => setValue('seo', { ...seo, [h]: v })}
-              />
+              {f.type === 'select' && typeof f.placeholder === 'string' ? (
+                // What applies while nothing is chosen ("Web Page") reads as the value it is, not as a field left empty.
+                <Select
+                  id={fieldControlId(f, ['seo'])}
+                  aria-label={f.label}
+                  size="sm"
+                  value={typeof seo[f.handle] === 'string' && seo[f.handle] !== '' ? seo[f.handle] : null}
+                  onChange={(v) => setValue('seo', { ...seo, [f.handle]: v })}
+                  options={Object.entries((f.options ?? {}) as Record<string, string>).map(([value, label]) => ({ value, label: String(label) }))}
+                  defaultLabel={f.placeholder}
+                  invalid={!!errors[`seo.${f.handle}`]}
+                  disabled={!editable}
+                  clearable
+                />
+              ) : (
+                <Fields
+                  bare
+                  context={{ path: [field.handle], entry: entry ?? undefined, collection: entry?.collection }}
+                  disabled={!editable}
+                  errors={errors}
+                  // What a field falls back to shows as its placeholder, so it needs no explaining.
+                  fields={[{ ...f, instructions: undefined, width: 'full', size: 'sm', rows: f.type === 'textarea' ? 3 : f.rows, placeholder: (f.handle === 'title' ? title || analysis.data?.meta.title : f.handle === 'description' ? clip(analysis.data?.meta.description) : undefined) || f.placeholder }]}
+                  values={seo}
+                  onChange={(h, v) => setValue('seo', { ...seo, [h]: v })}
+                />
+              )}
             </Row>
           ))}
         </section>
@@ -64,30 +88,22 @@ export function SeoPanel({ entry, collection, values, title, setValue, editable,
         <h3 className="m-0 flex h-10 items-center text-xs font-semibold text-ink">{t('Search Preview')}</h3>
         <div className="rounded-md bg-bg px-3 py-2.5 ring-1 ring-border">
           <div className="truncate text-xs text-muted">{host}{entry?.uri && entry.uri !== '/' ? entry.uri.replace(/\//g, ' › ').replace(/^ › /, ' › ') : ''}</div>
-          <div className="mt-0.5 line-clamp-2 text-[15px] leading-5 text-[#1a0dab] dark:text-[#8ab4f8]">{shownTitle}</div>
-          <div className="mt-1 line-clamp-2 text-xs leading-[18px] text-muted">{description || <span className="text-faint">{t('No description: the first paragraph is used.')}</span>}</div>
+          {/* A result's title is a blue link in every search engine: the kit's blue for words, in both themes. */}
+          <div className="mt-0.5 line-clamp-2 text-base leading-5 text-info">{shownTitle}</div>
+          <div className="mt-1 line-clamp-2 text-xs text-muted">{description || <span className="text-faint">{t('No description: the first paragraph is used.')}</span>}</div>
         </div>
       </section>
 
       <section className="border-b border-border px-4 pb-3 last:border-b-0">
-        {/* A score in one row; open it for what to improve. Passing checks need no reading. */}
-        <button
-          type="button"
-          disabled={!analysis.data || open.length === 0}
-          onClick={() => setExpanded(!expanded)}
-          aria-expanded={open.length > 0 ? expanded : undefined}
-          className="group/score -mx-2 flex h-10 w-[calc(100%+16px)] items-center gap-2 rounded-md px-2 text-left enabled:hover:bg-hover"
-        >
-          <span className="min-w-0 flex-1 truncate text-xs font-semibold text-ink">{t('Score')}</span>
-          {analysis.data && (
-            <span className="shrink-0 text-xs text-muted">
-              {open.length ? t('{count} to improve', { count: open.length }) : t('All checks pass')}
-            </span>
-          )}
-          {analysis.isLoading && <Spinner size={14} />}
-          {analysis.data && <Score value={analysis.data.score} />}
-          {open.length > 0 && <Icon name="chevron-down" size={14} className={cn('shrink-0 text-faint transition-transform duration-base', !expanded && '-rotate-90')} />}
-        </button>
+        {/* A score in one row; open it for what to improve. Passing checks need no reading, so then the row is no button. */}
+        {open.length > 0 ? (
+          <Button variant="ghost" onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className={rowClass}>
+            {scoreRow}
+            <Icon name="chevron-down" size={14} className={cn('shrink-0 text-faint transition-transform duration-base', !expanded && '-rotate-90')} />
+          </Button>
+        ) : (
+          <div className={cn(rowClass, 'flex')}>{scoreRow}</div>
+        )}
         {!entry && <p className="m-0 text-xs text-muted">{t('Checks are available after the first save.')}</p>}
         {analysis.isError && <QueryError compact message={t('Couldn’t load SEO checks.')} onRetry={() => void analysis.refetch()} />}
         {expanded && open.length > 0 && (
@@ -104,13 +120,30 @@ export function SeoPanel({ entry, collection, values, title, setValue, editable,
             <li className="pl-4 text-xs text-faint">{t('Based on the last save.')}</li>
           </ul>
         )}
+        {/* The same row as the score: its name, and a chevron for what it opens. */}
         {entry && (
-          <Button size="sm" variant="ghost" icon="markdown" className="-ml-2 mt-1" onClick={() => setMd(true)}>{t('What AI Crawlers Read')}</Button>
+          <Button variant="ghost" onClick={() => setMd(true)} className={rowClass}>
+            <span className="min-w-0 flex-1 truncate">{t('What AI Crawlers Read')}</span>
+            <Icon name="chevron-right" size={14} className="shrink-0 text-faint" />
+          </Button>
         )}
       </section>
       {md && entry && <MarkdownDialog id={entry.id} onClose={() => setMd(false)} />}
     </div>
   )
+}
+
+/** A row of the panel's last section, 40px high and reaching the panel's padding: a name on the left, what it says or opens on the right. */
+const rowClass = '-mx-2 h-10! w-[calc(100%+16px)] items-center justify-start! gap-2! rounded-md! px-2! text-left text-xs! font-semibold! text-ink'
+
+/**
+ * A fallback shown as a placeholder, kept to what the field's three rows hold at the panel's narrowest:
+ * a browser cuts a longer placeholder off mid-line, and the search preview below shows it whole.
+ */
+function clip(text: string | undefined, max = 90): string | undefined {
+  if (!text || text.length <= max) return text
+  const cut = text.slice(0, max)
+  return `${cut.slice(0, cut.lastIndexOf(' ') > 40 ? cut.lastIndexOf(' ') : max).replace(/[\s.,;:!?–-]+$/, '')}…`
 }
 
 /** One field: its label above it, the control the panel's width; a switch is its own row, as in every inspector. */
