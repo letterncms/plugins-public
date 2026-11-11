@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- The Audit Log names what Forms changed in the past tense, such as **Created Form** and **Deleted Form Submissions**.
+
 ## 0.13.0 (2026-11-11)
 
 ### Added
@@ -114,7 +118,6 @@
 - On a phone, the search box above submissions takes the full width.
 - Field blocks are in title case (**Short Text**, **Long Text**, **File Upload**, **Hidden Value**) with a few plain words each, and the Form block asks you to choose a form to show. Permissions are **View Form Submissions** and **Manage Forms**; the settings say less.
 - The Form block asks to **Choose a Form**; with no forms yet its list says so and offers **New Form**, which opens the new-form dialog. A form’s On or Off in the list is a dot, like every table’s status.
-
 
 ## 0.2.0 (2026-11-02)
 

@@ -358,4 +358,16 @@ final class FormsTest extends TestCase
         $this->assertSame('Created Bookings', $view['children'][0]['props']['title']);
         $this->assertSame([['Open', '/forms/'.$form['handle']], ['Delete', null]], array_map(static fn ($a) => [$a['label'], $a['to'] ?? null], $view['children'][1]['props']['items']));
     }
+
+    public function test_every_change_has_a_past_tense_label_for_the_audit_log(): void
+    {
+        $past = $this->cms()->hooks()->filter('audit.past', []);
+        $changes = array_filter($this->cms()->abilities()->all(), static fn ($ability) => $ability->package === 'letterncms/forms' && ! $ability->isReadOnly());
+
+        $this->assertNotSame([], $changes);
+
+        foreach ($changes as $name => $ability) {
+            $this->assertIsString($past[$name] ?? null, "{$name} has no past-tense label: add it to the audit.past filter.");
+        }
+    }
 }

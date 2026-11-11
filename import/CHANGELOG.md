@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- The Audit Log names an import in the past tense: **Ran Import**.
+
 ## 0.2.0 (2026-11-11)
 
 ### Added

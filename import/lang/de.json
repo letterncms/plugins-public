@@ -20,6 +20,7 @@
   "Name the file or folder to import.": "Gib die Datei oder den Ordner an, der importiert wird.",
   "No column holds the title. Name one “title”, or map one to it.": "Keine Spalte enthält den Titel. Nenne eine „title“ oder ordne ihm eine zu.",
   "Preview Import": "Importvorschau",
+  "Ran Import": "Import ausgeführt",
   "Row :line has no title and was left out.": "Zeile :line hat keinen Titel und wurde ausgelassen.",
   "Row :line repeats “:key” from row :first and was left out.": "Zeile :line wiederholt „:key“ aus Zeile :first und wurde ausgelassen.",
   "Run Import": "Import ausführen",

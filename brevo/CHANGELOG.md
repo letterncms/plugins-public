@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- The Audit Log names a signup an agent made in the past tense: **Subscribed to Brevo List**.
+
 ## 0.6.0 (2026-11-11)
 
 ### Added

@@ -76,6 +76,12 @@ final class SeoPlugin extends Plugin
         $this->abilities();
         $this->redirectsTab();
 
+        // What the Audit Log calls each change, once it has happened.
+        $this->cms()->hooks()->addFilter('audit.past', static fn (array $past): array => $past + [
+            'redirects/create' => __('Created Redirect'),
+            'redirects/set' => __('Saved Redirects'),
+        ]);
+
         $this->cms()->admin()->widget('seo-health', ['label' => 'SEO Health', 'description' => __('How published pages score for search and AI answers, and what to fix first.'), 'icon' => 'seo', 'column' => 'main', 'order' => 45]);
         $this->adminModule();
     }

@@ -5,6 +5,7 @@
 ### Added
 
 - A term's archive in a collection (`/blog/topics/tides`, with the core that has them) is in the sitemap of its language, with links to the same term's archives in the other languages, and has a Markdown version, `/blog/topics/tides.md`, that lists the entries filed under the term. A term kept out of search keeps its archives out too.
+- The Audit Log names what SEO changed in the past tense: **Created Redirect**, **Saved Redirects**.
 
 ### Changed
 

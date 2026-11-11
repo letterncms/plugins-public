@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- The Audit Log names what Webhooks changed in the past tense, such as **Created Webhook** and **Redelivered Webhook**.
+
 ### Changed
 
 - The button of the **New Webhook** dialog says **Create Webhook**, as every dialog that makes something names what it makes.
