@@ -221,6 +221,9 @@ final class SeoPlugin extends Plugin
         $hooks = $this->cms()->hooks();
         $files = fn () => $this->app->make(SiteFiles::class);
 
+        // llms.txt is the site's own file: SEO says what it knows about the pages, it does not write a second one.
+        $hooks->addFilter('site.llms', fn (array $document) => $files()->llms($document));
+
         $hooks->addFilter('site.build.extras', fn (array $extras) => [
             ...$extras,
             'sitemap' => ['path' => 'sitemap.xml', 'render' => fn () => $files()->sitemap()],
@@ -229,7 +232,6 @@ final class SeoPlugin extends Plugin
                 array_map(fn (string $locale) => ['path' => $files()->languageSitemaps()[$locale], 'render' => fn () => $files()->sitemap($locale)], $languages),
             ),
             'robots' => ['path' => 'robots.txt', 'render' => fn () => $files()->robots()],
-            'llms' => ['path' => 'llms.txt', 'render' => fn () => $files()->llms()],
             ...($files()->securityTxt() === null ? [] : ['security' => ['path' => '.well-known/security.txt', 'render' => fn () => $files()->securityTxt()]]),
             ...array_combine(
                 array_map(static fn (string $path) => 'feed:'.$path, array_keys($feeds = $this->app->make(Feeds::class)->all())),
@@ -316,7 +318,6 @@ final class SeoPlugin extends Plugin
                 return response($this->app->make(Feeds::class)->render($found['collection'], $found['locale']), 200, ['Content-Type' => 'application/rss+xml; charset=utf-8']);
             })->where('feed', '.*feed\.xml');
             Route::get('/robots.txt', fn () => response($this->app->make(SiteFiles::class)->robots(), 200, ['Content-Type' => 'text/plain; charset=utf-8']));
-            Route::get('/llms.txt', fn () => response($this->app->make(SiteFiles::class)->llms(), 200, ['Content-Type' => 'text/plain; charset=utf-8']));
             Route::get('/.well-known/security.txt', fn () => response($this->app->make(SiteFiles::class)->securityTxt() ?? abort(404), 200, ['Content-Type' => 'text/plain; charset=utf-8']));
             Route::get('/{path}.md', function (string $path) {
                 abort_unless($this->cms()->setting('seo', 'markdown_twins', true), 404);

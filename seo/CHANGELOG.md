@@ -12,6 +12,7 @@
 - `seo.sitemap` is told which language's sitemap is being written (`$locale`, `null` on a site with one), and an address that names its `locale` goes in that language's sitemap. One that names none stays in the default language's, as before. One that names an `entry` is left out when that entry is marked noindex, and gets the entry's other languages as alternates.
 - In the SEO panel, **Page Type** shows what applies while nothing is chosen (**Web Page**, or **Article** for a post) as its value, not as a faint hint. **Score** and **What AI Crawlers Read** are two rows of one shape.
 - With no redirects yet, **New Redirect** is offered where the table would be; otherwise it is in the bar, the one place a redirect is made: the table has no add button of its own. On a phone each redirect is a card of its fields.
+- **Breaking.** Needs the core 0.24 or newer, which writes `llms.txt` for every site. SEO no longer writes its own: it makes the site's richer through the `site.llms` filter, with the **Summary for AI**, each page's description, a link to its Markdown twin, and only the pages search engines may list.
 
 ### Fixed
 
