@@ -5,6 +5,7 @@
 ### Added
 
 - The Audit Log names what Forms changed in the past tense, such as **Created Form** and **Deleted Form Submissions**.
+- With the site's content security policy on, a form's CAPTCHA (Turnstile or hCaptcha) loads and runs, and a form whose **Redirect To** is another site can lead there after it is sent without JavaScript: Forms names those hosts in the policy (`site.policy`).
 
 ### Changed
 

@@ -61,6 +61,22 @@ final class FormsPlugin extends Plugin
         // The widget and its site key are in the built pages: another provider or key builds them again.
         $this->cms()->hooks()->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'forms-captcha' => $this->app->make(Captcha\Captchas::class)->signature()]);
 
+        // The site's content security policy (core `site.policy`): the CAPTCHA's own hosts, and where a form sends a
+        // visitor without JavaScript after it is sent (its Redirect To, when that is another site).
+        $this->cms()->hooks()->addFilter('site.policy', function (array $policy) {
+            foreach ($this->app->make(Captcha\Captchas::class)->current()?->sources() ?? [] as $directive => $sources) {
+                $policy[$directive] = [...($policy[$directive] ?? ["'self'"]), ...$sources];
+            }
+
+            foreach ($this->app->make(FormRepository::class)->all() as $form) {
+                if (is_string($form['settings']['redirect'] ?? null) && preg_match('~^https://[^/"\'\s?#]+~i', $form['settings']['redirect'], $m)) {
+                    $policy['form-action'] = [...($policy['form-action'] ?? ["'self'"]), strtolower($m[0])];
+                }
+            }
+
+            return $policy;
+        });
+
         $this->cms()->admin()->nav('forms', ['path' => '/forms', 'icon' => 'form', 'section' => 'content', 'order' => 75, 'pinned' => true, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
         $this->cms()->admin()->widget('forms-submissions', ['label' => 'Form Submissions', 'description' => __('New submissions over the last two weeks and the latest ones.'), 'icon' => 'form', 'column' => 'side', 'order' => 40, 'permission' => 'forms.view']);
         $this->app->make(FormsViews::class)->register();

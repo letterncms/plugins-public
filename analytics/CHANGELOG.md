@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- With the site's content security policy on, a **Reporting Address** on another host still receives the views: Analytics names it in the policy (`site.policy`).
+
 ### Changed
 
 - A number has one name everywhere: the lists' column is **Page Views**, like the number above the chart and on the home screen. On a phone a row says what it counts: “4,048 Page Views”.

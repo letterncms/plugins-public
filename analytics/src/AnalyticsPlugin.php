@@ -100,6 +100,18 @@ final class AnalyticsPlugin extends Plugin
         });
 
         // Changing what is counted, or where, rebuilds the static pages.
+        // A reporting address on another host is one the pages call and load a pixel from: the site's content security
+        // policy (core `site.policy`) names it.
+        $hooks->addFilter('site.policy', static function (array $policy) use ($collector, $base) {
+            if ($collector()->enabled() && preg_match('~^https://[^/"\'\s?#]+~i', $base(), $m)) {
+                foreach (['connect-src', 'img-src'] as $directive) {
+                    $policy[$directive] = [...($policy[$directive] ?? ["'self'"]), strtolower($m[0])];
+                }
+            }
+
+            return $policy;
+        });
+
         $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'analytics:'.(int) $collector()->enabled().':'.$collector()->mode().':'.(int) $this->setting('consent_required', true).':'.$base()]);
 
         $hooks->on('settings.saved', function (string $namespace) use ($collector) {
