@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-11)
+
 ### Added
 
 - **Import** brings a site over from a WordPress export (posts, pages, the media they use, and redirects from their old addresses when SEO is on), a CSV file, or a folder of Markdown with front matter. Put the file in `storage/app/import/`, look at what it would do with `php cms import wordpress export.xml --dry-run` or the `import/preview` ability, then run it. Running it again updates what changed and never makes a second copy.
