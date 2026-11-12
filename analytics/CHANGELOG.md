@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Needs CMS 0.26: going back to page views asks first through the core's `confirmChange`, which an older CMS does not have.
 - Going back to counting page views only asks first, as it is saved, and says it deletes the visitor data: the sentence under the choice is gone.
 - A number has one name everywhere: the lists' column is **Page Views**, like the number above the chart and on the home screen. On a phone a row says what it counts: “4,048 Page Views”.
 - **What to Count** says what switching back costs: visitor data is deleted.
