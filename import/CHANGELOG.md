@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 (2026-11-12)
+
 ### Changed
 
 - Text goes into the field marked as the collection's body (**Use as Body**). Needs the CMS 0.28.
