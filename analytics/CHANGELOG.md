@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.0 (2026-11-12)
+
 ### Added
 
 - With the site's content security policy on, a **Reporting Address** on another host still receives the views: Analytics names it in the policy (`site.policy`).
