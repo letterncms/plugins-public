@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.15.0 (2026-11-12)
+
 ### Changed
 
 - **Forms travel with a site kit.** Exporting a site, switching to a kit and applying one carry the forms (their fields and settings), so a page that shows a form still has it after a switch. Submissions stay on the site.
