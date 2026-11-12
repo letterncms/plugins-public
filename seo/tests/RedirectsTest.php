@@ -33,6 +33,11 @@ final class RedirectsTest extends TestCase
         return array_values(array_filter($tabs, static fn (array $tab) => $tab['props']['id'] === 'redirects'))[0];
     }
 
+    public function test_redirects_travel_with_a_site_kit(): void
+    {
+        $this->assertContains('redirects', $this->cms()->hooks()->filter('kits.content', []));
+    }
+
     public function test_new_redirect_is_in_the_bar_and_the_tab_is_empty_and_then_the_table(): void
     {
         // The one way to make a redirect is the tab's action in the bar, with or without redirects.
