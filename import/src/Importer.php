@@ -498,7 +498,7 @@ final class Importer
             return $blueprint->field($handle) ?? throw AbilityException::invalid(__('The collection “:collection” has no field “:field”.', ['collection' => $collection->handle, 'field' => $handle]));
         }
 
-        if ($collection->body !== null && ($field = $blueprint->field($collection->body)) !== null) {
+        if (($field = $blueprint->body()) !== null) {
             return $field;
         }
 

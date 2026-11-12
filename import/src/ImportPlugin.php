@@ -112,7 +112,7 @@ final class ImportPlugin extends Plugin
             'fields' => ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'maxLength' => 200], 'description' => 'Where a source’s value goes when it is not the field of the same name, as {name: field handle}; "" leaves it out. wordpress has excerpt, tags, categories and image.'],
             'map' => ['type' => 'object', 'additionalProperties' => ['type' => 'string', 'maxLength' => 200], 'description' => 'csv: {column: field handle}, or title, slug, status, date, body, redirect_from; "" leaves a column out.'],
             'key' => ['type' => 'string', 'description' => 'csv: the column that tells rows apart (default: id, else the slug, else the title).'],
-            'body' => ['type' => 'string', 'description' => 'The field that takes the main text (default: the collection’s body, or its first blocks, Markdown or rich text field).'],
+            'body' => ['type' => 'string', 'description' => 'The field that takes the main text (default: the collection’s body field, or its first blocks, Markdown or rich text field).'],
             'locale' => ['type' => 'string', 'description' => 'The language entries are made in (default: the site’s).'],
             'media' => ['type' => 'boolean', 'default' => true, 'description' => 'wordpress: fetch the files entries show into the media library.'],
             'redirects' => ['type' => 'boolean', 'default' => true, 'description' => 'Add redirects from old addresses to SEO’s list.'],
