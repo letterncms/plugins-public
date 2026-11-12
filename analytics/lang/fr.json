@@ -16,9 +16,11 @@
   "Bounce Rate": "Taux de rebond",
   "Browser": "Navigateur",
   "Compared with the {period} before": "Par rapport aux {period} précédents",
+  "Count page views only?": "Ne compter que les pages vues ?",
   "Count Visits": "Compter les visites",
   "Counting visits is paused.": "Le comptage des visites est en pause.",
   "days": "jours",
+  "Delete Visitor Data": "Supprimer les données des visiteurs",
   "Desktop": "Ordinateur",
   "Device": "Appareil",
   "Devices": "Appareils",
@@ -69,7 +71,5 @@
   "Visitors per Day": "Visiteurs par jour",
   "Visitors, Sources and Devices": "Visiteurs, sources et appareils",
   "Wait for Consent": "Attendre le consentement",
-  "What to Count": "Ce qu’il faut compter",
-  "Count page views only?": "Ne compter que les pages vues ?",
-  "Delete Visitor Data": "Supprimer les données des visiteurs"
+  "What to Count": "Ce qu’il faut compter"
 }

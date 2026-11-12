@@ -16,9 +16,11 @@
   "Bounce Rate": "Bouncepercentage",
   "Browser": "Browser",
   "Compared with the {period} before": "Vergeleken met de {period} ervoor",
+  "Count page views only?": "Alleen nog paginaweergaven tellen?",
   "Count Visits": "Bezoeken tellen",
   "Counting visits is paused.": "Het tellen van bezoeken is gepauzeerd.",
   "days": "dagen",
+  "Delete Visitor Data": "Bezoekersgegevens wissen",
   "Desktop": "Desktop",
   "Device": "Apparaat",
   "Devices": "Apparaten",
@@ -69,7 +71,5 @@
   "Visitors per Day": "Bezoekers per dag",
   "Visitors, Sources and Devices": "Bezoekers, bronnen en apparaten",
   "Wait for Consent": "Wachten op toestemming",
-  "What to Count": "Wat te tellen",
-  "Count page views only?": "Alleen nog paginaweergaven tellen?",
-  "Delete Visitor Data": "Bezoekersgegevens wissen"
+  "What to Count": "Wat te tellen"
 }

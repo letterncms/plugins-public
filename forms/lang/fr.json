@@ -156,6 +156,7 @@
   "One submission in a dialog: its answers and files, to reply to, archive or mark as spam. Opening a new one marks it read.": "Une réponse dans une boîte de dialogue : ses réponses et ses fichiers, pour y répondre, l’archiver ou la marquer comme spam. Ouvrir une nouvelle réponse la marque comme lue.",
   "Only Show When": "Afficher seulement si",
   "Open": "Ouvrir",
+  "Option one\nvalue|Label": "Option un\nvaleur|Libellé",
   "Options": "Options",
   "Or Redirect To": "Ou rediriger vers",
   "Other Allowed Websites": "Autres sites autorisés",
@@ -230,6 +231,5 @@
   "Webhooks must use https://.": "Les webhooks doivent utiliser https://.",
   "Website": "Site web",
   "What visitors sent through forms.": "Ce que les visiteurs ont envoyé par formulaire.",
-  "Where submissions go and how long they stay.": "Où vont les envois et combien de temps ils restent.",
-  "Option one\nvalue|Label": "Option un\nvaleur|Libellé"
+  "Where submissions go and how long they stay.": "Où vont les envois et combien de temps ils restent."
 }

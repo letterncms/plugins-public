@@ -42,6 +42,7 @@
   "Create Redirect": "Weiterleitung erstellen",
   "Created Redirect": "Weiterleitung erstellt",
   "Default Social Image": "Standardbild für Social Media",
+  "Delete": "Löschen",
   "Discourage All Indexing": "Von jeder Indexierung abraten",
   "Enough Substance": "Genug Substanz",
   "Every page scores {score} or more.": "Jede Seite erreicht {score} oder mehr.",
@@ -80,6 +81,8 @@
   "Page as Markdown": "Seite als Markdown",
   "Page Type": "Seitentyp",
   "Pages Checked": "Geprüfte Seiten",
+  "Permanent (301)": "Dauerhaft (301)",
+  "Permanent (308)": "Dauerhaft (308)",
   "Person": "Person",
   "Phrase a few headings as the questions people ask, or add an FAQ.": "Formuliere einige Überschriften als die Fragen, die Menschen stellen, oder füge eine FAQ hinzu.",
   "Profile Page": "Profilseite",
@@ -106,6 +109,8 @@
   "Start with a short paragraph that answers the main question.": "Beginne mit einem kurzen Absatz, der die Hauptfrage beantwortet.",
   "Status": "Status",
   "Summary for AI (llms.txt)": "Zusammenfassung für KI (llms.txt)",
+  "Temporary (302)": "Vorübergehend (302)",
+  "Temporary (307)": "Vorübergehend (307)",
   "The image is described.": "Das Bild ist beschrieben.",
   "The opening paragraph has :count words. AI answers quote short, direct openings (60 words at most).": "Der erste Absatz hat :count Wörter. KI-Antworten zitieren kurze, direkte Einstiege (höchstens 60 Wörter).",
   "The opening paragraph is short and quotable.": "Der erste Absatz ist kurz und zitierbar.",
@@ -118,10 +123,5 @@
   "Type": "Typ",
   "Untitled": "Ohne Titel",
   "Web Page": "Webseite",
-  "What AI Crawlers Read": "Was KI-Crawler lesen",
-  "Delete": "Löschen",
-  "Permanent (301)": "Dauerhaft (301)",
-  "Permanent (308)": "Dauerhaft (308)",
-  "Temporary (302)": "Vorübergehend (302)",
-  "Temporary (307)": "Vorübergehend (307)"
+  "What AI Crawlers Read": "Was KI-Crawler lesen"
 }

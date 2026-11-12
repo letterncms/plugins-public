@@ -42,6 +42,7 @@
   "Create Redirect": "Doorverwijzing maken",
   "Created Redirect": "Doorverwijzing aangemaakt",
   "Default Social Image": "Standaard social-afbeelding",
+  "Delete": "Verwijderen",
   "Discourage All Indexing": "Alle indexering ontmoedigen",
   "Enough Substance": "Genoeg inhoud",
   "Every page scores {score} or more.": "Elke pagina scoort {score} of meer.",
@@ -80,6 +81,8 @@
   "Page as Markdown": "Pagina als Markdown",
   "Page Type": "Paginatype",
   "Pages Checked": "Gecontroleerde pagina’s",
+  "Permanent (301)": "Permanent (301)",
+  "Permanent (308)": "Permanent (308)",
   "Person": "Persoon",
   "Phrase a few headings as the questions people ask, or add an FAQ.": "Formuleer een paar koppen als vragen die mensen stellen, of voeg een FAQ toe.",
   "Profile Page": "Profielpagina",
@@ -106,6 +109,8 @@
   "Start with a short paragraph that answers the main question.": "Begin met een korte alinea die de hoofdvraag beantwoordt.",
   "Status": "Status",
   "Summary for AI (llms.txt)": "Samenvatting voor AI (llms.txt)",
+  "Temporary (302)": "Tijdelijk (302)",
+  "Temporary (307)": "Tijdelijk (307)",
   "The image is described.": "De afbeelding is beschreven.",
   "The opening paragraph has :count words. AI answers quote short, direct openings (60 words at most).": "De openingsalinea heeft :count woorden. AI-antwoorden citeren korte, directe openingen (maximaal 60 woorden).",
   "The opening paragraph is short and quotable.": "De openingsalinea is kort en citeerbaar.",
@@ -118,10 +123,5 @@
   "Type": "Type",
   "Untitled": "Naamloos",
   "Web Page": "Webpagina",
-  "What AI Crawlers Read": "Wat AI-crawlers lezen",
-  "Delete": "Verwijderen",
-  "Permanent (301)": "Permanent (301)",
-  "Permanent (308)": "Permanent (308)",
-  "Temporary (302)": "Tijdelijk (302)",
-  "Temporary (307)": "Tijdelijk (307)"
+  "What AI Crawlers Read": "Wat AI-crawlers lezen"
 }

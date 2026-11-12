@@ -42,6 +42,7 @@
   "Create Redirect": "Créer une redirection",
   "Created Redirect": "Redirection créée",
   "Default Social Image": "Image de partage par défaut",
+  "Delete": "Supprimer",
   "Discourage All Indexing": "Décourager toute indexation",
   "Enough Substance": "Contenu suffisant",
   "Every page scores {score} or more.": "Chaque page obtient {score} ou plus.",
@@ -80,6 +81,8 @@
   "Page as Markdown": "Page en Markdown",
   "Page Type": "Type de page",
   "Pages Checked": "Pages vérifiées",
+  "Permanent (301)": "Permanente (301)",
+  "Permanent (308)": "Permanente (308)",
   "Person": "Personne",
   "Phrase a few headings as the questions people ask, or add an FAQ.": "Formulez quelques titres comme les questions que les gens posent, ou ajoutez une FAQ.",
   "Profile Page": "Page de profil",
@@ -106,6 +109,8 @@
   "Start with a short paragraph that answers the main question.": "Commencez par un court paragraphe qui répond à la question principale.",
   "Status": "Statut",
   "Summary for AI (llms.txt)": "Résumé pour l’IA (llms.txt)",
+  "Temporary (302)": "Temporaire (302)",
+  "Temporary (307)": "Temporaire (307)",
   "The image is described.": "L’image est décrite.",
   "The opening paragraph has :count words. AI answers quote short, direct openings (60 words at most).": "Le paragraphe d’ouverture compte :count mots. Les réponses d’IA citent des ouvertures courtes et directes (60 mots au maximum).",
   "The opening paragraph is short and quotable.": "Le paragraphe d’ouverture est court et citable.",
@@ -118,10 +123,5 @@
   "Type": "Type",
   "Untitled": "Sans titre",
   "Web Page": "Page web",
-  "What AI Crawlers Read": "Ce que lisent les robots d’IA",
-  "Delete": "Supprimer",
-  "Permanent (301)": "Permanente (301)",
-  "Permanent (308)": "Permanente (308)",
-  "Temporary (302)": "Temporaire (302)",
-  "Temporary (307)": "Temporaire (307)"
+  "What AI Crawlers Read": "Ce que lisent les robots d’IA"
 }

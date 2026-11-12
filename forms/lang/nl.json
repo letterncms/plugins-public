@@ -156,6 +156,7 @@
   "One submission in a dialog: its answers and files, to reply to, archive or mark as spam. Opening a new one marks it read.": "Eén inzending in een dialoog: de antwoorden en bestanden, om te beantwoorden, te archiveren of als spam te markeren. Een nieuwe openen markeert hem als gelezen.",
   "Only Show When": "Alleen tonen als",
   "Open": "Openen",
+  "Option one\nvalue|Label": "Optie één\nwaarde|Label",
   "Options": "Opties",
   "Or Redirect To": "Of doorsturen naar",
   "Other Allowed Websites": "Andere toegestane websites",
@@ -230,6 +231,5 @@
   "Webhooks must use https://.": "Webhooks moeten https:// gebruiken.",
   "Website": "Website",
   "What visitors sent through forms.": "Wat bezoekers via formulieren stuurden.",
-  "Where submissions go and how long they stay.": "Waar inzendingen heen gaan en hoelang ze blijven.",
-  "Option one\nvalue|Label": "Optie één\nwaarde|Label"
+  "Where submissions go and how long they stay.": "Waar inzendingen heen gaan en hoelang ze blijven."
 }
