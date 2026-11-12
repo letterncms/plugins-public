@@ -216,6 +216,10 @@ final class WebhooksTest extends TestCase
         app(Dispatcher::class)->process();
 
         $this->assertSame('webhook.test', $this->sender->sent[0]['headers']['X-Cms-Event']);
+
+        // The Audit Log names the webhook a change was made to by its id: by where it sends, as it has no name.
+        $row = $this->run_('audit/list', ['ability' => 'webhooks/test'], AbilityContext::forUser($this->admin(), 'admin'))['items'][0] ?? null;
+        $this->assertSame(['Tested Webhook', 'https://hooks.example.com/in'], [$row['label'] ?? null, $row['subject'] ?? null]);
     }
 
     public function test_media_accounts_and_builds_say_what_changed(): void

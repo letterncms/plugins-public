@@ -37,7 +37,9 @@ final class AnalyticsPlugin extends Plugin
 
         $cms->settingsRegistry()->register(Collector::SETTINGS, fields: [
             ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true],
-            ['handle' => 'mode', 'type' => 'select', 'label' => 'What to Count', 'default' => Collector::COUNTS, 'options' => [Collector::COUNTS => __('Page Views Only'), Collector::VISITORS => __('Visitors, Sources and Devices')], 'display' => 'radio', 'instructions' => 'Switching back to page views deletes visitor data.', 'if' => ['enabled' => true]],
+            ['handle' => 'mode', 'type' => 'select', 'label' => 'What to Count', 'default' => Collector::COUNTS, 'options' => [Collector::COUNTS => __('Page Views Only'), Collector::VISITORS => __('Visitors, Sources and Devices')], 'display' => 'radio', 'if' => ['enabled' => true],
+                // Said where it happens: saving the switch back asks first.
+                'confirmChange' => ['from' => Collector::VISITORS, 'title' => __('Count page views only?'), 'text' => __('Switching back to page views deletes visitor data.'), 'confirm' => __('Delete Visitor Data')]],
             ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS]],
             ['handle' => 'exclude', 'type' => 'tags', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'if' => ['enabled' => true]],
             ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Visits For', 'suffix' => 'days', 'min' => 0, 'default' => 730, 'placeholder' => 'Forever', 'if' => ['enabled' => true]],

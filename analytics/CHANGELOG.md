@@ -8,9 +8,15 @@
 
 ### Changed
 
+- Going back to counting page views only asks first, as it is saved, and says it deletes the visitor data: the sentence under the choice is gone.
 - A number has one name everywhere: the lists' column is **Page Views**, like the number above the chart and on the home screen. On a phone a row says what it counts: “4,048 Page Views”.
 - **What to Count** says what switching back costs: visitor data is deleted.
 - The home-screen widget's empty state is its title, without a sentence under it.
+
+### Fixed
+
+- **Top Pages** reads a page's title whole; the path beside it gives way first, and the numbers take less room. Titles were cut to "A." and "Audi…".
+
 
 ## 0.8.0 (2026-11-11)
 

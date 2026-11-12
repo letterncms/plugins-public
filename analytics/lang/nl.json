@@ -69,5 +69,7 @@
   "Visitors per Day": "Bezoekers per dag",
   "Visitors, Sources and Devices": "Bezoekers, bronnen en apparaten",
   "Wait for Consent": "Wachten op toestemming",
-  "What to Count": "Wat te tellen"
+  "What to Count": "Wat te tellen",
+  "Count page views only?": "Alleen nog paginaweergaven tellen?",
+  "Delete Visitor Data": "Bezoekersgegevens wissen"
 }

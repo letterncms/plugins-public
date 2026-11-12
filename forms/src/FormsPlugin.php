@@ -197,7 +197,7 @@ final class FormsPlugin extends Plugin
             'meta' => ['page?' => Shape::STRING, 'locale?' => Shape::STRING_OR_NULL, 'user_agent?' => Shape::STRING],
             'status' => $status, 'createdAt' => Shape::STRING_OR_NULL, 'publishedAt' => Shape::STRING_OR_NULL, 'updatedAt' => Shape::STRING_OR_NULL,
         ];
-        $words = Shape::map(Shape::STRING);
+        $words = Shape::map(Shape::map(Shape::STRING));
 
         $a->register('forms/list', [
             'label' => 'List Forms',
@@ -335,7 +335,7 @@ final class FormsPlugin extends Plugin
 
         $a->register('form-words/get', [
             'label' => 'Get Form Wording',
-            'description' => 'What a form says to visitors in each of the site’s other languages: the fields to fill in, and their values, one per "<language>:s:<setting>" and "<language>:f:<field name>:<property>".',
+            'description' => 'What a form says to visitors in each of the site’s other languages: the fields to fill in, one group per thing said ("s:<setting>", "f:<field name>:<property>") with a field per language, and their values the same way: {"s:submit": {"de": "Senden"}}.',
             'permission' => 'forms.view',
             'annotations' => ['readOnly' => true],
             'expose' => ['mcp' => false],

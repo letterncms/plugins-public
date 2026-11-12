@@ -13,6 +13,7 @@
 
 ### Changed
 
+- An empty **Files** or **History** list offers **Upload File**.
 - `import/sources` and an upload give each source an `id`, and a report says whether it is `complete`, how many `records` the source has, and which entries are a `collision` with one already there.
 
 ## 0.2.0 (2026-11-11)

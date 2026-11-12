@@ -68,7 +68,8 @@ final class ImportViews
                             ['label' => __('Delete File'), 'icon' => 'trash', 'variant' => 'danger', 'ability' => 'import-sources/delete', 'input' => ['path' => '{row.path}'], 'then' => 'refresh', 'success' => __('File deleted'),
                                 'confirm' => ['title' => __('Delete “{row.path}”?'), 'text' => __('What it already imported stays.'), 'confirm' => __('Delete File'), 'danger' => true]],
                         ],
-                        'empty' => ['icon' => 'download', 'title' => __('No files yet')],
+                        // An empty list offers its one action: the bar's Upload File.
+                        'empty' => ['icon' => 'download', 'title' => __('No files yet'), 'action' => array_diff_key($upload, ['variant' => true, 'name' => true])],
                     ]],
                 ]],
                 ['type' => 'ui/tab', 'props' => ['id' => 'history', 'label' => __('History')], 'children' => [
@@ -87,7 +88,7 @@ final class ImportViews
                             ['label' => __('Delete Report'), 'icon' => 'trash', 'variant' => 'danger', 'ability' => 'import-runs/delete', 'input' => ['id' => '{row.id}'], 'then' => 'refresh', 'success' => __('Report deleted'), 'when' => '{row.finishedAt}',
                                 'confirm' => ['title' => __('Delete this report?'), 'text' => __('What it imported stays.'), 'confirm' => __('Delete Report'), 'danger' => true]],
                         ],
-                        'empty' => ['icon' => 'download', 'title' => __('No imports yet')],
+                        'empty' => ['icon' => 'download', 'title' => __('No imports yet'), 'action' => array_diff_key($upload, ['variant' => true, 'name' => true])],
                     ]],
                 ]],
             ]],
