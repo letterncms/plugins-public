@@ -18,7 +18,7 @@ Under Forms → Settings, kept in `config/forms.yaml`:
 |---|---|
 | `endpoint` | The address of the CMS, when the site is hosted somewhere else: built pages post submissions there. Other plugins with a public endpoint of their own, such as Brevo's signup, use it too. |
 | `origins` | Other websites whose forms may post here. |
-| `retention_days` | How many days submissions are kept. Empty (or `0`) keeps them forever. |
+| `retention_days` | How long submissions are kept: `0` (forever), `30`, `90`, `180`, `365` or `730` days. |
 | `captcha` | The check a visitor passes before a form is accepted: `none`, `turnstile` (Cloudflare Turnstile) or `hcaptcha`. |
 | `captcha_site_key` | The provider's site key, carried by the page. |
 | `captcha_secret` | The provider's secret key. Stored encrypted, never in `config/`. |

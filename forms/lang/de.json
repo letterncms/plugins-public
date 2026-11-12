@@ -1,4 +1,9 @@
 {
+  "1 Year": "1 Jahr",
+  "2 Years": "2 Jahre",
+  "30 Days": "30 Tage",
+  "6 Months": "6 Monate",
+  "90 Days": "90 Tage",
   ":count files are in the admin.": ":count Dateien liegen im Admin.",
   ":field is required.": ":field ist erforderlich.",
   "{count} Field": "{count} Feld",
