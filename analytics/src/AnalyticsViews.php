@@ -45,10 +45,10 @@ final class AnalyticsViews
         // Short at a glance (1.2K), the whole number on hover.
         // Named as the number above the chart is, and on a phone, where no header says it, with the number itself.
         $count = [...($counting
-            ? ['key' => 'views', 'label' => __('Page Views'), 'width' => '112px', 'unit' => ['one' => __('{count} Page View'), 'other' => __('{count} Page Views')]]
+            ? ['key' => 'views', 'label' => __('Page Views'), 'width' => '88px', 'unit' => ['one' => __('{count} Page View'), 'other' => __('{count} Page Views')]]
             : ['key' => 'visitors', 'label' => __('Visitors'), 'width' => '80px', 'unit' => ['one' => __('{count} Visitor'), 'other' => __('{count} Visitors')]]), 'align' => 'end', 'format' => 'compact'];
-        $share = ['key' => 'share', 'label' => __('Share'), 'width' => '96px', 'format' => 'share'];
-        // The name gives way first, down to nothing, so the bar and the number stay in a half-width list and on a phone.
+        $share = ['key' => 'share', 'label' => __('Share'), 'width' => '80px', 'format' => 'share'];
+        // The numbers take what they need; the title is read whole, and the path beside it gives way first.
         $name = ['width' => 'minmax(0,1fr)'];
         $pages = fn (string $dimension, string $title) => $this->list($title, $dimension, [
             ['key' => 'label', 'label' => __('Page'), 'muted' => 'path', ...$name],

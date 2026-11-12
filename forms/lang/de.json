@@ -110,7 +110,6 @@
   "Inbox": "Posteingang",
   "Invalid form handle.": "Ungültiger Formular-Handle.",
   "Is": "Ist",
-  "Keep each value: value|Label.": "Behalte jeden Wert bei: wert|Beschriftung.",
   "Keep it under :count characters.": "Bleib unter :count Zeichen.",
   "Keep Submissions For": "Einsendungen aufbewahren für",
   "Keep Submissions in {brand}": "Einsendungen in {brand} aufbewahren",
@@ -154,7 +153,6 @@
   "One option from a list": "Eine Option aus einer Liste",
   "One option, all in view": "Eine Option, alle sichtbar",
   "One per line. Offered while typing; anything else can be typed too.": "Eine pro Zeile. Wird beim Tippen vorgeschlagen; anderes lässt sich ebenfalls eingeben.",
-  "One per line. Use value|Label to store a different value.": "Eine pro Zeile. Mit wert|Beschriftung wird ein anderer Wert gespeichert.",
   "One submission in a dialog: its answers and files, to reply to, archive or mark as spam. Opening a new one marks it read.": "Eine Einsendung in einem Dialog: ihre Antworten und Dateien, zum Antworten, Archivieren oder Markieren als Spam. Eine neue gilt nach dem Öffnen als gelesen.",
   "Only Show When": "Nur anzeigen, wenn",
   "Open": "Öffnen",
@@ -232,5 +230,6 @@
   "Webhooks must use https://.": "Webhooks müssen https:// verwenden.",
   "Website": "Website",
   "What visitors sent through forms.": "Was Besucher über Formulare gesendet haben.",
-  "Where submissions go and how long they stay.": "Wohin Einsendungen gehen und wie lange sie bleiben."
+  "Where submissions go and how long they stay.": "Wohin Einsendungen gehen und wie lange sie bleiben.",
+  "Option one\nvalue|Label": "Option eins\nwert|Bezeichnung"
 }

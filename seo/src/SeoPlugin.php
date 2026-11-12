@@ -48,7 +48,7 @@ final class SeoPlugin extends Plugin
                 ? ['type' => 'ui/empty', 'props' => ['icon' => 'arrow-right', 'title' => __('No redirects yet'), 'action' => array_diff_key($new, ['variant' => true])]]
                 : ['type' => 'ui/form', 'props' => [
                     'source' => ['ability' => 'redirects/list'], 'into' => 'redirects', 'width' => 'wide',
-                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => false, 'fields' => self::redirectFields()]],
+                    'fields' => [['handle' => 'redirects', 'type' => 'repeater', 'display' => 'table', 'label' => __('Redirects'), 'add' => false, 'removeLabel' => __('Delete'), 'fields' => self::redirectFields()]],
                     'save' => ['ability' => 'redirects/set', 'as' => '*'],
                 ]],
             ],
@@ -61,7 +61,8 @@ final class SeoPlugin extends Plugin
         return [
             ['handle' => 'from', 'type' => 'text', 'label' => __('From'), 'mono' => true, 'placeholder' => '/old-url', ...($autofocus ? ['required' => true, 'autofocus' => true] : [])],
             ['handle' => 'to', 'type' => 'text', 'label' => __('To'), 'mono' => true, 'placeholder' => __('/new-url or https://…'), ...($autofocus ? ['required' => true] : [])],
-            ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('301 Permanent'), '302' => __('302 Temporary')]],
+            // Every status a redirect can have, in words first: a redirect made elsewhere (307, 308) reads as one too.
+            ['handle' => 'status', 'type' => 'select', 'label' => __('Status'), 'required' => true, 'numeric' => true, 'default' => 301, 'options' => ['301' => __('Permanent (301)'), '302' => __('Temporary (302)'), '307' => __('Temporary (307)'), '308' => __('Permanent (308)')]],
         ];
     }
 

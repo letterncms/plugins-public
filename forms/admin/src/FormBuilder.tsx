@@ -59,7 +59,8 @@ function Builder({ form }: { form: Form }) {
 
   if (!catalog) return <div className="grid place-items-center py-10 text-faint"><Spinner /></div>
   return (
-    <div className="max-w-[640px] pl-14">
+    // The column of every form-like page; the blocks' handles hang in its margin where the window has one.
+    <div className="pl-14 xl:-ml-14">
       <EditorProvider key={version} value={{ store, types, catalog, entryId: null, fieldHandle: 'fields', allowed, getValues: () => ({}), title: form.title }}>
         <WriteEditor />
       </EditorProvider>

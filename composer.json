@@ -13,7 +13,7 @@
         }
     ],
     "require": {
-        "letterncms/cms": "dev-main as 0.24.0",
+        "letterncms/cms": "dev-main as 0.26.0",
         "letterncms/analytics": "*",
         "letterncms/brevo": "*",
         "letterncms/consent": "*",

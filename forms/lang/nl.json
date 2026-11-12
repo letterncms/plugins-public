@@ -110,7 +110,6 @@
   "Inbox": "Inbox",
   "Invalid form handle.": "Ongeldige formulierhandle.",
   "Is": "Is",
-  "Keep each value: value|Label.": "Behoud elke waarde: waarde|Label.",
   "Keep it under :count characters.": "Houd het onder :count tekens.",
   "Keep Submissions For": "Inzendingen bewaren",
   "Keep Submissions in {brand}": "Inzendingen in {brand} bewaren",
@@ -154,7 +153,6 @@
   "One option from a list": "Eén optie uit een lijst",
   "One option, all in view": "Eén optie, alle zichtbaar",
   "One per line. Offered while typing; anything else can be typed too.": "Eén per regel. Voorgesteld tijdens het typen; iets anders typen kan ook.",
-  "One per line. Use value|Label to store a different value.": "Eén per regel. Gebruik waarde|Label om een andere waarde op te slaan.",
   "One submission in a dialog: its answers and files, to reply to, archive or mark as spam. Opening a new one marks it read.": "Eén inzending in een dialoog: de antwoorden en bestanden, om te beantwoorden, te archiveren of als spam te markeren. Een nieuwe openen markeert hem als gelezen.",
   "Only Show When": "Alleen tonen als",
   "Open": "Openen",
@@ -232,5 +230,6 @@
   "Webhooks must use https://.": "Webhooks moeten https:// gebruiken.",
   "Website": "Website",
   "What visitors sent through forms.": "Wat bezoekers via formulieren stuurden.",
-  "Where submissions go and how long they stay.": "Waar inzendingen heen gaan en hoelang ze blijven."
+  "Where submissions go and how long they stay.": "Waar inzendingen heen gaan en hoelang ze blijven.",
+  "Option one\nvalue|Label": "Optie één\nwaarde|Label"
 }

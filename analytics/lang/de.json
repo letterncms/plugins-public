@@ -69,5 +69,7 @@
   "Visitors per Day": "Besucher pro Tag",
   "Visitors, Sources and Devices": "Besucher, Quellen und Geräte",
   "Wait for Consent": "Auf Einwilligung warten",
-  "What to Count": "Was gezählt wird"
+  "What to Count": "Was gezählt wird",
+  "Count page views only?": "Nur noch Seitenaufrufe zählen?",
+  "Delete Visitor Data": "Besucherdaten löschen"
 }

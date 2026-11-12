@@ -8,6 +8,7 @@
 
 ### Changed
 
+- The Audit Log names the webhook a change was made to (its name, else its address): **Tested Webhook** said nothing else.
 - The button of the **New Webhook** dialog says **Create Webhook**, as every dialog that makes something names what it makes.
 
 ## 0.2.0 (2026-11-11)

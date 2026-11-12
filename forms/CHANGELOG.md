@@ -9,7 +9,10 @@
 
 ### Changed
 
-- **Breaking.** Needs the core 0.24 or newer: the **Phone** field type says which phone it means (`Phone||number`), a key older cores show as written.
+- A choice field's **Options** shows its format as a placeholder ("value|Label") instead of a sentence under it.
+- A form's editor sits in the one column every form-like page has, and its **Delete** is the red button the other editors have.
+- **Breaking.** A form's **Languages** tab is laid out as every value in several languages is: one group per thing the form says, its button or a field's label, with a field per language named in that language. `form-words/get` and `form-words/update` read and write `{"s:submit": {"de": "Senden"}}` instead of `"de:s:submit"` keys.
+- **Breaking.** Needs the core 0.26 or newer, whose views draw a red **Delete** (and, as 0.24 does, say which phone **Phone** means).
 - The first tab of the Forms screen is **All Forms**, so it no longer repeats the screen's name. With no forms yet, **New Form** is offered where the list would be.
 - On a phone, a form's row says what its numbers count: “6 Fields”, “128 Submissions”, “3 Unread”.
 - A dropdown's empty option reads **Choose** unless you give it other words, and the Form block's list reads **Choose** like every other select.

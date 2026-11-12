@@ -17,8 +17,6 @@
   "/old-url": "/ancienne-url",
   "1 link to another page.": "1 lien vers une autre page.",
   "1 section heading helps readers and AI find answers.": "1 titre de section aide les lecteurs et l’IA à trouver des réponses.",
-  "301 Permanent": "301 permanente",
-  "302 Temporary": "302 temporaire",
   "About Page": "Page À propos",
   "Add a social image so links look good when shared.": "Ajoutez une image de partage pour que les liens partagés soient soignés.",
   "Add H2 headings to break up long text.": "Ajoutez des titres H2 pour découper les longs textes.",
@@ -120,5 +118,10 @@
   "Type": "Type",
   "Untitled": "Sans titre",
   "Web Page": "Page web",
-  "What AI Crawlers Read": "Ce que lisent les robots d’IA"
+  "What AI Crawlers Read": "Ce que lisent les robots d’IA",
+  "Delete": "Supprimer",
+  "Permanent (301)": "Permanente (301)",
+  "Permanent (308)": "Permanente (308)",
+  "Temporary (302)": "Temporaire (302)",
+  "Temporary (307)": "Temporaire (307)"
 }

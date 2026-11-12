@@ -69,5 +69,7 @@
   "Visitors per Day": "Visiteurs par jour",
   "Visitors, Sources and Devices": "Visiteurs, sources et appareils",
   "Wait for Consent": "Attendre le consentement",
-  "What to Count": "Ce qu’il faut compter"
+  "What to Count": "Ce qu’il faut compter",
+  "Count page views only?": "Ne compter que les pages vues ?",
+  "Delete Visitor Data": "Supprimer les données des visiteurs"
 }
