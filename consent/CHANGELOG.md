@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-11-12)
+
 ### Changed
 
 - **Breaking.** Needs the core 0.24 or newer. The banner's **Title**, **Text** and **Privacy Policy** are each one setting with a value per language of the site, shown once per language under its own name, where they were a group of fields per language; a language added to the site gets its words at once. Updating moves the words saved before (`title_de`, `text_en` …) into them (`title: {de: …}`).
