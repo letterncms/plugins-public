@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.14.0 (2026-11-12)
+
 ### Added
 
 - The Audit Log names what Forms changed in the past tense, such as **Created Form** and **Deleted Form Submissions**.
