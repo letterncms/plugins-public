@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Needs CMS 0.26: the Audit Log names the webhook a change was made to through the core's `audit.subject` filter, which an older CMS does not have.
 - The Audit Log names the webhook a change was made to (its name, else its address): **Tested Webhook** said nothing else.
 - The button of the **New Webhook** dialog says **Create Webhook**, as every dialog that makes something names what it makes.
 

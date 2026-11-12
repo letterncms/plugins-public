@@ -13,6 +13,7 @@
 
 ### Changed
 
+- Needs CMS 0.26: an empty **Files** or **History** list offers **Upload File**, an empty state's action an older CMS does not draw.
 - An empty **Files** or **History** list offers **Upload File**.
 - `import/sources` and an upload give each source an `id`, and a report says whether it is `complete`, how many `records` the source has, and which entries are a `collision` with one already there.
 
