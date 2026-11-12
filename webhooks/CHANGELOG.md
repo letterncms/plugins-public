@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-11-12)
+
 ### Added
 
 - The Audit Log names what Webhooks changed in the past tense, such as **Created Webhook** and **Redelivered Webhook**.
