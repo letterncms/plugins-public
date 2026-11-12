@@ -19,7 +19,7 @@ final class FormFields
             ['handle' => 'help', 'type' => 'text', 'label' => 'Help Text'],
         ];
         $placeholder = ['handle' => 'placeholder', 'type' => 'text', 'label' => 'Placeholder'];
-        $options = ['handle' => 'options', 'type' => 'textarea', 'label' => 'Options', 'placeholder' => "Option one\nvalue|Label", 'default' => "Option one\nOption two"];
+        $options = ['handle' => 'options', 'type' => 'textarea', 'label' => 'Options', 'placeholder' => "Option one\nvalue|Label", 'default' => "Option one\nOption two", 'about' => 'One per line. Use value|Label to store a different value.'];
         $look = ['handle' => 'look', 'type' => 'select', 'label' => 'Show As', 'display' => 'segmented', 'options' => ['list' => __('List'), 'chips' => __('Chips')], 'default' => 'list'];
         $condition = ['handle' => 'show_if', 'type' => 'group', 'label' => 'Only Show When', 'fields' => [
             ['handle' => 'field', 'type' => 'text', 'label' => 'Field Name', 'width' => 'third'],
