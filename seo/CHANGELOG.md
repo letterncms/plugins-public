@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 (2026-11-12)
+
 ### Changed
 
 - **Redirects travel with a site kit.** Exporting a site, switching to a kit and applying one carry `content/redirects.yaml`, so the old addresses of a kit's pages go with them.
