@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+
+- The banner no longer covers the site in the admin's preview, such as the one beside the colours and fonts under **Design**.
+
 ## 0.2.0 (2026-11-11)
 
 ### Added
