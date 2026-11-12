@@ -1,4 +1,9 @@
 {
+  "1 Year": "1 jaar",
+  "2 Years": "2 jaar",
+  "30 Days": "30 dagen",
+  "6 Months": "6 maanden",
+  "90 Days": "90 dagen",
   ":count files are in the admin.": ":count bestanden staan in de admin.",
   ":field is required.": ":field is verplicht.",
   "{count} Field": "{count} veld",

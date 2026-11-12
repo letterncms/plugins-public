@@ -160,7 +160,7 @@ final class FormsPlugin extends Plugin
         $this->cms()->settingsRegistry()->register('forms', fields: [
             ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Submission Address', 'placeholder' => 'https://cms.example.com'],
             ['handle' => 'origins', 'type' => 'tags', 'label' => 'Other Allowed Websites', 'placeholder' => 'https://example.com'],
-            ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Submissions For', 'suffix' => 'days', 'min' => 0, 'placeholder' => 'Forever'],
+            ['handle' => 'retention_days', 'type' => 'select', 'label' => 'Keep Submissions For', 'default' => '0', 'required' => true, 'options' => ['0' => __('Forever'), '30' => __('30 Days'), '90' => __('90 Days'), '180' => __('6 Months'), '365' => __('1 Year'), '730' => __('2 Years')]],
             ['handle' => 'captcha', 'type' => 'select', 'label' => 'CAPTCHA', 'default' => 'none', 'required' => true, 'options' => ['none' => __('None'), 'turnstile' => 'Cloudflare Turnstile', 'hcaptcha' => 'hCaptcha']],
             ['handle' => 'captcha_site_key', 'type' => 'text', 'label' => 'Site Key', 'width' => 'half', 'mono' => true, 'if' => ['captcha' => ['turnstile', 'hcaptcha']]],
             ['handle' => 'captcha_secret', 'type' => 'text', 'label' => 'Secret Key', 'width' => 'half', 'secret' => true, 'if' => ['captcha' => ['turnstile', 'hcaptcha']]],

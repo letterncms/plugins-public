@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- **Keep Submissions For is a dropdown** with Forever, 30 Days, 90 Days, 6 Months, 1 Year and 2 Years, instead of a number of days.
+
 ## 0.15.0 (2026-11-12)
 
 ### Changed
