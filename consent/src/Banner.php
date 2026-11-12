@@ -101,6 +101,8 @@ final class Banner
         .'var V=el.getAttribute("data-version"),cats=(el.getAttribute("data-categories")||"").split(",").filter(Boolean),all=["analytics","marketing"],'
         .'q=function(s){return el.querySelector(s)},choices=q("#cms-consent-choices"),choose=q("[data-act=choose]"),save=q("[data-act=save]"),opener=d.querySelector(".cms-consent-open"),from=null,'
         .'api=w.cmsConsent={necessary:true,analytics:false,marketing:false,decided:false};'
+        // A page the site's own admin shows in a frame (the design screen's preview) is nobody's visit: nothing to ask.
+        .'if(w.frameElement)return;'
         .'function read(){try{var m=d.cookie.match(/(?:^|; )cms_consent=([^;]*)/);if(!m)return null;var p=decodeURIComponent(m[1]).split(".");if(p[0]!==V)return null;var o={};cats.forEach(function(c,i){o[c]=p[i+1]==="1"});return o}catch(e){return null}}'
         .'function write(o){try{d.cookie="cms_consent="+[V].concat(cats.map(function(c){return o[c]?1:0})).join(".")+";path=/;max-age=15552000;SameSite=Lax"+(location.protocol==="https:"?";Secure":"")}catch(e){}}'
         .'function run(){[].slice.call(d.querySelectorAll("script[type=\"text/plain\"][data-cms-consent]")).forEach(function(s){if(api[s.getAttribute("data-cms-consent")]!==true)return;var n=d.createElement("script");[].slice.call(s.attributes).forEach(function(a){if(a.name!=="type"&&a.name!=="data-cms-consent")n.setAttribute(a.name,a.value)});n.text=s.text;s.parentNode.replaceChild(n,s)})}'
