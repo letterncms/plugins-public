@@ -25,8 +25,8 @@ final class ConsentPlugin extends Plugin
     {
         $this->settingsSchema();
 
-        // The home-screen widget only speaks when something is wrong: nothing to restate otherwise.
-        $this->cms()->admin()->widget('consent-banner', ['label' => 'Consent', 'description' => __('Warns when visitors are never asked, while Analytics waits for their answer.'), 'icon' => 'shield', 'column' => 'side', 'order' => 86, 'permission' => 'settings.manage', 'view' => fn () => $this->widget()]);
+        // The home-screen widget warns when something is wrong, and says all is well otherwise.
+        $this->cms()->admin()->widget('consent-banner', ['label' => 'Consent', 'description' => __('Warns when visitors are never asked, while Analytics waits for their answer.'), 'empty' => 'No consent issues', 'icon' => 'shield', 'column' => 'side', 'order' => 86, 'permission' => 'settings.manage', 'view' => fn () => $this->widget()]);
 
         $hooks = $this->cms()->hooks();
 
@@ -59,7 +59,7 @@ final class ConsentPlugin extends Plugin
         return (bool) $this->setting('enabled', true) && $this->offered() !== [];
     }
 
-    /** Nothing, unless Analytics waits for an answer nobody is asked for: then its visitors are never counted. */
+    /** A warning when Analytics waits for an answer nobody is asked for (its visitors are never counted), else an empty view. */
     private function widget(): array
     {
         $waits = $this->cms()->isActive('letterncms/analytics')

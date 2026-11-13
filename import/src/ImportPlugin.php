@@ -80,9 +80,8 @@ final class ImportPlugin extends Plugin
             'import-runs/delete' => __('Deleted Import Report'),
         ]);
 
-        // The home-screen widget. It is not on anyone's home screen unless they add it,
-        // and with nothing imported and nothing waiting it draws nothing.
-        $this->cms()->admin()->widget('import-status', ['label' => 'Import', 'description' => __('What has been imported so far, and the files waiting in the import folder.'), 'icon' => 'download', 'column' => 'side', 'order' => 87, 'permission' => 'import.run',
+        // The home-screen widget. It is not on anyone's home screen unless they add it.
+        $this->cms()->admin()->widget('import-status', ['label' => 'Import', 'description' => __('What has been imported so far, and the files waiting in the import folder.'), 'empty' => 'Nothing imported yet', 'icon' => 'download', 'column' => 'side', 'order' => 87, 'permission' => 'import.run',
             'view' => function () {
                 $counts = $this->app->make(Ledger::class)->counts();
                 $waiting = count($this->app->make(Importer::class)->sources());
