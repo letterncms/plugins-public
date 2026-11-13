@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- **Breaking.** Include form definitions when exporting a Site using the new Sites API.
+
 ## 0.16.0 (2026-11-13)
 
 ### Changed

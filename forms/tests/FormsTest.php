@@ -51,7 +51,7 @@ final class FormsTest extends TestCase
 
     public function test_forms_travel_with_a_site_kit(): void
     {
-        $this->assertContains('forms', $this->cms()->hooks()->filter('kits.content', []));
+        $this->assertContains('forms', $this->cms()->hooks()->filter('sites.content', []));
     }
 
     public function test_a_page_showing_a_form_is_built_again_when_that_form_changes(): void

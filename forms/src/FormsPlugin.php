@@ -59,8 +59,8 @@ final class FormsPlugin extends Plugin
         });
 
         // The widget and its site key are in the built pages: another provider or key builds them again.
-        // Forms are part of a site kit: its pages show them. What people sent through them is not.
-        $this->cms()->hooks()->addFilter('kits.content', static fn (array $folders): array => [...$folders, 'forms']);
+        // Forms are part of a site: its pages show them. What people sent through them is not.
+        $this->cms()->hooks()->addFilter('sites.content', static fn (array $folders): array => [...$folders, 'forms']);
         $this->cms()->hooks()->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'forms-captcha' => $this->app->make(Captcha\Captchas::class)->signature()]);
 
         // The site's content security policy (core `site.policy`): the CAPTCHA's own hosts, and where a form sends a
