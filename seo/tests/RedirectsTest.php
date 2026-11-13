@@ -35,7 +35,7 @@ final class RedirectsTest extends TestCase
 
     public function test_redirects_travel_with_a_site_kit(): void
     {
-        $this->assertContains('redirects', $this->cms()->hooks()->filter('kits.content', []));
+        $this->assertContains('redirects', $this->cms()->hooks()->filter('sites.content', []));
     }
 
     public function test_new_redirect_is_in_the_bar_and_the_tab_is_empty_and_then_the_table(): void

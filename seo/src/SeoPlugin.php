@@ -79,7 +79,7 @@ final class SeoPlugin extends Plugin
 
         // What the Audit Log calls each change, once it has happened.
         // Redirects are the old addresses of a site's pages: they go where the pages go.
-        $this->cms()->hooks()->addFilter('kits.content', static fn (array $folders): array => [...$folders, 'redirects']);
+        $this->cms()->hooks()->addFilter('sites.content', static fn (array $folders): array => [...$folders, 'redirects']);
         $this->cms()->hooks()->addFilter('audit.past', static fn (array $past): array => $past + [
             'redirects/create' => __('Created Redirect'),
             'redirects/set' => __('Saved Redirects'),
