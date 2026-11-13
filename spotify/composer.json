@@ -1,0 +1,27 @@
+{
+    "name": "letterncms/spotify",
+    "description": "A Spotify block: a track, album, playlist, artist, podcast episode or show with Spotify’s player, sized to fit what it plays.",
+    "type": "cms-plugin",
+    "version": "0.0.0",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "letterncms/cms": ">=0.36 <1"
+    },
+    "autoload": {
+        "psr-4": {
+            "Cms\\Spotify\\": "src/"
+        }
+    },
+    "extra": {
+        "cms": {
+            "label": "Spotify",
+            "icon": "spotify-logo",
+            "provider": "Cms\\Spotify\\SpotifyPlugin",
+            "modules": [
+                "letterncms/blocks"
+            ]
+        }
+    },
+    "homepage": "https://github.com/letterncms/spotify"
+}

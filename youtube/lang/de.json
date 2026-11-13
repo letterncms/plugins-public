@@ -1,0 +1,23 @@
+{
+  "A YouTube block that shows the video’s poster and loads YouTube only when a visitor plays it: fast pages, no cookies before they choose.": "Ein YouTube-Block, der das Vorschaubild des Videos zeigt und YouTube erst lädt, wenn jemand es abspielt: schnelle Seiten, keine Cookies vor der Entscheidung.",
+  "A YouTube video or Short that shows its poster and loads YouTube only when played.": "Ein YouTube-Video oder Short, das sein Vorschaubild zeigt und YouTube erst beim Abspielen lädt.",
+  "Aspect Ratio": "Seitenverhältnis",
+  "Automatic": "Automatisch",
+  "https://www.youtube.com/watch?v=…": "https://www.youtube.com/watch?v=…",
+  "Load When Played": "Erst beim Abspielen laden",
+  "Play video: :title": "Video abspielen: :title",
+  "Poster Image": "Posterbild",
+  "Privacy-Enhanced Mode": "Erweiterter Datenschutzmodus",
+  "Show Subtitles": "Untertitel anzeigen",
+  "Square": "Quadrat",
+  "Start At": "Starten bei",
+  "The video’s title on YouTube": "Der Titel des Videos auf YouTube",
+  "This is a playlist. Use the link of one video in it.": "Das ist eine Playlist. Nimm den Link eines Videos daraus.",
+  "This isn’t a link to a YouTube video. Use the link from the video’s Share button.": "Das ist kein Link zu einem YouTube-Video. Nimm den Link über „Teilen“ beim Video.",
+  "This video is private, gone, or its owner doesn’t allow it on other sites.": "Dieses Video ist privat, gelöscht, oder es darf nicht auf anderen Websites erscheinen.",
+  "Title for Screen Readers": "Titel für Screenreader",
+  "Vertical": "Vertikal",
+  "Video Link": "Link zum Video",
+  "YouTube": "YouTube",
+  "YouTube video": "YouTube-Video"
+}

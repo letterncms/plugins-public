@@ -1,0 +1,25 @@
+/* Spotify block (SpotifyPlayer): Spotify's player at the height it is designed for, or a card in its place that loads it. */
+@layer components {
+  .cms-spotify-player iframe { display: block; width: 100%; border: 0; border-radius: 12px; color-scheme: normal; }
+
+  .cms-spotify-player__card { box-sizing: border-box; display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--color-border, rgb(0 0 0 / 0.1)); border-radius: 12px; background: var(--color-surface, transparent); color: var(--color-foreground, inherit); text-decoration: none; cursor: pointer; }
+  .cms-spotify-player__card--dark { border-color: transparent; background: #121212; color: #fff; }
+  .cms-spotify-player__card--slim { padding-block: 0.5rem; }
+  .cms-spotify-player__card:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  .cms-spotify-player__logo { display: flex; flex: none; font-size: 2rem; color: #1db954; }
+  .cms-spotify-player__card--slim .cms-spotify-player__logo { font-size: 1.5rem; }
+  .cms-spotify-player__text { display: grid; flex: 1; min-width: 0; gap: 0.125rem; line-height: 1.35; }
+  .cms-spotify-player__title { overflow: hidden; font-weight: var(--font-weight-semibold, 600); text-overflow: ellipsis; white-space: nowrap; }
+  .cms-spotify-player__kind { overflow: hidden; font-size: var(--text-sm, 0.875rem); text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; }
+  .cms-spotify-player__play { display: grid; flex: none; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #1ed760; color: #000; font-size: 1.125rem; transition: scale 0.15s; }
+  .cms-spotify-player__card--slim .cms-spotify-player__play { width: 2.25rem; height: 2.25rem; font-size: 1rem; }
+  .cms-spotify-player__card:hover .cms-spotify-player__play { scale: 1.06; }
+  .cms-spotify-player__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* The canvas only: why there is nothing to play yet. */
+  .cms-spotify-player__message { align-content: center; gap: 0.5rem; padding: 1rem; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cms-spotify-player__play { transition: none; }
+  }
+}
