@@ -2,7 +2,7 @@
     "name": "letterncms/youtube",
     "description": "A YouTube block that shows the video’s poster and loads YouTube only when a visitor plays it: fast pages, no cookies before they choose.",
     "type": "cms-plugin",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
