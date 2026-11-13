@@ -115,7 +115,8 @@ final class SpotifyPlayer
         $dark = ($b['theme'] ?? 'auto') === 'dark';
         $src = self::embed($item, $dark);
 
-        if (! ($b['load_on_click'] ?? false)) {
+        // The canvas runs no scripts, so neither would the player: it shows the card, which names what plays.
+        if (! ($b['load_on_click'] ?? false) && ! $d['editor']) {
             return '<div '.$d['attrs'].'><iframe src="'.e($src).'" title="'.e($title).'" style="height:'.$height.'px" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe></div>';
         }
 
@@ -123,10 +124,17 @@ final class SpotifyPlayer
         $link = "https://open.spotify.com/{$item['kind']}/{$item['id']}";
         $named = $title !== $what;
 
+        // The cover the site copied, on the colour it is mostly made of, as Spotify's player shows it; dark when asked.
+        $cover = $found['cover'] ?? null;
+        $color = ! $dark && is_string($cover['color'] ?? null) ? ' background-color:'.$cover['color'].';' : '';
+        $size = $height < self::HEIGHTS['compact'] ? 'slim' : ($height < self::HEIGHTS['tall'] ? 'compact' : 'tall');
+        $art = is_array($cover) ? '<img class="cms-spotify-player__art" src="'.e($cover['src']).'" width="'.$cover['width'].'" height="'.$cover['height'].'" alt="" loading="lazy" decoding="async">' : '';
+
         return '<div '.$d['attrs'].'>'
-            .'<a class="cms-spotify-player__card'.($dark ? ' cms-spotify-player__card--dark' : '').($height < self::HEIGHTS['compact'] ? ' cms-spotify-player__card--slim' : '').'" href="'.e($link).'" style="height:'.$height.'px" data-cms-spotify="'.e($src).'" data-cms-spotify-title="'.e($title).'">'
-            .'<span class="cms-spotify-player__logo">'.Icons::svg('spotify-logo-fill').'</span>'
+            .'<a class="cms-spotify-player__card cms-spotify-player__card--'.$size.($dark || $color === '' ? ' cms-spotify-player__card--dark' : '').'" href="'.e($link).'" style="height:'.$height.'px;'.$color.'" data-cms-spotify="'.e($src).'" data-cms-spotify-title="'.e($title).'">'
+            .$art
             .'<span class="cms-spotify-player__text">'.($named ? '<span class="cms-spotify-player__title">'.e($title).'</span>' : '').'<span class="cms-spotify-player__kind">'.e($what).'</span></span>'
+            .'<span class="cms-spotify-player__logo">'.Icons::svg('spotify-logo-fill').'</span>'
             .'<span class="cms-spotify-player__play">'.Icons::svg('play-fill').'<span class="cms-spotify-player__label">'.e(__('Load the Spotify player')).'</span></span>'
             .'</a></div>';
     }
