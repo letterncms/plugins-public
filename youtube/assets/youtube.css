@@ -1,0 +1,19 @@
+/* YouTube block (YoutubeVideo): the video's poster with YouTube's play button, which becomes YouTube's player when played. */
+@layer components {
+  .cms-youtube-video .cms-ratio { background: #000; }
+  .cms-youtube-video__play { position: absolute; inset: 0; display: block; cursor: pointer; }
+  .cms-youtube-video__play:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+  .cms-youtube-video__poster, .cms-youtube-video__poster picture { position: absolute; inset: 0; display: block; }
+  .cms-youtube-video__poster img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .cms-youtube-video__button { position: absolute; top: 50%; left: 50%; width: 68px; height: 48px; translate: -50% -50%; filter: drop-shadow(0 1px 6px rgb(0 0 0 / 0.25)); }
+  .cms-youtube-video__shape { fill: #212121; fill-opacity: 0.8; transition: fill 0.15s, fill-opacity 0.15s; }
+  .cms-youtube-video__play:hover .cms-youtube-video__shape, .cms-youtube-video__play:focus-visible .cms-youtube-video__shape { fill: #f00; fill-opacity: 1; }
+  .cms-youtube-video__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* The canvas only: why there is no video yet. */
+  .cms-youtube-video__message { align-content: center; gap: 0.5rem; padding: 1rem; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cms-youtube-video__shape { transition: none; }
+  }
+}
