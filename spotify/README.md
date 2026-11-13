@@ -4,7 +4,7 @@ Adds a **Spotify** block: a song, album, playlist, artist, podcast episode or sh
 
 The site asks Spotify about each link once, not the visitor: its title, which screen readers read when the block has none, and whether it can be shown. Something private or gone shows nothing on the page, and the block says why in the editor, as it does for a short `spotify.link` link or a link to a library.
 
-With **Load on Click**, the page shows a card with the title, a link to it on Spotify, and Spotify's player loads in its place, at the same height, when a visitor presses it. Until then nothing on the page contacts Spotify. It is off by default: the card has no artwork, since that would come from Spotify, and Spotify's player can't start playing by itself, so visitors press twice.
+With **Load on Click**, the page shows a card in the player's place: the cover, on the colour it is mostly made of, the title and a link to it on Spotify. Spotify's player loads in its place, at the same height, when a visitor presses it. The site copies the cover into `public/_cms/spotify/` when it asks Spotify about the link, so until a visitor presses the card nothing on the page contacts Spotify. It is off by default, since Spotify's player can't start playing by itself and visitors would press twice. The editor always shows the card: it runs no scripts, so Spotify's player could only show half of itself there.
 
 ## Install
 

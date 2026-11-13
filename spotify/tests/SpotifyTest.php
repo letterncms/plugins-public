@@ -10,6 +10,7 @@ use Cms\Modules\Blocks\Scope;
 use Cms\Spotify\SpotifyPlayer;
 use Cms\Tests\TestCase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 final class SpotifyTest extends TestCase
@@ -102,6 +103,38 @@ final class SpotifyTest extends TestCase
         $this->assertStringContainsString('src="https://open.spotify.com/embed/playlist/'.self::ID.'?theme=0" title="Our &quot;summer&quot; &lt;list&gt;"', $dark);
     }
 
+    public function test_the_card_shows_the_cover_the_site_copied_on_its_colour(): void
+    {
+        $image = imagecreatetruecolor(300, 300);
+        imagefill($image, 0, 0, imagecolorallocate($image, 200, 40, 30));
+        ob_start();
+        imagejpeg($image);
+        $jpeg = (string) ob_get_clean();
+        Http::fake([
+            'open.spotify.com/oembed*' => Http::response(['title' => 'Jazz in the Background', 'type' => 'rich', 'thumbnail_url' => 'https://i.scdn.co/image/ab67706f0000000247'.'2120b92edea982b5feb264']),
+            'i.scdn.co/*' => Http::response($jpeg, 200, ['Content-Type' => 'image/jpeg']),
+        ]);
+
+        $html = $this->render(['url' => 'https://open.spotify.com/playlist/'.self::ID, 'load_on_click' => true]);
+
+        $this->assertMatchesRegularExpression('#<img class="cms-spotify-player__art" src="/_cms/spotify/playlist-'.self::ID.'\\.jpg\\?v=[0-9a-f]{8}" width="300" height="300" alt=""#', $html);
+        $this->assertMatchesRegularExpression('#cms-spotify-player__card--tall" href="[^"]+" style="height:352px; background-color:\#[0-9a-f]{6};"#', $html, 'the cover’s own colour, deep enough for white text');
+        $this->assertFileExists(public_path('_cms/spotify/playlist-'.self::ID.'.jpg'));
+        Http::assertNotSent(static fn ($request) => ! str_contains($request->url(), 'spotify.com/oembed') && ! str_contains($request->url(), 'i.scdn.co'));
+        @unlink(public_path('_cms/spotify/playlist-'.self::ID.'.jpg'));
+    }
+
+    public function test_a_cover_from_anywhere_but_spotify_is_not_copied(): void
+    {
+        Http::fake(['open.spotify.com/oembed*' => Http::response(['title' => 'X', 'thumbnail_url' => 'https://evil.example/x.jpg'])]);
+
+        $html = $this->render(['url' => 'spotify:album:'.self::ID, 'load_on_click' => true]);
+
+        $this->assertStringNotContainsString('cms-spotify-player__art', $html);
+        $this->assertStringContainsString('cms-spotify-player__card--dark', $html, 'without a cover, the dark card');
+        Http::assertNotSent(static fn ($request) => str_contains($request->url(), 'evil.example'));
+    }
+
     public function test_with_load_on_click_nothing_comes_from_spotify_until_the_card_is_pressed(): void
     {
         $this->spotify();
@@ -109,7 +142,7 @@ final class SpotifyTest extends TestCase
         $html = $this->render(['url' => 'https://open.spotify.com/track/'.self::ID, 'load_on_click' => true, 'theme' => 'dark']);
 
         $this->assertStringNotContainsString('<iframe', $html);
-        $this->assertStringContainsString('<a class="cms-spotify-player__card cms-spotify-player__card--dark" href="https://open.spotify.com/track/'.self::ID.'" style="height:152px" data-cms-spotify="https://open.spotify.com/embed/track/'.self::ID.'?theme=0" data-cms-spotify-title="Today’s Top Hits">', $html, 'without scripts, a link to it on Spotify');
+        $this->assertStringContainsString('<a class="cms-spotify-player__card cms-spotify-player__card--compact cms-spotify-player__card--dark" href="https://open.spotify.com/track/'.self::ID.'" style="height:152px;" data-cms-spotify="https://open.spotify.com/embed/track/'.self::ID.'?theme=0" data-cms-spotify-title="Today’s Top Hits">', $html, 'without scripts, a link to it on Spotify');
         $this->assertStringContainsString('<span class="cms-spotify-player__title">Today’s Top Hits</span><span class="cms-spotify-player__kind">Song on Spotify</span>', $html);
         $this->assertStringContainsString('<span class="cms-spotify-player__label">Load the Spotify player</span>', $html);
         $this->assertTrue(app(BlockRenderer::class)->features['spotify/facade'] ?? false, 'the script that loads it');
@@ -129,6 +162,10 @@ final class SpotifyTest extends TestCase
         $this->assertStringContainsString('Short links can’t be shown here. Open it, then copy the open.spotify.com link.', $this->render(['url' => 'https://spotify.link/abc123'], editor: true));
         $this->assertStringContainsString('Your library and profile are private. Share a public playlist instead.', $this->render(['url' => 'https://open.spotify.com/collection/tracks'], editor: true));
         Http::assertNothingSent();
+        // The canvas runs no scripts: it shows the card in the player's place, and loads nothing from Spotify.
+        $canvas = $this->render(['url' => 'https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M'], editor: true);
+        $this->assertStringContainsString('cms-spotify-player__card', $canvas);
+        $this->assertStringNotContainsString('<iframe', $canvas);
     }
 
     public function test_something_private_or_gone_shows_nothing_and_the_canvas_says_so(): void
