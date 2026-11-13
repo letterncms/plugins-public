@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-11-13)
+
 ### Changed
 
 - The Dashboard widget says "Nothing imported yet" instead of showing an empty panel.
