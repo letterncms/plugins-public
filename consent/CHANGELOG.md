@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The Dashboard widget says "No consent issues" instead of showing an empty panel.
+
 ## 0.3.0 (2026-11-12)
 
 ### Changed
