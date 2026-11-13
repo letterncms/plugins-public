@@ -2,7 +2,7 @@
     "name": "letterncms/consent",
     "description": "A cookie-consent banner in your site’s own design: visitors choose analytics and marketing, and scripts wait for their answer.",
     "type": "cms-plugin",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
