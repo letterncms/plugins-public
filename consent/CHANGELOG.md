@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 (2026-11-14)
+
 ### Changed
 
 - **Breaking.** Needs the core 0.37 or newer: the banner's buttons take their look from the site's Tailwind classes (`btn-primary`, `btn-secondary`).
