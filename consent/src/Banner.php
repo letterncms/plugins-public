@@ -56,10 +56,10 @@ final class Banner
             .'<div id="cms-consent-choices" class="cms-consent__choices" hidden>'.$rows.'</div>'
             .'<div class="cms-consent__actions" data-size="sm">'
             // The two answers weigh the same; once the choices are open, saving them is the way on.
-            .'<button type="button" class="cms-button" data-variant="secondary" data-act="save" hidden><span>'.e(__('Save Choices')).'</span></button>'
-            .'<button type="button" class="cms-button" data-variant="primary" data-act="accept"><span>'.e(__('Accept All')).'</span></button>'
-            .'<button type="button" class="cms-button" data-variant="primary" data-act="reject"><span>'.e(__('Only Necessary')).'</span></button>'
-            .'<button type="button" class="cms-button" data-variant="secondary" data-act="choose" aria-expanded="false" aria-controls="cms-consent-choices"><span>'.e(__('Choose')).'</span></button>'
+            .'<button type="button" class="cms-button btn-secondary" data-act="save" hidden><span>'.e(__('Save Choices')).'</span></button>'
+            .'<button type="button" class="cms-button btn-primary" data-act="accept"><span>'.e(__('Accept All')).'</span></button>'
+            .'<button type="button" class="cms-button btn-primary" data-act="reject"><span>'.e(__('Only Necessary')).'</span></button>'
+            .'<button type="button" class="cms-button btn-secondary" data-act="choose" aria-expanded="false" aria-controls="cms-consent-choices"><span>'.e(__('Choose')).'</span></button>'
             .'</div></div>';
 
         $opener = $reopen ? '<button type="button" class="cms-consent-open" data-cms-consent-open hidden>'.e(__('Cookie Settings')).'</button>' : '';
@@ -109,7 +109,9 @@ final class Banner
         .'function apply(o,decided){var back=false;all.forEach(function(c){var on=cats.indexOf(c)>-1&&o[c]===true;if(api[c]&&!on)back=true;api[c]=on});api.decided=decided;'
         .'[].slice.call(el.querySelectorAll("input[data-category]")).forEach(function(i){if(!i.disabled)i.checked=api[i.getAttribute("data-category")]});'
         .'if(back){location.reload();return}run();d.dispatchEvent(new CustomEvent("cms:consent",{detail:{necessary:true,analytics:api.analytics,marketing:api.marketing}}))}'
-        .'function details(on){choices.hidden=!on;save.hidden=!on;choose.hidden=on;choose.setAttribute("aria-expanded",on?"true":"false");el.setAttribute("data-state",on?"choices":"ask");save.setAttribute("data-variant",on?"primary":"secondary");[q("[data-act=accept]"),q("[data-act=reject]")].forEach(function(b){b.setAttribute("data-variant",on?"secondary":"primary")})}'
+        .'function details(on){choices.hidden=!on;save.hidden=!on;choose.hidden=on;choose.setAttribute("aria-expanded",on?"true":"false");el.setAttribute("data-state",on?"choices":"ask");look(save,on);[q("[data-act=accept]"),q("[data-act=reject]")].forEach(function(b){look(b,!on)})}'
+        // A button's look is a class of the site's theme.
+        .'function look(b,primary){b.classList.toggle("btn-primary",primary);b.classList.toggle("btn-secondary",!primary)}'
         .'function show(focus){if(el.parentNode!==d.body||d.body.firstChild!==el)d.body.insertBefore(el,d.body.firstChild);el.hidden=false;if(opener)opener.hidden=true;if(focus)q("#cms-consent-title").focus()}'
         .'function hide(){var had=el.contains(d.activeElement);el.hidden=true;details(false);if(opener)opener.hidden=false;var to=from&&d.contains(from)&&from.getClientRects().length?from:opener;if((had||from)&&to&&to.focus)to.focus();from=null}'
         .'function decide(o){write(o);apply(o,true);hide()}'

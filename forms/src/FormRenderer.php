@@ -77,7 +77,7 @@ final class FormRenderer
   <input type="hidden" name="_cms_locale" value="{$this->e($locale)}">
   <div class="cms-form__error" id="{$id}-error" role="alert" tabindex="-1"><p>{$error}</p></div>
   {$again}
-  <button type="submit" class="cms-button cms-form__submit" data-variant="primary">{$this->e((string) $s['submit'])}</button>
+  <button type="submit" class="cms-button btn-primary cms-form__submit">{$this->e((string) $s['submit'])}</button>
 </form>
 <div class="cms-form__success" id="{$id}-ok" role="status" tabindex="-1"><p>{$this->e((string) $s['success'])}</p></div>
 HTML;
@@ -96,11 +96,11 @@ HTML;
 
     /**
      * What only these forms have: the busy, error and success states. How fields look and sit
-     * is the site's design system (`fields`), as on every form.
+     * is the site's styling (its --field-* properties), as on every form.
      */
     private function css(): string
     {
-        return '@layer theme,base,elements,components,utilities;@layer components{'
+        return '@layer components{'
             .'.cms-form.is-busy .cms-form__submit{opacity:.6;pointer-events:none}'
             .'.cms-form__error,.cms-form__success{display:none}.cms-form__error:target,.cms-form__error.is-shown{display:block;color:var(--field-invalid-color,#d92d20)}'
             .'.cms-form__success:target,.cms-form__success.is-shown{display:block;padding:1rem 1.25rem;border-radius:var(--field-radius,.5rem);background:color-mix(in srgb,var(--color-success,#16a34a) 10%,transparent)}'

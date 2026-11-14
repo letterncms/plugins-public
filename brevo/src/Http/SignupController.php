@@ -116,13 +116,13 @@ final class SignupController
 
         try {
             if ($this->cms->isActive('letterncms/site')) {
-                $design = '<link rel="stylesheet" href="'.e($this->cms->app()->make(\Cms\Modules\Site\Design\Design::class)->stylesheet()).'">';
+                $design = '<link rel="stylesheet" href="'.e($this->cms->app()->make(\Cms\Modules\Site\Styling\Styling::class)->stylesheet()).'">';
             }
         } catch (Throwable) {
         }
 
         $form = $token === null ? '' : '<form method="post" action="'.e(($this->signup->base() ?: '').'/api/brevo/confirm').'"><input type="hidden" name="token" value="'.e($token).'">'
-            .'<button type="submit" class="cms-button" data-variant="primary"><span>'.e(__('Confirm Subscription')).'</span></button></form>';
+            .'<button type="submit" class="cms-button btn-primary"><span>'.e(__('Confirm Subscription')).'</span></button></form>';
 
         return response('<!doctype html><html lang="'.$lang.'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="referrer" content="no-referrer"><title>'.e($title).' · '.$site.'</title>'
             // In a layer declared first, so the site's design wins wherever it speaks; these are what a site without one gets.

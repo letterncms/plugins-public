@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- **Breaking.** Needs the core 0.37 or newer: a form's button takes its look from the site's Tailwind class `btn-primary`.
+
+### Fixed
+
+- The Form block's Design tab offers Fill again.
+
 ## 0.17.0 (2026-11-13)
 
 ### Changed
