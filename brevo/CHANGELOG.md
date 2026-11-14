@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Changed
+
+- **Breaking.** Needs the core 0.37 or newer: the signup button takes its look from the site's Tailwind class `btn-primary`, and the confirmation page uses the site's new stylesheet.
+
+### Fixed
+
+- The signup block's Design tab offers Fill again.
+
 ## 0.7.0 (2026-11-12)
 
 ### Added

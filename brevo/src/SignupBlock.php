@@ -21,7 +21,7 @@ final class SignupBlock
             'category' => 'form',
             'description' => __('Adds visitors to a Brevo list'),
             'keywords' => ['newsletter', 'subscribe', 'email', 'signup', 'brevo'],
-            'styles' => ['spacing', 'size', 'background', 'border'],
+            'styles' => ['spacing', 'size', 'fill', 'border'],
             'fields' => [
                 ['handle' => 'list', 'type' => 'select', 'label' => 'List', 'placeholder' => 'Default List', 'options' => [], 'dynamic' => 'brevo-lists'],
                 ['handle' => 'label', 'type' => 'text', 'label' => 'Label', 'placeholder' => 'Email'],
@@ -50,7 +50,7 @@ final class SignupBlock
         $consent = trim((string) ($b['consent'] ?? '')) !== '' ? '<p class="cms-help">'.e(trim((string) $b['consent'])).'</p>' : '';
         $base = $signup->base();
 
-        cms()->hooks()->dispatch('render.head', 'brevo-signup-css', '<style>@layer theme,base,elements,components,utilities;@layer components{'
+        cms()->hooks()->dispatch('render.head', 'brevo-signup-css', '<style>@layer components{'
             .'.brevo-signup{max-width:28rem;margin-inline:auto}.brevo-signup__ok{max-width:28rem;margin-inline:auto}'
             .'.brevo-signup__row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-start}.brevo-signup__row .cms-input{flex:1 1 14rem;min-width:0}'
             .'.brevo-signup__hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}'
@@ -64,7 +64,7 @@ final class SignupBlock
             .'<form id="'.e($id).'" class="brevo-signup" method="post" action="'.e($base.'/api/brevo/subscribe').'" data-brevo-signup>'
             .'<div class="cms-field"><label class="cms-label" for="'.e($id).'-email">'.$say('label', 'Email').'</label>'
             .'<div class="brevo-signup__row"><input class="cms-input" id="'.e($id).'-email" type="email" name="email" autocomplete="email" required aria-required="true" maxlength="254">'
-            .'<button type="submit" class="cms-button" data-variant="primary"><span>'.$say('button', 'Subscribe').'</span></button></div>'.$consent.'</div>'
+            .'<button type="submit" class="cms-button btn-primary"><span>'.$say('button', 'Subscribe').'</span></button></div>'.$consent.'</div>'
             .'<div class="brevo-signup__hp" aria-hidden="true"><label>'.e(__('Leave this empty', [], $locale)).'<input type="text" name="_cms_website" tabindex="-1" autocomplete="off"></label></div>'
             .'<input type="hidden" name="list" value="'.$list.'"><input type="hidden" name="seal" value="'.e($signup->seal($list)).'">'
             .'<input type="hidden" name="_cms_locale" value="'.e($locale).'"><input type="hidden" name="_cms_id" value="'.e($id).'">'

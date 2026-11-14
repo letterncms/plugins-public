@@ -54,7 +54,7 @@ final class ConsentTest extends TestCase
         $this->assertStringContainsString('aria-expanded="false" aria-controls="cms-consent-choices"', $foot);
         $this->assertStringContainsString('<div id="cms-consent-choices" class="cms-consent__choices" hidden>', $foot);
         // Every button is a button with words, in the site's own button style.
-        $this->assertSame(4, preg_match_all('/<button type="button" class="cms-button" data-variant="[a-z]+" data-act="[a-z]+"[^>]*><span>[^<]+<\/span><\/button>/', $foot));
+        $this->assertSame(4, preg_match_all('/<button type="button" class="cms-button btn-[a-z]+" data-act="[a-z]+"[^>]*><span>[^<]+<\/span><\/button>/', $foot));
         // Each switch is described by its explanation; what the site needs can't be switched off.
         $this->assertStringContainsString('<input type="checkbox" class="cms-switch" role="switch" data-category="necessary" aria-describedby="cms-consent-necessary" checked disabled>', $foot);
         $this->assertStringContainsString('<input type="checkbox" class="cms-switch" role="switch" data-category="analytics" aria-describedby="cms-consent-analytics">', $foot);
@@ -159,12 +159,12 @@ final class ConsentTest extends TestCase
     {
         $foot = $this->foot();
 
-        $this->assertStringContainsString('<button type="button" class="cms-button" data-variant="primary" data-act="accept">', $foot);
-        $this->assertStringContainsString('<button type="button" class="cms-button" data-variant="primary" data-act="reject">', $foot);
-        $this->assertStringContainsString('<button type="button" class="cms-button" data-variant="secondary" data-act="choose"', $foot);
-        $this->assertStringNotContainsString('data-variant="link"', $foot);
+        $this->assertStringContainsString('<button type="button" class="cms-button btn-primary" data-act="accept">', $foot);
+        $this->assertStringContainsString('<button type="button" class="cms-button btn-primary" data-act="reject">', $foot);
+        $this->assertStringContainsString('<button type="button" class="cms-button btn-secondary" data-act="choose"', $foot);
+        $this->assertStringNotContainsString('btn-link', $foot);
         // With the choices open, saving them is the way on, and the two answers step back together.
-        $this->assertStringContainsString('save.setAttribute("data-variant",on?"primary":"secondary")', $foot);
+        $this->assertStringContainsString('look(save,on)', $foot);
         // On a phone: half the screen at most, a thumb's height for every target, the whole row a label.
         $this->assertStringContainsString('max-height:50dvh', $foot);
         $this->assertStringContainsString('min-height:2.75rem', $foot);
