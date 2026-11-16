@@ -1,7 +1,7 @@
 import { t } from '@letterncms/sdk'
 import { cn } from '@letterncms/ui'
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
-import { longDate, shortDate } from './data'
+import { stepLabel, type Interval } from './data'
 
 const PAD = { top: 12, right: 12, bottom: 28, left: 48 }
 
@@ -21,10 +21,21 @@ function ticks(max: number, whole: boolean): number[] {
 
 /**
  * One metric over time: a 2px line over a soft wash, hairline grid, round y ticks and a
- * few dates. Hover or arrow keys move a crosshair that reads out the day; the numbers are
- * also in a table for screen readers.
+ * few dates, with the period before as a dashed line behind it. Hover or arrow keys move a
+ * crosshair that reads out the step; the numbers are also in a table for screen readers.
  */
-export function AreaChart({ points, format, label, height = 240, pending, whole = false }: { points: { date: string; value: number }[]; format: (value: number) => string; label: string; height?: number; pending?: boolean; /** The values are counts: the axis has whole numbers only. */ whole?: boolean }) {
+export function AreaChart({ points, previous, interval = 'day', format, label, height = 240, pending, whole = false }: {
+  points: { date: string; value: number }[]
+  /** The period before, step for step: the first beside the first. */
+  previous?: { date: string; value: number }[]
+  interval?: Interval
+  format: (value: number) => string
+  label: string
+  height?: number
+  pending?: boolean
+  /** The values are counts: the axis has whole numbers only. */
+  whole?: boolean
+}) {
   const box = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [active, setActive] = useState<number | null>(null)
@@ -40,7 +51,8 @@ export function AreaChart({ points, format, label, height = 240, pending, whole 
 
   const n = points.length
   const values = points.map((p) => p.value)
-  const scale = ticks(Math.max(...values, 0), whole)
+  const before = (previous ?? []).slice(0, Math.max(n, 1))
+  const scale = ticks(Math.max(...values, ...before.map((p) => p.value), 0), whole)
   const top = scale[scale.length - 1]
   const plotW = Math.max(0, width - PAD.left - PAD.right)
   const plotH = height - PAD.top - PAD.bottom
@@ -48,6 +60,7 @@ export function AreaChart({ points, format, label, height = 240, pending, whole 
   const y = (v: number) => PAD.top + plotH - (top > 0 ? (v / top) * plotH : 0)
   const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join('')
   const area = n > 1 ? `${line}L${x(n - 1).toFixed(1)},${y(0)}L${x(0).toFixed(1)},${y(0)}Z` : ''
+  const beforeLine = before.length > 1 ? before.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join('') : ''
   const labelCount = Math.max(2, Math.min(n, Math.floor(plotW / 84)))
   // Dates at an even step of days, ending on the last one.
   const every = Math.max(1, Math.ceil((n - 1) / Math.max(1, labelCount - 1)))
@@ -71,7 +84,8 @@ export function AreaChart({ points, format, label, height = 240, pending, whole 
   }
 
   const point = active !== null ? points[active] : null
-  const today = n > 0 && point === points[n - 1]
+  const was = active !== null ? before[active] : undefined
+  const now = n > 0 && point === points[n - 1] && interval !== 'minute'
 
   return (
     <div ref={box} className={cn('relative select-none transition-opacity duration-move', pending && 'opacity-60')}>
@@ -95,10 +109,11 @@ export function AreaChart({ points, format, label, height = 240, pending, whole 
 
           {dateTicks.map((i) => (
             <text key={i} x={x(i)} y={height - 8} textAnchor={i === 0 && n > 1 ? 'start' : i === n - 1 && n > 1 ? 'end' : 'middle'} className="fill-faint text-2xs tabular-nums">
-              {shortDate(points[i].date)}
+              {stepLabel(points[i].date, interval)}
             </text>
           ))}
 
+          {beforeLine && <path d={beforeLine} fill="none" stroke="var(--cms-border-strong)" strokeWidth={1.5} strokeDasharray="4 4" strokeLinejoin="round" />}
           {area && <path d={area} fill={`url(#${gradient})`} />}
           <path d={line} fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
 
@@ -119,12 +134,19 @@ export function AreaChart({ points, format, label, height = 240, pending, whole 
           className="pointer-events-none absolute top-0 z-raised min-w-36 -translate-x-1/2 rounded-md border border-border-float bg-bg px-3 py-2 shadow-pop"
           style={{ left: Math.max(PAD.left + 64, Math.min(width - 64, x(active))) }}
         >
-          <p className="m-0 text-2xs text-muted">{today ? t('Today so far') : longDate(point.date)}</p>
+          <p className="m-0 text-2xs text-muted">{now ? t('So far') : stepLabel(point.date, interval, true)}</p>
           <p className="m-0 mt-1 flex items-center gap-2 text-xs text-muted">
             <span className="h-0.5 w-3 rounded-full bg-ink" />
             <span className="text-sm font-semibold tabular-nums text-ink">{format(point.value)}</span>
             {label}
           </p>
+          {was && (
+            <p className="m-0 mt-1 flex items-center gap-2 text-xs text-muted">
+              <span className="w-3 border-t border-dashed border-border-strong" />
+              <span className="tabular-nums">{format(was.value)}</span>
+              {stepLabel(was.date, interval, true)}
+            </p>
+          )}
         </div>
       )}
 
@@ -133,7 +155,7 @@ export function AreaChart({ points, format, label, height = 240, pending, whole 
         <tbody>
           {points.map((p) => (
             <tr key={p.date}>
-              <th scope="row">{longDate(p.date)}</th>
+              <th scope="row">{stepLabel(p.date, interval, true)}</th>
               <td>{format(p.value)}</td>
             </tr>
           ))}

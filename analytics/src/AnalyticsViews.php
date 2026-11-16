@@ -7,9 +7,10 @@ namespace Cms\Analytics;
 use Cms\Cms;
 
 /**
- * The Analytics place, as data (see Cms\Admin\Views): the period's headline numbers and
- * chart, drawn by the plugin's `analytics/overview`, and where visits go and come from,
- * as lists of the analytics/breakdown ability for the period in the address (?period=).
+ * The Analytics place, as data (see Cms\Admin\Views): a tab per report, each drawn by the plugin. Overview
+ * (the numbers, the chart, and where visits come from, go and convert), Journeys (funnels and paths;
+ * visitors mode), Search (Google Search, AI assistants and page speed), and the settings' own tab.
+ * The period and the filters are in the address (?period=, ?f=), the same on every tab.
  */
 final class AnalyticsViews
 {
@@ -17,16 +18,30 @@ final class AnalyticsViews
 
     public function register(): void
     {
-        $this->cms->admin()->component('analytics/overview', ['label' => 'Analytics overview', 'description' => 'The period’s visitors, views, views per visit and bounce rate, each switching the chart, with who is on the site now.', 'surface' => false, 'permission' => 'analytics.view',
-            'props' => ['type' => 'object', 'properties' => (object) [], 'additionalProperties' => false]]);
+        $components = [
+            'analytics/overview' => ['Analytics overview', 'The period’s headline numbers against the period before, one of them over time, and where visits come from, go and convert. Every row narrows the report to it.'],
+            'analytics/journeys' => ['Analytics journeys', 'Funnels from the settings step by step, and the paths visits take through the site.'],
+            'analytics/search' => ['Analytics search', 'Google Search from Search Console, the visitors AI assistants send, and how fast the pages are for visitors.'],
+        ];
+
+        foreach ($components as $name => [$label, $description]) {
+            $this->cms->admin()->component($name, ['label' => $label, 'description' => $description, 'surface' => false, 'permission' => 'analytics.view',
+                'props' => ['type' => 'object', 'properties' => (object) [], 'additionalProperties' => false]]);
+        }
+
         $this->cms->views()->register('analytics', '/analytics', fn () => $this->view(), permission: 'analytics.view');
     }
 
     private function view(): array
     {
+        $tab = static fn (string $id, string $label, array $children) => ['type' => 'ui/tab', 'props' => ['id' => $id, 'label' => $label], 'children' => [['type' => 'ui/stack', 'children' => $children]]];
+        $counting = $this->reports->counting();
+
         return ['type' => 'ui/page', 'props' => ['title' => __('Analytics'), 'icon' => 'chart', 'width' => 'wide'], 'children' => [
             ['type' => 'ui/tabs', 'children' => [
-                ['type' => 'ui/tab', 'props' => ['id' => 'overview', 'label' => __('Overview')], 'children' => [['type' => 'ui/stack', 'children' => $this->overview()]]],
+                $tab('overview', __('Overview'), $this->overview()),
+                ...($counting ? [] : [$tab('journeys', __('Journeys'), [['type' => 'analytics/journeys']])]),
+                $tab('search', __('Search||results'), [['type' => 'analytics/search']]),
             ]],
         ]];
     }
@@ -41,61 +56,9 @@ final class AnalyticsViews
                 : [['type' => 'ui/empty', 'props' => ['icon' => 'chart', 'title' => __('Analytics is off'), 'action' => [...$settings, 'variant' => 'primary']]]];
         }
 
-        $counting = $this->reports->counting();
-        // Short at a glance (1.2K), the whole number on hover.
-        // Named as the number above the chart is, and on a phone, where no header says it, with the number itself.
-        $count = [...($counting
-            ? ['key' => 'views', 'label' => __('Page Views'), 'width' => '88px', 'unit' => ['one' => __('{count} Page View'), 'other' => __('{count} Page Views')]]
-            : ['key' => 'visitors', 'label' => __('Visitors'), 'width' => '80px', 'unit' => ['one' => __('{count} Visitor'), 'other' => __('{count} Visitors')]]), 'align' => 'end', 'format' => 'compact'];
-        $share = ['key' => 'share', 'label' => __('Share'), 'width' => '80px', 'format' => 'share'];
-        // The numbers take what they need; the title is read whole, and the path beside it gives way first.
-        $name = ['width' => 'minmax(0,1fr)'];
-        $pages = fn (string $dimension, string $title) => $this->list($title, $dimension, [
-            ['key' => 'label', 'label' => __('Page'), 'muted' => 'path', ...$name],
-            $share,
-            $count,
-        ], ['label' => __('Open'), 'href' => '{row.url}']);
-
         return [
             ...($this->reports->enabled() ? [] : [['type' => 'ui/notice', 'props' => ['tone' => 'neutral', 'title' => __('Counting visits is paused.'), 'action' => [...$settings, 'label' => __('Settings')]]]]),
             ['type' => 'analytics/overview'],
-            ['type' => 'ui/grid', 'props' => ['columns' => 2], 'children' => $counting ? [
-                $pages('pages', __('Top Pages')),
-                $this->list(__('Languages'), 'languages', [['key' => 'label', 'label' => __('Language'), ...$name], $share, $count]),
-            ] : [
-                $pages('pages', __('Top Pages')),
-                $this->list(__('Sources'), 'sources', [['key' => 'label', 'label' => __('Source'), 'labels' => ['Direct' => __('Direct')], ...$name], $share, $count]),
-                $pages('entries', __('Entry Pages')),
-                $this->list(__('Devices'), 'devices', [
-                    ['key' => 'label', 'label' => __('Device'), 'icon' => 'icon', ...$name, 'labels' => ['desktop' => __('Desktop'), 'mobile' => __('Mobile'), 'tablet' => __('Tablet'), 'Other' => __('Other')]],
-                    $share,
-                ], filters: [['param' => 'dimension', 'label' => __('Show'), 'all' => __('Type'), 'options' => self::options(['browsers' => __('Browser'), 'os' => __('System')])]]),
-            ]],
         ];
-    }
-
-    /** @param array<string, string> $labels value => words */
-    private static function options(array $labels): array
-    {
-        return array_map(static fn ($value, $label) => ['value' => $value, 'label' => $label], array_keys($labels), $labels);
-    }
-
-    /**
-     * One breakdown for the period on view, most first: few enough to read at a glance, with nothing to search.
-     * The period is the address's (?period=), which the overview above keeps to one it knows.
-     */
-    private function list(string $title, string $dimension, array $columns, ?array $open = null, array $filters = []): array
-    {
-        return ['type' => 'ui/section', 'props' => ['title' => $title], 'children' => [
-            ['type' => 'ui/records', 'props' => [
-                'id' => "analytics.{$dimension}", 'label' => $title, 'key' => 'key',
-                'source' => ['ability' => 'analytics/breakdown', 'input' => ['period' => '{query.period}', 'dimension' => $dimension, 'limit' => 8]],
-                'columns' => $columns,
-                'search' => false, 'display' => false,
-                ...($open ? ['open' => $open] : []),
-                ...($filters ? ['filters' => $filters] : []),
-                'empty' => ['icon' => 'chart', 'title' => __('No visits in this period'), 'size' => 'sm'],
-            ]],
-        ]];
     }
 }

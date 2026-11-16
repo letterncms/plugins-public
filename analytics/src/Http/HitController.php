@@ -10,8 +10,8 @@ use Cms\Cms;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Where the snippet on published pages reports a view (visitors mode). Always answers 204 —
- * counted or not — so the page learns nothing and nothing waits on it.
+ * Where the script on published pages reports (visitors mode): a page view, the page's engagement as it is
+ * hidden, or an event. Always answers 204, counted or not, so the page learns nothing and nothing waits on it.
  */
 final class HitController
 {
@@ -19,26 +19,18 @@ final class HitController
     {
         $own = array_values(array_filter([$request->getHost(), parse_url($cms->url(), PHP_URL_HOST)]));
 
-        if ($this->consents($request) && ! $request->cookies->has(Collector::STAFF_COOKIE) && $this->fromOwnSite($request, $own)) {
+        if ($this->consents($request) && ! $request->cookies->has(Collector::STAFF_COOKIE) && $this->fromOwnSite($request, $own) && strlen((string) $request->getContent()) <= 8192) {
             $hit = json_decode((string) $request->getContent(), true);
 
-            if (is_array($hit) && is_string($hit['p'] ?? null)) {
-                $collector->record(
-                    path: $hit['p'],
-                    referrer: is_string($hit['r'] ?? null) ? mb_substr($hit['r'], 0, 1000) : null,
-                    campaign: is_string($hit['s'] ?? null) ? mb_substr($hit['s'], 0, 100) : null,
-                    width: is_numeric($hit['w'] ?? null) ? (int) $hit['w'] : null,
-                    ip: (string) $request->ip(),
-                    userAgent: mb_substr((string) $request->userAgent(), 0, 500),
-                    ownHosts: $own,
-                );
+            if (is_array($hit)) {
+                $collector->record($hit, (string) $request->ip(), mb_substr((string) $request->userAgent(), 0, 500), $own);
             }
         }
 
         return response('', 204, ['Cache-Control' => 'no-store']);
     }
 
-    /** Do Not Track and Global Privacy Control are respected here too, not only in the snippet. */
+    /** Do Not Track and Global Privacy Control are respected here too, not only in the script. */
     private function consents(Request $request): bool
     {
         return $request->header('DNT') !== '1' && $request->header('Sec-GPC') !== '1';

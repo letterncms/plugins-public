@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Added
+
+- Visitors mode counts visits as well as visitors: a visit ends after half an hour without anything happening. Visit duration, time on page and scroll depth say how long people read and how far.
+- Every number can be narrowed: press a source, a page, a country, a device or a goal and the whole report shows only those visits. The filters are in the address, so a report can be linked to, and Back takes one off.
+- More periods: the last 30 minutes (live), today and yesterday by the hour, the last 12 months by the month, and any two dates.
+- The chart draws the period before as a dashed line beside the one on view.
+- Channels sort where visits came from: search engines, AI assistants (ChatGPT, Perplexity, Claude, Gemini, Copilot and more), social networks, email, paid ads, other websites and campaigns. Campaigns are read from `utm_source`, `utm_medium` and `utm_campaign`.
+- Countries, from the visitor's time zone: no address is looked up.
+- Exit pages beside the top and entry pages.
+- Goals: clicks on links to other sites, file downloads, forms sent and visits to missing pages are counted by themselves, and **Goal Pages** in the settings name pages that count as a goal. Sites count events of their own with `window.cmsAnalytics.track()` or a `data-cms-event` attribute, and plugins with the `analytics.track` hook. Each goal shows its visitors, how often and its conversion rate; pressed, what its events carried (which links, which files).
+- Funnels in the settings, shown step by step with who dropped off where, and the paths visits take through the site, or around one page, on the new **Journeys** tab.
+- The new **Search** tab: Google Search through Search Console (clicks, impressions, click-through rate and position, the searches, the pages, and the searches a page is close to the top for), the visitors AI assistants send and the pages they land on, and page speed as visitors met it: the Core Web Vitals Google ranks by, rated by Google's thresholds, for the site and per page.
+- An **Analytics** tab beside each page in the editor: its visitors, views, time on page and scroll depth, where people came from, and its Google Search clicks.
+- Three dashboard widgets: **On the Site Now**, **Top Pages** and **Google Search**.
+- Abilities for agents, the API and the CLI: `analytics/funnel`, `analytics/paths`, `analytics/vitals`, `analytics/search`, `analytics/goals`, and `analytics/track` to count an event from outside the pages. `analytics/summary` and `analytics/breakdown` take any period and filters.
+
+### Changed
+
+- **Breaking.** Visitors mode keeps visits, page views and events instead of one row per visitor and day; visitors counted before keep their number, without the pages they read. `analytics/summary` and `analytics/breakdown` answer with more numbers, and `period` takes more values.
+- The visitor hash also includes the site's host, as the French data protection authority asks of audience measurement.
+- The demo command fills visits, page views, goals, countries and page speed.
+
+### Fixed
+
+- AI assistants fetching a page for someone (ChatGPT, Claude, Perplexity, Mistral and others) aren't counted as visitors.
+
 ## 0.10.0 (2026-11-16)
 
 ### Changed
