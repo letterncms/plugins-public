@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0 (2026-11-16)
+
 ### Added
 
 - Visitors mode counts visits as well as visitors: a visit ends after half an hour without anything happening. Visit duration, time on page and scroll depth say how long people read and how far.

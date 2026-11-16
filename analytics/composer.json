@@ -2,7 +2,7 @@
     "name": "letterncms/analytics",
     "description": "Site analytics on your own server: page views by default, and visitors, goals, funnels, page speed and Google Search as an option.",
     "type": "cms-plugin",
-    "version": "0.10.0",
+    "version": "0.11.0",
     "license": "MIT",
     "require": {
         "php": "^8.4",
