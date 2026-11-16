@@ -1,6 +1,6 @@
 import { blockViews, useEditorContext, type BlockNode } from '@letterncms/blocks'
 import { t, type FieldDef } from '@letterncms/sdk'
-import { Button, Fields, Icon, cn } from '@letterncms/ui'
+import { Button, Fields, Icon, cn, Tooltip } from '@letterncms/ui'
 
 const label = (): FieldDef => ({ handle: 'label', type: 'text', component: 'forms-label', label: t('Label') })
 
@@ -27,9 +27,9 @@ function FieldView({ node, onSettings }: { node: BlockNode; onSettings: (id: str
         <div className="flex items-center gap-2">
           <Fields bare className="min-w-0 flex-1" fields={[{ ...label(), display: 'heading', placeholder: t('Label') }]} values={p} onChange={(_, v) => store.updateProps(node.id, { label: v })} />
           {p.required && <span className="text-xs text-faint">{t('Required')}</span>}
-          <Button variant="ghost" size="xs" onClick={() => onSettings(node.id)} title={t('Field Settings')} className="px-1! font-mono text-2xs! font-normal! text-faint! hover:text-text!">
+          <Tooltip content={t('Field Settings')}><Button variant="ghost" size="xs" onClick={() => onSettings(node.id)} className="px-1! font-mono text-2xs! font-normal! text-faint! hover:text-text!">
             {p.name || t('name?')}
-          </Button>
+          </Button></Tooltip>
         </div>
       )}
       {kind === 'textarea' ? (
