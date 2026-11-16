@@ -7,32 +7,38 @@ namespace Cms\Analytics;
 /**
  * What a published page carries.
  *
- * Counts mode: one image, with the path baked in at build. No script, nothing read from
- * the browser, and no referrer sent.
+ * Counts mode: one image, with the path baked in at build. No script, nothing read from the browser, and
+ * no referrer sent.
  *
- * Visitors mode: a few hundred bytes of script that send the path, the referrer, a campaign
- * name and the viewport width. Visitors who ask not to be tracked (Do Not Track, Global
- * Privacy Control) and automated browsers are skipped, and by default it waits for a consent
- * signal: `window.cmsConsent.analytics === true`, or a `cms:consent` event with
- * `detail.analytics` true. A consent tool sends either; a built page has one copy for everyone,
- * so the decision has to come from the browser.
+ * Visitors mode: the script in `resources/tracker.js`, the same on every page: what differs (where it
+ * reports, whether it waits for consent, whether the page is the one for a missing address) is in the
+ * element's attributes, so the site's content security policy names one hash for it. Visitors who ask
+ * not to be tracked (Do Not Track, Global Privacy Control) and automated browsers are skipped, and by
+ * default it waits for a consent signal: `window.cmsConsent.analytics === true`, or a `cms:consent` event
+ * with `detail.analytics` true. A built page has one copy for everyone, so the decision comes from the browser.
  */
 final class Snippet
 {
+    private static ?string $script = null;
+
     public static function image(string $endpoint, string $path): string
     {
         return '<img src="'.e($endpoint.'?p='.rawurlencode($path)).'" alt="" width="1" height="1" aria-hidden="true" decoding="async" fetchpriority="low" referrerpolicy="no-referrer" style="position:absolute;opacity:0">';
     }
 
-    public static function html(string $endpoint, bool $consent = true): string
+    public static function html(string $endpoint, bool $consent = true, bool $automatic = true, bool $missing = false): string
     {
-        $url = json_encode($endpoint, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
-        $start = $consent
-            ? 'var c=w.cmsConsent;if(c&&c.analytics===true)go();else d.addEventListener("cms:consent",function f(e){if(e.detail&&e.detail.analytics===true){d.removeEventListener("cms:consent",f);go()}})'
-            : 'go()';
+        $attributes = 'data-endpoint="'.e($endpoint).'"'.($consent ? ' data-consent="1"' : '').($automatic ? ' data-auto="1"' : '').($missing ? ' data-status="404"' : '');
 
-        return <<<HTML
-<script>(function(w,d,n){if(n.webdriver||n.doNotTrack=="1"||w.doNotTrack=="1"||n.globalPrivacyControl)return;function go(){var q=new URLSearchParams(location.search),b=JSON.stringify({p:location.pathname,r:d.referrer,s:q.get("utm_source")||q.get("ref")||"",w:w.innerWidth});try{n.sendBeacon?n.sendBeacon({$url},b):fetch({$url},{method:"POST",body:b,keepalive:true})}catch(e){}}{$start}})(window,document,navigator)</script>
-HTML;
+        return '<script '.$attributes.'>'.self::script().'</script>';
+    }
+
+    /** The script without its comments and indentation: one statement a line, as written. */
+    public static function script(): string
+    {
+        return self::$script ??= implode("\n", array_filter(
+            array_map('trim', file(dirname(__DIR__).'/resources/tracker.js', FILE_IGNORE_NEW_LINES) ?: []),
+            static fn (string $line) => $line !== '' && ! str_starts_with($line, '//'),
+        ));
     }
 }

@@ -10,7 +10,7 @@ namespace Cms\Analytics;
  */
 final readonly class Client
 {
-    private const string BOTS = '/bot|crawl|spider|slurp|archiver|headless|lighthouse|pagespeed|gtmetrix|preview|monitor|uptime|pingdom|curl|wget|python|httpclient|okhttp|axios|go-http|java\/|ruby|perl|php\/|facebookexternalhit|embedly|whatsapp|telegram|discord|slack|vercel|phantom|selenium|puppeteer|playwright/i';
+    private const string BOTS = '/bot|crawl|spider|slurp|archiver|headless|lighthouse|pagespeed|gtmetrix|preview|monitor|uptime|pingdom|curl|wget|python|httpclient|okhttp|axios|go-http|java\/|ruby|perl|php\/|facebookexternalhit|meta-external|embedly|whatsapp|telegram|discord|slack|vercel|phantom|selenium|puppeteer|playwright|chatgpt-user|claude-user|perplexity-user|mistralai-user|googleother|google-cloudvertex|google-agent|duckassist|amzn-|ai2bot|cohere-ai|diffbot|timpibot|youbot/i';
 
     public function __construct(
         public string $device,

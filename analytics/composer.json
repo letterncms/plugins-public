@@ -1,6 +1,6 @@
 {
     "name": "letterncms/analytics",
-    "description": "Site analytics on your own server: page views per day by default, with visitors, sources and devices as an option.",
+    "description": "Site analytics on your own server: page views by default, and visitors, goals, funnels, page speed and Google Search as an option.",
     "type": "cms-plugin",
     "version": "0.10.0",
     "license": "MIT",

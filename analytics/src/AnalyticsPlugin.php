@@ -28,12 +28,18 @@ final class AnalyticsPlugin extends Plugin
     {
         $this->app->singleton(Collector::class);
         $this->app->singleton(Reports::class);
+        $this->app->singleton(SearchConsole::class);
+
+        foreach ([Goals::class, Journeys::class, Vitals::class] as $service) {
+            $this->app->singleton($service);
+        }
     }
 
     public function boot(): void
     {
         $cms = $this->cms();
         $cms->permissions()->register('analytics.view', 'View Site Analytics', 'Analytics', roles: ['editor']);
+        $cms->permissions()->register('analytics.track', 'Record Analytics Events', 'Analytics', roles: ['admin']);
 
         $cms->settingsRegistry()->register(Collector::SETTINGS, fields: [
             ['handle' => 'enabled', 'type' => 'toggle', 'label' => 'Count Visits', 'default' => true],
@@ -41,9 +47,20 @@ final class AnalyticsPlugin extends Plugin
                 // Said where it happens: saving the switch back asks first.
                 'confirmChange' => ['from' => Collector::VISITORS, 'title' => __('Count page views only?'), 'text' => __('Switching back to page views deletes visitor data.'), 'confirm' => __('Delete Visitor Data')]],
             ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS]],
+            ['handle' => 'automatic', 'type' => 'toggle', 'label' => 'Count Links, Downloads and Forms', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS]],
             ['handle' => 'exclude', 'type' => 'list', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'if' => ['enabled' => true]],
             ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Visits For', 'suffix' => 'days', 'min' => 0, 'default' => 730, 'placeholder' => 'Forever', 'if' => ['enabled' => true]],
             ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Reporting Address', 'placeholder' => 'https://cms.example.com', 'if' => ['enabled' => true]],
+            ['handle' => 'goals', 'section' => 'Goals', 'type' => 'repeater', 'display' => 'table', 'label' => 'Goal Pages', 'add' => 'Add Goal', 'fields' => [
+                ['handle' => 'name', 'type' => 'text', 'label' => 'Name', 'placeholder' => 'Signed Up', 'required' => true],
+                ['handle' => 'path', 'type' => 'text', 'label' => 'Page', 'mono' => true, 'placeholder' => '/thank-you', 'required' => true],
+            ]],
+            ['handle' => 'funnels', 'section' => 'Goals', 'type' => 'repeater', 'label' => 'Funnels', 'add' => 'Add Funnel', 'if' => ['mode' => Collector::VISITORS], 'fields' => [
+                ['handle' => 'name', 'type' => 'text', 'label' => 'Name', 'placeholder' => 'Sign-Up', 'required' => true],
+                ['handle' => 'steps', 'type' => 'list', 'label' => 'Steps', 'placeholder' => '/pricing', 'required' => true],
+            ]],
+            ['handle' => 'search_key', 'section' => 'Search Console', 'type' => 'textarea', 'label' => 'Service Account Key', 'secret' => true, 'rows' => 3, 'mono' => true, 'placeholder' => '{"type": "service_account", …}'],
+            ['handle' => 'search_property', 'section' => 'Search Console', 'type' => 'text', 'label' => 'Search Console Property', 'mono' => true, 'placeholder' => 'sc-domain:example.com'],
         ], icon: 'chart', description: 'Visitor counting on the published site.', order: 55, home: 'analytics');
 
         $this->routes();
@@ -54,6 +71,9 @@ final class AnalyticsPlugin extends Plugin
         $admin = $cms->admin();
         $admin->nav('analytics', ['path' => '/analytics', 'icon' => 'chart', 'section' => 'main', 'order' => 10, 'pinned' => true, 'permission' => 'analytics.view']);
         $admin->widget('analytics-overview', ['label' => 'Analytics', 'description' => 'Page views in the last 30 days.', 'icon' => 'chart', 'column' => 'main', 'enabled' => true, 'order' => 5, 'permission' => 'analytics.view']);
+        $admin->widget('analytics-now', ['label' => 'On the Site Now', 'description' => 'Who is on the site and what they read, in the last half hour.', 'icon' => 'activity', 'column' => 'side', 'order' => 6, 'permission' => 'analytics.view']);
+        $admin->widget('analytics-pages', ['label' => 'Top Pages', 'description' => 'The pages read most in the last 30 days.', 'icon' => 'file-text', 'column' => 'side', 'order' => 7, 'permission' => 'analytics.view']);
+        $admin->widget('analytics-search', ['label' => 'Google Search', 'description' => 'Clicks and searches from Google in the last 30 days.', 'icon' => 'search', 'column' => 'side', 'order' => 8, 'permission' => 'analytics.view']);
         $this->app->make(AnalyticsViews::class)->register();
         $admin->command('analytics', ['label' => 'Open Analytics', 'icon' => 'chart', 'path' => '/analytics', 'permission' => 'analytics.view', 'keywords' => ['visitors', 'traffic', 'stats', 'views']]);
         $this->adminModule();
@@ -93,7 +113,9 @@ final class AnalyticsPlugin extends Plugin
             }
 
             if ($collector()->mode() === Collector::VISITORS) {
-                $foot[] = Snippet::html($base().'/api/analytics/hit', (bool) $this->setting('consent_required', true));
+                // Only the page for a missing address is rendered without an entry or an archive.
+                $missing = ($context->entry ?? null) === null && ($context->archive ?? null) === null;
+                $foot[] = Snippet::html($base().'/api/analytics/hit', (bool) $this->setting('consent_required', true), (bool) $this->setting('automatic', true), $missing);
             } elseif (is_string($context->uri ?? null)) {
                 $foot[] = Snippet::image($base().'/api/analytics/view', $context->uri);
             }
@@ -114,12 +136,21 @@ final class AnalyticsPlugin extends Plugin
             return $policy;
         });
 
-        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'analytics:'.(int) $collector()->enabled().':'.$collector()->mode().':'.(int) $this->setting('consent_required', true).':'.$base()]);
+        $hooks->addFilter('site.build.signature', fn (array $parts) => [...$parts, 'analytics:'.(int) $collector()->enabled().':'.$collector()->mode().':'.(int) $this->setting('consent_required', true).':'.(int) $this->setting('automatic', true).':'.$base().':'.md5(Snippet::script())]);
+
+        // Any plugin counts an event of its own without depending on this one: `$cms->hooks()->dispatch('analytics.track', 'Purchase', ['plan' => 'Pro'])`.
+        $hooks->on('analytics.track', static function (mixed $name, mixed $props = [], mixed $path = null) use ($collector): void {
+            is_string($name) && $collector()->track($name, is_array($props) ? $props : [], is_string($path) ? $path : null);
+        });
 
         $hooks->on('settings.saved', function (string $namespace) use ($collector) {
-            if ($namespace === Collector::SETTINGS && $collector()->mode() === Collector::COUNTS) {
-                $collector()->forgetVisitors();
+            if ($namespace !== Collector::SETTINGS) {
+                return;
             }
+
+            $collector()->mode() === Collector::COUNTS && $collector()->forgetVisitors();
+            // Another key or property: what Search Console said before is not this one's.
+            $this->app->make(SearchConsole::class)->forget();
         });
     }
 

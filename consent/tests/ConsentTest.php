@@ -98,9 +98,9 @@ final class ConsentTest extends TestCase
         $this->assertStringContainsString('w.cmsConsent={necessary:true,analytics:false,marketing:false,decided:false}', $foot);
         $this->assertStringContainsString('new CustomEvent("cms:consent",{detail:{necessary:true,analytics:api.analytics,marketing:api.marketing}})', $foot);
         // What Analytics waits for, and it is on the page before Analytics asks.
-        $this->assertStringContainsString('c.analytics===true', $foot);
-        $this->assertStringContainsString('addEventListener("cms:consent"', $foot);
-        $this->assertLessThan(strpos($foot, 'c.analytics===true'), strpos($foot, 'w.cmsConsent='));
+        $this->assertStringContainsString('w.cmsConsent && w.cmsConsent.analytics === true', $foot);
+        $this->assertStringContainsString("addEventListener('cms:consent'", $foot);
+        $this->assertLessThan(strpos($foot, 'w.cmsConsent && w.cmsConsent.analytics === true'), strpos($foot, 'w.cmsConsent='));
         $this->assertStringContainsString('navigator.globalPrivacyControl', $foot);
     }
 

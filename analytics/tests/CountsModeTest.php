@@ -65,7 +65,7 @@ final class CountsModeTest extends TestCase
         $this->visit();
 
         $this->assertSame(2, $this->views());
-        $this->assertSame(0, DB::table('analytics_visitors')->count());
+        $this->assertSame(0, DB::table('analytics_visits')->count());
         $this->assertFileDoesNotExist(storage_path('app/salts/analytics.json'));
         $this->assertSame(['day', 'path', 'views', 'visitors'], array_keys((array) DB::table('analytics_pages')->first()));
         $this->assertSame(0, (int) DB::table('analytics_pages')->value('visitors'));
@@ -152,19 +152,19 @@ final class CountsModeTest extends TestCase
         $settings = $this->cms()->settingsRegistry();
         $collector = $this->app->make(Collector::class);
         $settings->save('analytics', ['mode' => 'visitors']);
-        $collector->record('/pricing', null, null, 1440, '203.0.113.7', self::BROWSER, ['localhost']);
+        $collector->record(['p' => '/pricing', 'w' => 1440], '203.0.113.7', self::BROWSER, ['localhost']);
         $this->assertFileExists(storage_path('app/salts/analytics.json'));
-        $this->assertSame(1, DB::table('analytics_visitors')->count());
+        $this->assertSame(1, DB::table('analytics_visits')->count());
 
         $settings->save('analytics', ['mode' => 'counts']);
 
-        $this->assertSame(0, DB::table('analytics_visitors')->count());
+        $this->assertSame(0, DB::table('analytics_visits')->count());
         $this->assertFileDoesNotExist(storage_path('app/salts/analytics.json'));
         $this->assertSame(1, $this->views(), 'the views stay');
         $this->assertSame(0, (int) DB::table('analytics_pages')->value('visitors'));
 
-        $collector->record('/pricing', null, null, 1440, '203.0.113.7', self::BROWSER, ['localhost']);
-        $this->assertSame(0, DB::table('analytics_visitors')->count(), 'visitors mode code stays out of counts mode');
+        $collector->record(['p' => '/pricing', 'w' => 1440], '203.0.113.7', self::BROWSER, ['localhost']);
+        $this->assertSame(0, DB::table('analytics_visits')->count(), 'visitors mode code stays out of counts mode');
     }
 
     public function test_visitors_mode_waits_for_a_signal_from_the_browser(): void
@@ -172,12 +172,13 @@ final class CountsModeTest extends TestCase
         $this->cms()->settingsRegistry()->save('analytics', ['mode' => 'visitors']);
         $foot = implode('', $this->cms()->hooks()->filter('site.foot', [], (object) ['editor' => false, 'preview' => false, 'uri' => '/']));
 
-        $this->assertStringContainsString('/api/analytics/hit', $foot);
+        $this->assertStringContainsString('data-endpoint="/api/analytics/hit"', $foot);
+        $this->assertStringContainsString('data-consent="1"', $foot);
         $this->assertStringContainsString('w.cmsConsent', $foot);
         $this->assertStringContainsString('cms:consent', $foot);
         $this->assertStringNotContainsString('/api/analytics/view', $foot);
 
-        $this->assertStringNotContainsString('cmsConsent', Snippet::html('/api/analytics/hit', false));
+        $this->assertStringNotContainsString('data-consent="1"', Snippet::html('/api/analytics/hit', false));
     }
 
     public function test_the_hit_endpoint_counts_nothing_in_counts_mode(): void
@@ -185,7 +186,7 @@ final class CountsModeTest extends TestCase
         $this->call('POST', '/api/analytics/hit', [], [], [], ['HTTP_USER_AGENT' => self::BROWSER, 'CONTENT_TYPE' => 'text/plain'], (string) json_encode(['p' => '/pricing']))->assertNoContent();
 
         $this->assertSame(0, $this->views());
-        $this->assertSame(0, DB::table('analytics_visitors')->count());
+        $this->assertSame(0, DB::table('analytics_visits')->count());
     }
 
     public function test_reports_say_what_they_can_and_null_for_what_they_cannot(): void
@@ -219,6 +220,20 @@ final class CountsModeTest extends TestCase
         $this->assertSame(3, $languages['total']);
 
         $this->assertSame('mode', $abilities->execute('analytics/breakdown', ['period' => '7d', 'dimension' => 'sources'], $ctx)['unavailable']);
+
+        // A page is all it can narrow to.
+        $this->assertSame(2, $abilities->execute('analytics/summary', ['period' => '7d', 'filters' => [['dimension' => 'page', 'value' => '/pricing']]], $ctx)['views']);
+        $narrower = $abilities->execute('analytics/summary', ['period' => '7d', 'filters' => [['dimension' => 'source', 'value' => 'Google']]], $ctx);
+        $this->assertSame(['mode', null, []], [$narrower['unavailable'], $narrower['views'], $narrower['series']]);
+        $this->assertSame('mode', $abilities->execute('analytics/summary', ['period' => 'realtime'], $ctx)['unavailable']);
+        $this->assertCount(1, $abilities->execute('analytics/summary', ['period' => 'today'], $ctx)['series']);
+
+        // Goal pages count their views, and a plugin's events their number.
+        $this->cms()->settingsRegistry()->save('analytics', ['goals' => [['name' => 'Saw Pricing', 'path' => '/pricing']]]);
+        $collector->track('Purchase');
+        $goals = collect($abilities->execute('analytics/breakdown', ['period' => '7d', 'dimension' => 'goals'], $ctx)['items'])->keyBy('key');
+        $this->assertSame([2, 1], [$goals['Saw Pricing']['events'], $goals['Purchase']['events']]);
+        $this->assertNull($goals['Purchase']['visitors']);
     }
 
     public function test_a_salt_is_not_even_made_in_counts_mode(): void
@@ -233,11 +248,12 @@ final class CountsModeTest extends TestCase
     public function test_its_abilities_are_reads_that_say_what_they_answer_with(): void
     {
         $mine = array_filter($this->cms()->abilities()->all(), static fn ($ability) => $ability->package === 'letterncms/analytics');
-        $this->assertSame(['analytics/breakdown', 'analytics/summary'], collect(array_keys($mine))->sort()->values()->all());
+        $this->assertSame(['analytics/breakdown', 'analytics/funnel', 'analytics/goals', 'analytics/paths', 'analytics/search', 'analytics/summary', 'analytics/track', 'analytics/vitals'], collect(array_keys($mine))->sort()->values()->all());
 
         foreach ($mine as $name => $ability) {
             $this->assertNotNull($ability->output(), "{$name} says what it answers with");
-            $this->assertTrue($ability->isReadOnly(), $name);
+            // Only recording an event changes anything.
+            $this->assertSame($name !== 'analytics/track', $ability->isReadOnly(), $name);
         }
 
         // Every dimension answers in the shape that is said, in this mode and with nothing counted yet.
@@ -256,7 +272,7 @@ final class CountsModeTest extends TestCase
         $this->assertSame([], array_filter(array_column($fields, 'instructions', 'handle')));
         $mode = array_values(array_filter($fields, static fn ($f) => $f['handle'] === 'mode'))[0];
         $this->assertSame(['visitors', 'Switching back to page views deletes visitor data.'], [$mode['confirmChange']['from'], $mode['confirmChange']['text']]);
-        $this->assertSame(['exclude' => '/drafts/*', 'retention_days' => 'Forever', 'endpoint' => 'https://cms.example.com'], array_filter(array_column($fields, 'placeholder', 'handle')));
+        $this->assertSame(['exclude' => '/drafts/*', 'retention_days' => 'Forever', 'endpoint' => 'https://cms.example.com', 'search_key' => '{"type": "service_account", …}', 'search_property' => 'sc-domain:example.com'], array_filter(array_column($fields, 'placeholder', 'handle')));
     }
 
     public function test_the_place_is_a_view_of_what_is_counted(): void
