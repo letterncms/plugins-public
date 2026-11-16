@@ -79,7 +79,7 @@ final class FormsPlugin extends Plugin
             return $policy;
         });
 
-        $this->cms()->admin()->nav('forms', ['path' => '/forms', 'icon' => 'form', 'section' => 'content', 'order' => 75, 'pinned' => true, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
+        $this->cms()->admin()->nav('forms', ['path' => '/forms', 'icon' => 'form', 'section' => 'pinned', 'order' => 26, 'permission' => 'forms.view', 'badge' => fn () => Submission::query()->where('status', 'new')->count() ?: null]);
         $this->cms()->admin()->widget('forms-submissions', ['label' => 'Form Submissions', 'description' => __('New submissions over the last two weeks and the latest ones.'), 'icon' => 'form', 'column' => 'side', 'order' => 40, 'permission' => 'forms.view']);
         $this->app->make(FormsViews::class)->register();
         $this->adminModule(import: '@letterncms/forms');
