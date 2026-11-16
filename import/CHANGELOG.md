@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 (2026-11-16)
+
 ### Added
 
 - **Tags and categories become terms.** A WordPress post's tags and categories go into the collection's terms fields called `tags` and `categories`: a tag or category the site does not have yet is made in that taxonomy, once, when whoever imports may add to it, and running the import again finds it.
