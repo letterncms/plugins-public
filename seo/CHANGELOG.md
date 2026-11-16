@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- **Breaking.** Needs the core 0.48 or newer, where the list of profiles use its **List** field.
+
 ## 0.12.0 (2026-11-13)
 
 ### Changed

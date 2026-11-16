@@ -132,7 +132,7 @@ final class SeoPlugin extends Plugin
             ['handle' => 'org_type', 'section' => 'Organization', 'width' => 'half', 'type' => 'select', 'label' => 'Type', 'options' => ['Organization' => __('Organization'), 'LocalBusiness' => __('Local Business'), 'Person' => __('Person')], 'default' => 'Organization', 'required' => true],
             ['handle' => 'org_name', 'section' => 'Organization', 'width' => 'half', 'type' => 'text', 'label' => 'Name'],
             ['handle' => 'org_logo', 'section' => 'Organization', 'type' => 'media', 'label' => 'Logo', 'max' => 1],
-            ['handle' => 'same_as', 'section' => 'Organization', 'type' => 'tags', 'label' => 'Profiles', 'placeholder' => 'https://linkedin.com/company/…'],
+            ['handle' => 'same_as', 'section' => 'Organization', 'type' => 'list', 'label' => 'Profiles', 'placeholder' => 'https://linkedin.com/company/…'],
             ['handle' => 'llms_summary', 'section' => 'AI Crawlers', 'type' => 'textarea', 'label' => 'Summary for AI (llms.txt)'],
             ['handle' => 'markdown_twins', 'section' => 'AI Crawlers', 'type' => 'toggle', 'label' => 'Publish Markdown Versions of Pages', 'default' => true],
             ['handle' => 'blocked_crawlers', 'section' => 'AI Crawlers', 'type' => 'select', 'label' => 'Block These AI Crawlers', 'multiple' => true, 'options' => array_combine(array_keys($crawlers), array_map(static fn ($label, $agent) => "{$agent} — {$label}", $crawlers, array_keys($crawlers))), 'instructions' => 'Blocked search crawlers can’t cite you.'],

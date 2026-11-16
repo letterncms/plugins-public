@@ -41,7 +41,7 @@ final class AnalyticsPlugin extends Plugin
                 // Said where it happens: saving the switch back asks first.
                 'confirmChange' => ['from' => Collector::VISITORS, 'title' => __('Count page views only?'), 'text' => __('Switching back to page views deletes visitor data.'), 'confirm' => __('Delete Visitor Data')]],
             ['handle' => 'consent_required', 'type' => 'toggle', 'label' => 'Wait for Consent', 'default' => true, 'if' => ['enabled' => true, 'mode' => Collector::VISITORS]],
-            ['handle' => 'exclude', 'type' => 'tags', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'if' => ['enabled' => true]],
+            ['handle' => 'exclude', 'type' => 'list', 'label' => 'Paths Not to Count', 'placeholder' => '/drafts/*', 'if' => ['enabled' => true]],
             ['handle' => 'retention_days', 'type' => 'number', 'label' => 'Keep Visits For', 'suffix' => 'days', 'min' => 0, 'default' => 730, 'placeholder' => 'Forever', 'if' => ['enabled' => true]],
             ['handle' => 'endpoint', 'type' => 'url', 'label' => 'Reporting Address', 'placeholder' => 'https://cms.example.com', 'if' => ['enabled' => true]],
         ], icon: 'chart', description: 'Visitor counting on the published site.', order: 55, home: 'analytics');

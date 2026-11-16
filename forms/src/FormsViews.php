@@ -173,7 +173,7 @@ final class FormsViews
             ['handle' => 'submit', 'type' => 'text', 'label' => __('Button Label')],
             ['handle' => 'success', 'type' => 'textarea', 'label' => __('Success Message'), 'rows' => 2],
             ['handle' => 'redirect', 'type' => 'url', 'component' => 'link', 'label' => __('Or Redirect To'), 'placeholder' => '/thank-you'],
-            ['handle' => 'notify', 'type' => 'tags', 'label' => __('Email Submissions To'), 'placeholder' => 'name@example.com', 'section' => __('Email')],
+            ['handle' => 'notify', 'type' => 'list', 'label' => __('Email Submissions To'), 'placeholder' => 'name@example.com', 'section' => __('Email')],
             // Literal braces: the subject's own placeholders, not the view's.
             ['handle' => 'subject', 'type' => 'text', 'label' => __('Email Subject'), 'placeholder' => 'New submission: {{form}}', 'section' => __('Email')],
             ['handle' => 'reply_to_field', 'type' => 'text', 'label' => __('Reply-to Field'), 'placeholder' => 'email', 'mono' => true, 'section' => __('Email')],

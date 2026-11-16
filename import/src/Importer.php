@@ -448,6 +448,7 @@ final class Importer
     {
         $publish = $prepared['status'] === 'published';
         $content = $this->cms->entryService();
+        $prepared['data'] = $this->categories($collection, $prepared['data'], $locale, $user);
 
         if ($prepared['id'] !== null) {
             return $content->update($prepared['id'], ['title' => $record->title, 'data' => $prepared['data'], ...($record->slug !== null ? ['slug' => $record->slug] : []), ...($publish && $record->at !== null ? ['at' => $record->at] : [])], $user, $publish);
@@ -464,6 +465,45 @@ final class Importer
             ...($publish && $record->at !== null ? ['at' => $record->at] : []),
             ...($collection->isTree() && $parent !== null && $this->cms->entries()->find($parent)?->collection === $collection->handle ? ['parentId' => $parent] : []),
         ], $user);
+    }
+
+    /**
+     * The categories a record is filed under, by name, as they are here: a name no category of its taxonomy has, in
+     * this language, by its title or else its slug, is made first, as WordPress had it: published, or a draft when the
+     * person importing may not publish there. Who may not make categories there leaves the name, which the entry's
+     * save refuses. Tags need nothing: a terms field makes a tag that is not there yet, as the entry is saved.
+     */
+    private function categories(Collection $collection, array $data, string $locale, ?User $user): array
+    {
+        foreach ($collection->blueprint()->fields() as $field) {
+            $taxonomy = $field->type === 'terms' ? $this->cms->collections()->find((string) $field->get('taxonomy')) : null;
+
+            if ($taxonomy?->type !== 'categories' || ! is_array($data[$field->handle] ?? null)) {
+                continue;
+            }
+
+            $byTitle = [];
+            $bySlug = [];
+
+            foreach ($this->cms->entries()->query()->working()->ungated()->collection($taxonomy->handle)->locale($locale)->get() as $term) {
+                $byTitle[mb_strtolower((string) $term->working()['title'])] ??= $term->id;
+                $bySlug[(string) $term->working()['slug']] ??= $term->id;
+            }
+
+            $may = static fn (string $action) => $user === null || $user->hasPermission("entries.{$taxonomy->handle}.{$action}");
+
+            $data[$field->handle] = array_values(array_unique(array_map(function (string $name) use ($taxonomy, $locale, $user, $may, &$byTitle, $bySlug): string {
+                $found = $byTitle[mb_strtolower($name)] ?? $bySlug[$name] ?? null;
+
+                if ($found === null && $may('create')) {
+                    $found = $byTitle[mb_strtolower($name)] = $this->cms->entryService()->create($taxonomy->handle, ['title' => $name, 'locale' => $locale, 'status' => $may('publish') ? 'published' : 'draft'], $user)->id;
+                }
+
+                return $found ?? $name;
+            }, $data[$field->handle])));
+        }
+
+        return $data;
     }
 
     /** The field of a collection a name from a source goes to when nothing maps it: its handle, or null when none takes it. */
@@ -535,7 +575,8 @@ final class Importer
         $list = static fn (mixed $v): array => is_array($v) ? array_values(array_map('strval', array_filter($v, 'is_scalar'))) : array_values(array_filter(array_map('trim', preg_split('/[|,]/', (string) $v) ?: []), static fn (string $s) => $s !== ''));
 
         return match ($field->type) {
-            'tags' => $list($value),
+            // Terms by their names: a tag is made as the entry is saved, a category by categories() before.
+            'list', 'terms' => $list($value),
             'select' => $field->get('multiple', false) ? $list($value) : (is_array($value) ? (string) ($list($value)[0] ?? '') : (string) $value),
             'toggle' => is_bool($value) ? $value : in_array(strtolower(trim((string) (is_scalar($value) ? $value : ''))), ['1', 'true', 'yes', 'y', 'on'], true),
             'number' => is_numeric($value) ? $value + 0 : $value,
