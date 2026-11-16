@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- A field's **Field Settings** button names itself in the admin's own tooltip.
+
 ## 0.18.1 (2026-11-16)
 
 ### Changed
