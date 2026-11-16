@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.0 (2026-11-16)
+
 ### Changed
 
 - **Breaking.** Needs the core 0.48 or newer, where the list of paths not to count use its **List** field.
