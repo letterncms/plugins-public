@@ -126,6 +126,35 @@ final class ImportTest extends TestCase
         $this->assertSame([], $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml', 'dryRun' => true])['changes']);
     }
 
+    public function test_wordpress_tags_and_categories_become_terms_of_taxonomies(): void
+    {
+        $this->cms()->collections()->save(\Cms\Content\Collections\Collection::fromArray('topics', ['title' => 'Topics', 'type' => 'categories', 'fields' => []]));
+        $this->cms()->collections()->save(\Cms\Content\Collections\Collection::fromArray('labels', ['title' => 'Labels', 'type' => 'tags', 'fields' => []]));
+        $posts = $this->cms()->collections()->findOrFail('posts')->toYaml();
+        $this->cms()->collections()->save(\Cms\Content\Collections\Collection::fromArray('posts', [...$posts, 'fields' => [
+            ...array_values(array_filter($posts['fields'], static fn (array $f) => $f['handle'] !== 'tags')),
+            ['handle' => 'tags', 'type' => 'terms', 'taxonomy' => 'labels'],
+            ['handle' => 'categories', 'type' => 'terms', 'taxonomy' => 'topics'],
+        ]]));
+
+        // A preview makes no term.
+        $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml', 'dryRun' => true]);
+        $this->assertSame([], [...$this->entries('topics'), ...$this->entries('labels')]);
+
+        $this->assertSame(0, $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml'])['summary']['failed']);
+        $hello = array_column($this->entries('posts'), null, 'slug')['hello-welcome'];
+        [$news] = $this->entries('labels');
+        [$harbour] = $this->entries('topics');
+        $this->assertSame(['News', 'Harbour'], [$news->title, $harbour->title]);
+        $this->assertTrue($news->isLive() && $harbour->isLive());
+        $this->assertSame([[$news->id], [$harbour->id]], [$hello->data['tags'], $hello->data['categories']]);
+
+        // Again: the same terms, not new ones.
+        $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml', 'dryRun' => false]);
+        $this->assertCount(1, $this->entries('topics'));
+        $this->assertCount(1, $this->entries('labels'));
+    }
+
     public function test_wordpress_brings_posts_pages_media_and_redirects(): void
     {
         $report = $this->ability('import/run', ['type' => 'wordpress', 'path' => 'wordpress.xml']);

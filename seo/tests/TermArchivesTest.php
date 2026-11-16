@@ -21,7 +21,7 @@ final class TermArchivesTest extends TestCase
     protected function collections(): array
     {
         return [
-            'topics' => ['title' => 'Topics', 'taxonomy' => true, 'route' => '/topics/{slug}', 'fields' => [['handle' => 'description', 'type' => 'textarea']]],
+            'topics' => ['title' => 'Topics', 'type' => 'tags', 'route' => '/topics/{slug}', 'fields' => [['handle' => 'description', 'type' => 'textarea']]],
             'posts' => ['title' => 'Posts', 'structure' => 'dated', 'route' => '/blog/{slug}', 'fields' => [['handle' => 'topics', 'type' => 'terms', 'taxonomy' => 'topics'], ['handle' => 'notes', 'type' => 'textarea']], 'archives' => ['topics' => ['route' => '/blog/topics/{slug}', 'routes' => ['de' => '/blog/themen/{slug}']]]],
         ];
     }
