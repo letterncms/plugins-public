@@ -20,7 +20,6 @@
         "letterncms/forms": "*",
         "letterncms/import": "*",
         "letterncms/seo": "*",
-        "letterncms/site-search": "*",
         "letterncms/spotify": "*",
         "letterncms/webhooks": "*",
         "letterncms/youtube": "*"
@@ -36,7 +35,6 @@
             "Cms\\Forms\\Tests\\": "forms/tests/",
             "Cms\\Import\\Tests\\": "import/tests/",
             "Cms\\Seo\\Tests\\": "seo/tests/",
-            "Cms\\SiteSearch\\Tests\\": "site-search/tests/",
             "Cms\\Spotify\\Tests\\": "spotify/tests/",
             "Cms\\Tests\\": "vendor/letterncms/cms/tests/",
             "Cms\\Webhooks\\Tests\\": "webhooks/tests/",
