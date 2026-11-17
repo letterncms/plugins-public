@@ -1,0 +1,54 @@
+/* Site Search (SearchForm, SearchResults): a search field and a page of results. Restrained on purpose: the field and
+   its button are the site's own (cms-input, cms-button btn-*), the rest takes the theme's colours, and classes on the
+   blocks restyle any of it. */
+@layer components {
+  /* Search Field: the label above, the field and its button in one row. */
+  .cms-site-search-form { display: grid; gap: var(--field-spacing-label, 0.375rem); width: 100%; max-width: 40rem; }
+  .cms-site-search-form__label { font-size: var(--field-label-font-size, 0.875rem); font-weight: var(--field-label-font-weight, 500); color: var(--field-label-color, currentColor); }
+  /* Hidden, still read: a screen reader names the field by it. */
+  .cms-site-search-form__label[data-hidden] { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .cms-site-search-form__row { display: flex; gap: 0.5rem; align-items: stretch; }
+  .cms-site-search-form__input { flex: 1 1 auto; min-width: 0; }
+
+  /* Search Results. */
+  .cms-site-search-results { display: grid; gap: 1.25rem; align-content: start; }
+  /* Its line is there from the start, so nothing moves when the count comes. */
+  .cms-site-search-results__status { min-height: 1lh; margin: 0; color: var(--color-muted); }
+  .cms-site-search-results__filters ul { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+  .cms-site-search-results__filters a {
+    display: inline-flex; align-items: center; min-height: 2.25rem; padding: 0 0.875rem; box-sizing: border-box;
+    font-size: var(--text-sm, 0.875rem); color: inherit; text-decoration: none;
+    border: 1px solid var(--color-border); border-radius: 999px;
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+  .cms-site-search-results__filters a:hover { border-color: color-mix(in srgb, var(--color-border) 40%, currentColor); background: var(--color-surface); }
+  .cms-site-search-results__filters a[aria-current="true"] { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 10%, transparent); font-weight: var(--font-weight-medium, 500); }
+  .cms-site-search-results__list { display: grid; margin: 0; padding: 0; list-style: none; }
+  .cms-site-search-results__item { padding-block: 1.25rem; border-top: 1px solid var(--color-border); }
+  .cms-site-search-results__item:last-child { border-bottom: 1px solid var(--color-border); }
+  /* The title comes first for screen readers; its kind reads above it. */
+  .cms-site-search-results__result { display: flex; flex-direction: column; gap: 0.25rem; }
+  .cms-site-search-results__kind { order: -1; margin: 0; font-size: var(--text-xs, 0.75rem); font-weight: var(--font-weight-medium, 500); letter-spacing: 0.02em; color: var(--color-muted); }
+  .cms-site-search-results__title { margin: 0; font-size: var(--text-lg, 1.125rem); line-height: 1.35; }
+  .cms-site-search-results__title a { color: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, currentColor 35%, transparent); text-underline-offset: 0.2em; }
+  .cms-site-search-results__title a:hover { text-decoration-color: currentColor; }
+  .cms-site-search-results__date { font-size: var(--text-sm, 0.875rem); color: var(--color-muted); }
+  .cms-site-search-results__snippet { margin: 0.25rem 0 0; max-width: 70ch; }
+  .cms-site-search-results mark { padding: 0 0.1em; color: inherit; background: color-mix(in srgb, var(--color-primary) 16%, transparent); border-radius: 0.2em; }
+  .cms-site-search-results__more { justify-self: start; }
+  .cms-site-search-results a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 0.2em; }
+  /* Results that come with "Show More Results" fade in, where motion is welcome. */
+  @media (prefers-reduced-motion: no-preference) {
+    .cms-site-search-results__item { animation: cms-site-search-in 200ms ease-out both; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cms-site-search-results__filters a { transition: none; }
+  }
+}
+
+/* Hidden is hidden, whatever a button's look or a class says of its display: outside the layers, so it wins over them. */
+.cms-site-search-results [hidden] { display: none; }
+
+@keyframes cms-site-search-in {
+  from { opacity: 0; }
+}
