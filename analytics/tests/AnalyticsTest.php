@@ -104,6 +104,8 @@ final class AnalyticsTest extends TestCase
 
     public function test_a_visit_ends_after_half_an_hour_without_anything_and_the_visitor_stays_one(): void
     {
+        // Noon on the site, so the morning's visits are earlier today whenever the test runs, after midnight too.
+        \Carbon\Carbon::setTestNow(Collector::local()->startOfDay()->addHours(12));
         $at = Collector::local()->startOfDay()->addHours(9);
 
         $this->record('/', at: $at);
